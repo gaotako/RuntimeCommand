@@ -62,12 +62,17 @@ else
 fi
 verth=2.0.0
 
+# Upgrade pip.
+pip install --no-cache-dir --upgrade pip
+pip install --no-cache-dir --upgrade setuptools
+pip install --no-cache-dir --upgrade wheel
+
 #
-install black "" 23.7.0
+install black jupyter 23.7.0
 install mypy "" 1.4.1
 install pytest "" 7.4.0
 install pytest-cov "" 4.1.0
-install more_itertools "" 8.14.0
+install more-itertools "" 8.14.0
 install numpy "" 1.25.1
 install scipy "" 1.11.1
 install scikit-learn "" 1.3.0

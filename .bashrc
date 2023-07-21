@@ -21,7 +21,7 @@ _ALIAS_() {
     alias lsc="ls --color"
 
     #
-    if [[ -n $(which nvcc) ]]; then
+    if [[ -n $(which nvcc 2>/dev/null) ]]; then
         #
         alias gpustats="watch -n 0.1 nvidia-smi"
     fi
@@ -30,7 +30,7 @@ _ALIAS_() {
 # CUDA
 _CUDA_() {
     #
-    if [[ -n $(which module) ]]; then
+    if [[ -n $(which module 2>/dev/null) ]]; then
         #
         module load cuda/11.7
     fi
@@ -39,13 +39,13 @@ _CUDA_() {
 # Slurm
 _SLURM_() {
     #
-    if [[ -n $(which module) ]]; then
+    if [[ -n $(which module 2>/dev/null) ]]; then
         #
         module load slurm
     fi
 
     #
-    if [[ -n $(which slurm) ]]; then
+    if [[ -n $(which slurm 2>/dev/null) ]]; then
         # Use customized slurm queue log.
         export SQUEUE_FORMAT="%.10i %.9P %.8u %.28j %.2t %.10M"
     fi
