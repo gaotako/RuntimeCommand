@@ -24,7 +24,7 @@ _PS_() {
     local cmdhd
 
     #
-    case $(basename ${SHELL}) in
+    case $(ps -p $$ | tail -1 | awk "{print \$NF}") in
     bash)
         #
         shopt -s promptvars
@@ -95,9 +95,14 @@ _SLURM_() {
 
 # CONDA
 _CONDA_() {
+    # Skip conda initialization if conda root is not defined.
+    if [[ -z ${CONDA} ]]; then
+        #
+        return
+    fi
+
     # Essential for conda initialization.
-    __conda_root="/usr/local/Caskroom/miniconda/base"
-    __conda_setup="$("${__conda_root}/bin/conda" 'shell.bash' 'hook' 2>/dev/null)"
+    __conda_setup="$("${CONDA}/bin/conda" 'shell.bash' 'hook' 2>/dev/null)"
     if [[ $? -eq 0 ]]; then
         #
         eval "$__conda_setup"
