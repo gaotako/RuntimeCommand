@@ -73,13 +73,17 @@ install mypy "" 1.4.1
 install pytest "" 7.4.0
 install pytest-cov "" 4.1.0
 install more-itertools "" 8.14.0
-install numpy "" 1.25.1
+install numpy "" 1.24.4
 install scipy "" 1.11.1
 install scikit-learn "" 1.3.0
 install matplotlib "" 3.7.2
 install pandas "" 2.0.3
 install seaborn "" 0.12.2
 install lmdb "" 1.4.1
+install ray "" 2.6.0
+install numba "" 0.57.1
+
+#
 install torch "" ${verth} --extra-index-url https://download.pytorch.org/whl/${vercu}
 install pyg_lib "" 0.2.0 -f https://data.pyg.org/whl/torch-${verth}+${vercu}.html
 install torch-scatter "" 2.1.1 -f https://data.pyg.org/whl/torch-${verth}+${vercu}.html
@@ -89,6 +93,7 @@ install torch-spline-conv "" 1.2.2 -f https://data.pyg.org/whl/torch-${verth}+${
 install torch-geometric "" 2.3.0 -f https://data.pyg.org/whl/torch-${verth}+${vercu}.html
 
 #
+ignores["numpy"]=true
 ignores["torch"]=true
 ignores["torch-geometric"]=true
 
