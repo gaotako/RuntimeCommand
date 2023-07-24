@@ -25,7 +25,7 @@ _PS_() {
 
     #
     case $(ps -p $$ | tail -1 | awk "{print \$NF}") in
-    bash)
+    *bash*)
         #
         shopt -s promptvars
 
@@ -38,7 +38,7 @@ _PS_() {
         cmdhd="${cmdhd}:${yellow}\w${reset}"
         cmdhd="${cmdhd}|${brightyellow}\W${reset}"
         ;;
-    zsh)
+    *zsh*)
         #
         cmdhd=
         cmdhd="${cmdhd}#${cyan}%h${reset}"
