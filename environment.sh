@@ -53,7 +53,7 @@ outdate() {
 }
 
 # Variables.
-if [[ -z $(which nvcc) ]]; then
+if [[ -z $(which nvcc 2>/dev/null) ]]; then
     #
     vercu=cpu
 else
