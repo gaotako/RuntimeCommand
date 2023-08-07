@@ -69,6 +69,8 @@ pip install --no-cache-dir --upgrade wheel
 
 #
 install black jupyter 23.7.0
+install isort "" 5.12.0
+install flake8 "" 6.0.0
 install mypy "" 1.4.1
 install pytest "" 7.4.0
 install pytest-cov "" 4.1.0
@@ -82,6 +84,9 @@ install seaborn "" 0.12.2
 install lmdb "" 1.4.1
 install ray "" 2.6.0
 install numba "" 0.57.1
+install textdistance extras 4.5.0
+install datasketch "" 1.5.9
+install tabulate "" 0.9.0
 
 #
 install torch "" ${verth} --extra-index-url https://download.pytorch.org/whl/${vercu}

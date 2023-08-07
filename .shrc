@@ -108,12 +108,12 @@ _CONDA_() {
         eval "$__conda_setup"
     else
         #
-        if [[ -f "${__conda_root}/etc/profile.d/conda.sh" ]]; then
+        if [[ -f "${CONDA}/etc/profile.d/conda.sh" ]]; then
             #
-            . "${__conda_root}/etc/profile.d/conda.sh"
+            . "${CONDA}/etc/profile.d/conda.sh"
         else
             # Prioritize this setting over system setting.
-            export PATH="${__conda_root}/bin:${PATH}"
+            export PATH="${CONDA}/bin:${PATH}"
         fi
     fi
     unset __conda_setup
