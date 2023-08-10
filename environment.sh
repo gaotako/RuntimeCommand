@@ -76,9 +76,13 @@ getcu() {
     curelease=${cu%%.*}
 
     # CUDA release number should have and only have major, minor and release numbers.
-    if [[ ${#cumajor} -gt 0 && ${#cuminor} -gt 0 && ${#curelease} -gt 0 && ${#cu} -eq ${#curelease} ]]; then
+    if [[ 
+        ${#cumajor} -gt 0 && ${#cuminor} -gt 0 && ${#curelease} -gt 0 &&
+        ${#cu} -eq ${#curelease} ]] \
+        ; then
         #
-        echo ${cumajor}${cuminor}
+        msg1="Major = ${cumajor}, Minor = ${cuminor}, Release = ${curelease}"
+        echo "Detect CUDA version numbers: ${msg1}"
     else
         #
         echo "error: CUDA release string is not \"V\${major}.\${minor}.\${release}\"."
