@@ -52,13 +52,48 @@ outdate() {
     done <<<$(pip list --outdated)
 }
 
+# Get CUDA version numbers.
+getcu() {
+    # CUDA release number start with "V".
+    cu=$(nvcc --version | grep release | awk "{ print \$NF }")
+    cuV=${cu:0:1}
+    if [[ ${cuV} != "V" ]]; then
+        #
+        echo "error: CUDA release string is not \"V\${major}.\${minor}.\${release}\"."
+        exit 1
+    fi
+
+    # Get major version.
+    cu=${cu:1}
+    cumajor=${cu%%.*}
+
+    # Get minor version.
+    cu=${cu#*.}
+    cuminor=${cu%%.*}
+
+    # Get release version.
+    cu=${cu#*.}
+    curelease=${cu%%.*}
+
+    # CUDA release number should have and only have major, minor and release numbers.
+    if [[ ${#cumajor} -gt 0 && ${#cuminor} -gt 0 && ${#curelease} -gt 0 && ${#cu} -eq ${#curelease} ]]; then
+        #
+        echo ${cumajor}${cuminor}
+    else
+        #
+        echo "error: CUDA release string is not \"V\${major}.\${minor}.\${release}\"."
+        exit 1
+    fi
+}
+
 # Variables.
 if [[ -z $(which nvcc 2>/dev/null) ]]; then
     #
     vercu=cpu
 else
     #
-    vercu=cu117
+    getcu
+    vercu=cu${cumajor}${cuminor}
 fi
 verth=2.0.0
 
@@ -70,11 +105,11 @@ pip install --no-cache-dir --upgrade wheel
 #
 install black jupyter 23.7.0
 install isort "" 5.12.0
-install flake8 "" 6.0.0
+install flake8 "" 6.1.0
 install mypy "" 1.4.1
 install pytest "" 7.4.0
 install pytest-cov "" 4.1.0
-install more-itertools "" 8.14.0
+install more-itertools "" 10.1.0
 install numpy "" 1.24.4
 install scipy "" 1.11.1
 install scikit-learn "" 1.3.0
@@ -82,7 +117,7 @@ install matplotlib "" 3.7.2
 install pandas "" 2.0.3
 install seaborn "" 0.12.2
 install lmdb "" 1.4.1
-install ray "" 2.6.0
+install ray "" 2.6.2
 install numba "" 0.57.1
 install textdistance extras 4.5.0
 install datasketch "" 1.5.9
