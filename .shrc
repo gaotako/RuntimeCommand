@@ -1,6 +1,12 @@
-# Reset prompt setting.
+# Reset command lien head.
+#
+# Args
+# ----
+#
+# Returns
+# -------
 _PS_() {
-    #
+    # Local variables for special keyword symbols.
     local reset
     local cyan
     local brightgreen
@@ -10,7 +16,7 @@ _PS_() {
     local brightyellow
     local newline
 
-    #
+    # Define keyword symbols for all supporting shells.
     reset=$'\e[0m'
     cyan=$'\e[36m'
     brightgreen=$'\e[92m'
@@ -20,16 +26,16 @@ _PS_() {
     brightyellow=$'\e[93m'
     newline=$'\n'
 
-    #
+    # Local variable to store the string of command line head.
     local cmdhd
 
-    #
+    # Command line head construction will be different according to running shell.
     case $(ps -p $$ | tail -1 | awk "{print \$NF}") in
     *bash*)
-        #
+        # Bash requires explicit operation to enable string variables in command line head.
         shopt -s promptvars
 
-        #
+        # Command line head for Bash.
         cmdhd=
         cmdhd="${cmdhd}#${cyan}\#${reset}"
         cmdhd="${cmdhd} ${brightgreen}\u${reset}"
@@ -39,7 +45,7 @@ _PS_() {
         cmdhd="${cmdhd}|${brightyellow}\W${reset}"
         ;;
     *zsh*)
-        #
+        # Command line head for Zsh.
         cmdhd=
         cmdhd="${cmdhd}#${cyan}%h${reset}"
         cmdhd="${cmdhd} ${brightgreen}%n${reset}"
@@ -49,80 +55,106 @@ _PS_() {
         cmdhd="${cmdhd}|${brightyellow}%.${reset}"
         ;;
     *)
+        # Use default command line head for unsupported shells.
+        # Thus, skip final broadcasting.
         return
         ;;
     esac
 
-    #
+    # Braodcast command line head.
     export PS1="${newline}${reset}${cmdhd}${reset}${newline}$ "
 }
 
 # Alias new commands.
+#
+# Args
+# ----
+#
+# Returns
+# -------
 _ALIAS_() {
-    #
+    # Commands related to listing directory contents of files and directories.
     alias lsc="ls --color"
 
-    #
+    # Commands related to GPU and CUDA.
+    # Only perform the aliases when GPU and CUDA are available.
     if [[ -n $(which nvcc 2>/dev/null) ]]; then
-        #
+        # CUDA commands.
         alias gpustats="watch -n 0.1 nvidia-smi"
     fi
 }
 
-# CUDA
+# Prepare CUDA.
+#
+# Args
+# ----
+#
+# Returns
+# -------
 _CUDA_() {
-    #
+    # On remote clusters, CUDA may be loaded by `module`.
     if [[ -n $(which module 2>/dev/null) ]]; then
-        #
-        module load cuda/11.7
+        # Use `module` to load default CUDA.
+        module load cuda
     fi
 }
 
-# Slurm
+# Prepare Slurm.
+#
+# Args
+# ----
+#
+# Returns
+# -------
 _SLURM_() {
-    #
+    # On remote clusters, Slurm may be loaded by `module`.
     if [[ -n $(which module 2>/dev/null) ]]; then
-        #
+        # Use `module` to load default Slurm.
         module load slurm
     fi
 
-    #
+    # Some configurations are only allowed when Slurm is active.
     if [[ -n $(which slurm 2>/dev/null) ]]; then
-        # Use customized slurm queue log.
+        # Use customized Slurm queue log.
         export SQUEUE_FORMAT="%.10i %.9P %.8u %.28j %.2t %.10M"
     fi
 }
 
-# CONDA
+# Prepare Conda.
+#
+# Args
+# ----
+#
+# Returns
+# -------
 _CONDA_() {
     # Skip conda initialization if conda root is not defined.
-    if [[ -z ${CONDA} ]]; then
-        #
-        return
-    fi
+    [[ -z ${CONDA} ]] && return
 
-    # Essential for conda initialization.
-    __conda_setup="$("${CONDA}/bin/conda" 'shell.bash' 'hook' 2>/dev/null)"
+    # Essential commands for conda initialization.
+    # This is a copy from default conda initialization codes with slight modification to fit personal customization.
+    __conda_setup="$("${CONDA}/bin/conda" shell.bash hook 2>/dev/null)"
     if [[ $? -eq 0 ]]; then
-        #
+        # Execute codes provided in Conda setup failure return.
         eval "$__conda_setup"
     else
-        #
+        # Conda setup is successful, proceed to initialization.
+        # If Conda environment has customized initialization, then run it rather than take default operations.
         if [[ -f "${CONDA}/etc/profile.d/conda.sh" ]]; then
-            #
+            # Run Conda environment initialization.
             . "${CONDA}/etc/profile.d/conda.sh"
         else
-            # Prioritize this setting over system setting.
+            # By default, add and prioritize Conda environment binaries into system path.
             export PATH="${CONDA}/bin:${PATH}"
         fi
     fi
     unset __conda_setup
 
-    #
+    # Use personal default rather than Conda default base.
     conda activate Default
 }
 
-# Reset terminal log.
+# Reset terminal settings.
 _PS_
 
 # Enable essential softwares.
@@ -132,5 +164,5 @@ _SLURM_
 # Register essential commands.
 _ALIAS_
 
-# Enable virtual environment.
+# Enable virtual environments.
 _CONDA_
