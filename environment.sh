@@ -204,7 +204,7 @@ install textdistance extras 4.5.0
 install datasketch "" 1.6.0
 install tabulate "" 0.9.0
 
-# Install deep learning packages.
+# Install deep learning packages regardless of stage settings.
 # Pseudo installation will be performed if installation stage is inactive.
 install torch "" ${verth} --extra-index-url https://download.pytorch.org/whl/${vercu}
 install pyg_lib "" 0.2.0 -f https://data.pyg.org/whl/torch-${verth}+${vercu}.html
