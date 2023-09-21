@@ -204,7 +204,6 @@ install requests "" 2.31.0
 install requests-mock "" 1.11.0
 install tabulate "" 0.9.0
 
-<<<<<<< HEAD
 # Install CPU numeric computation packages (level 1) regardless of stage settings.
 # Pseudo installation will be performed if installation stage is inactive.
 install numpy "" 1.25.2
@@ -234,9 +233,6 @@ install pandas "" 2.1.1
 install seaborn "" 0.12.2
 
 # Install GPU deep learning packages (level 1) regardless of stage settings.
-=======
-# Install deep learning packages regardless of stage settings.
->>>>>>> a1c5918240f2297f73309267f5e88b66b3a32da1
 # Pseudo installation will be performed if installation stage is inactive.
 install torch "" ${verth} --extra-index-url https://download.pytorch.org/whl/${vercu}
 
