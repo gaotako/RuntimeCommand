@@ -149,7 +149,7 @@ getcu() {
     curelease=${cu%%.*}
 
     # CUDA release number should have and only have major, minor and release numbers.
-    if [[ 
+    if [[
         ${#cumajor} -gt 0 && ${#cuminor} -gt 0 && ${#curelease} -gt 0 &&
         ${#cu} -eq ${#curelease} ]] \
         ; then
@@ -172,7 +172,7 @@ else
     getcu
     vercu=cu${cumajor}${cuminor}
 fi
-verth=2.0.0
+verth=2.1.0
 
 # Installation stage.
 if [[ ${flag_install} -gt 0 ]]; then
@@ -182,37 +182,71 @@ if [[ ${flag_install} -gt 0 ]]; then
     pip install --no-cache-dir --upgrade wheel
 fi
 
-# Install packages regardless of stage settings.
+# Install formatter packages regardless of stage settings.
 # Pseudo installation will be performed if installation stage is inactive.
-install black jupyter 23.7.0
-install isort "" 5.12.0
+install black jupyter 23.10.1
 install flake8 "" 6.1.0
-install mypy "" 1.5.1
-install pytest "" 7.4.1
+install isort "" 5.12.0
+
+# Install static typing packages regardless of stage settings.
+# Pseudo installation will be performed if installation stage is inactive.
+install mypy "" 1.6.1
+install PyYAML "" 6.0.1
+install types-requests "" 2.31.0.10
+install types-PyYAML "" 6.0.12.12
+
+# Install unittest packages regardless of stage settings.
+# Pseudo installation will be performed if installation stage is inactive.
+install pytest "" 7.4.3
 install pytest-cov "" 4.1.0
+install pytest-mock "" 3.12.0
+
+# Install basic extension packages regardless of stage settings.
+# Pseudo installation will be performed if installation stage is inactive.
 install more-itertools "" 10.1.0
-install numpy "" 1.24.4
-install scipy "" 1.11.2
-install scikit-learn "" 1.3.0
-install matplotlib "" 3.7.2
-install pandas "" 2.1.0
-install seaborn "" 0.12.2
+install requests "" 2.31.0
+install requests-mock "" 1.11.0
+
+# Install CPU numeric computation packages (level 1) regardless of stage settings.
+# Pseudo installation will be performed if installation stage is inactive.
+install numpy "" 1.26.1
+
+# Install CPU numeric computation packages (level 2) regardless of stage settings.
+# Pseudo installation will be performed if installation stage is inactive.
+install scipy "" 1.11.3
+
+# Install CPU numeric computation packages (level 3) regardless of stage settings.
+# Pseudo installation will be performed if installation stage is inactive.
+install scikit-learn "" 1.3.2
+
+# Install CPU numeric computation packages (level 4) regardless of stage settings.
+# Pseudo installation will be performed if installation stage is inactive.
 install lmdb "" 1.4.1
-install ray "" 2.6.3
-install numba "" 0.57.1
-install textdistance extras 4.5.0
-install datasketch "" 1.6.0
-install tabulate "" 0.9.0
+install ray "" 2.7.1
+install numba "" 0.58.1
+
+# Install rendering packages regardless of stage settings.
+# Pseudo installation will be performed if installation stage is inactive.
+install matplotlib "" 3.8.1
+
+# Install database packages regardless of stage settings.
+# Pseudo installation will be performed if installation stage is inactive.
+install pandas "" 2.1.2
+install pyarrow "" 14.0.0
+
+# Install database rendering packages regardless of stage settings.
+# Pseudo installation will be performed if installation stage is inactive.
+install seaborn "" 0.13.0
 
 # Install deep learning packages regardless of stage settings.
 # Pseudo installation will be performed if installation stage is inactive.
 install torch "" ${verth} --extra-index-url https://download.pytorch.org/whl/${vercu}
 install pyg_lib "" 0.2.0 -f https://data.pyg.org/whl/torch-${verth}+${vercu}.html
-install torch-scatter "" 2.1.1 -f https://data.pyg.org/whl/torch-${verth}+${vercu}.html
-install torch-sparse "" 0.6.17 -f https://data.pyg.org/whl/torch-${verth}+${vercu}.html
-install torch-cluster "" 1.6.1 -f https://data.pyg.org/whl/torch-${verth}+${vercu}.html
+install torch-scatter "" 2.1.2 -f https://data.pyg.org/whl/torch-${verth}+${vercu}.html
+install torch-sparse "" 0.6.18 -f https://data.pyg.org/whl/torch-${verth}+${vercu}.html
+install torch-cluster "" 1.6.3 -f https://data.pyg.org/whl/torch-${verth}+${vercu}.html
 install torch-spline-conv "" 1.2.2 -f https://data.pyg.org/whl/torch-${verth}+${vercu}.html
-install torch-geometric "" 2.3.0 -f https://data.pyg.org/whl/torch-${verth}+${vercu}.html
+install torch-geometric "" 2.4.0 -f https://data.pyg.org/whl/torch-${verth}+${vercu}.html
 
 # Register update ignoring packages and reasons.
 ignores["numpy"]="For Numba support."
@@ -239,7 +273,7 @@ if [[ ${flag_outdate} -gt 0 ]]; then
                 # Otherwise, report that it is forced to current version, and report reason.
                 msg1="\x1b[92m${package}\x1b[0m"
                 msg2="\x1b[94m${installed[${package}]}\x1b[0m"
-                msg3="${msg1} (${msg2}) is \x1b[92mforced\x1b[0m"
+                msg3="${msg1} (${msg2}) is \x1b[92mforced\x1b[0m for \"${ignores[${package}]}\""
                 msg4="latest version is \x1b[2;94m${latests[${package}]}\x1b[0m"
             fi
             echo -e "${msg3} (${msg4})."
