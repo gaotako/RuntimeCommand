@@ -214,13 +214,10 @@ install scipy "" 1.11.3
 
 # Install CPU numeric computation packages (level 3) regardless of stage settings.
 # Pseudo installation will be performed if installation stage is inactive.
-install scikit-learn "" 1.3.2
-
-# Install CPU numeric computation packages (level 4) regardless of stage settings.
-# Pseudo installation will be performed if installation stage is inactive.
+install numba "" 0.58.1
 install lmdb "" 1.4.1
 install ray "" 2.7.1
-install numba "" 0.58.1
+install scikit-learn "" 1.3.2
 
 # Install rendering packages regardless of stage settings.
 # Pseudo installation will be performed if installation stage is inactive.
@@ -230,34 +227,6 @@ install matplotlib "" 3.8.1
 # Pseudo installation will be performed if installation stage is inactive.
 install pandas "" 2.1.2
 install pyarrow "" 14.0.0
-
-# Install database rendering packages regardless of stage settings.
-# Pseudo installation will be performed if installation stage is inactive.
-install seaborn "" 0.13.0
-
-# Install CPU numeric computation packages (level 1) regardless of stage settings.
-# Pseudo installation will be performed if installation stage is inactive.
-install numpy "" 1.26.1
-
-# Install CPU numeric computation packages (level 2) regardless of stage settings.
-# Pseudo installation will be performed if installation stage is inactive.
-install ray "" 2.7.0
-install scipy "" 1.11.2
-
-# Install CPU numeric computation packages (level 3) regardless of stage settings.
-# Pseudo installation will be performed if installation stage is inactive.
-install datasketch "" 1.6.3
-install numba "" 0.58.1
-install scikit-learn "" 1.3.1
-install textdistance extras 4.5.0
-
-# Install rendering packages regardless of stage settings.
-# Pseudo installation will be performed if installation stage is inactive.
-install matplotlib "" 3.8.0
-
-# Install database packages regardless of stage settings.
-# Pseudo installation will be performed if installation stage is inactive.
-install pandas "" 2.1.2
 
 # Install database rendering packages regardless of stage settings.
 # Pseudo installation will be performed if installation stage is inactive.
