@@ -11,7 +11,7 @@ else
     flag_install=0
     flag_outdate=0
     while [[ ${#} -gt 0 ]]; do
-        #
+        # Scan only acting stage arguments.
         case ${1} in
         install)
             # Act installation.
@@ -106,9 +106,8 @@ outdate() {
         name=$(echo ${line} | awk "{print \$1}")
         latest=$(echo ${line} | awk "{print \$3}")
         latests[${name}]=${latest}
-    done <<<"${lines}"
-    nlns=$((nlns - 2))
-    echo "${nlns} package(s) are outdated."
+        echo "${name} can be upgraded to ${latest}."
+    done <<< "${lines}"
 }
 
 # Get CUDA version numbers.
@@ -149,10 +148,7 @@ getcu() {
     curelease=${cu%%.*}
 
     # CUDA release number should have and only have major, minor and release numbers.
-    if [[
-        ${#cumajor} -gt 0 && ${#cuminor} -gt 0 && ${#curelease} -gt 0 &&
-        ${#cu} -eq ${#curelease} ]] \
-        ; then
+    if [[ ${#cumajor} -gt 0 && ${#cuminor} -gt 0 && ${#curelease} -gt 0 && ${#cu} -eq ${#curelease} ]]; then
         # Report major, minor and release versions.
         msg="Major = ${cumajor}, Minor = ${cuminor}, Release = ${curelease}"
         echo "Detect CUDA version numbers: ${msg}"
@@ -178,6 +174,7 @@ verth=2.1.0
 if [[ ${flag_install} -gt 0 ]]; then
     # Upgrade pip.
     pip install --no-cache-dir --upgrade pip
+    pip install --no-cache-dir --upgrade pipdeptree
     pip install --no-cache-dir --upgrade setuptools
     pip install --no-cache-dir --upgrade wheel
 fi
@@ -238,9 +235,40 @@ install pyarrow "" 14.0.0
 # Pseudo installation will be performed if installation stage is inactive.
 install seaborn "" 0.13.0
 
-# Install deep learning packages regardless of stage settings.
+# Install CPU numeric computation packages (level 1) regardless of stage settings.
+# Pseudo installation will be performed if installation stage is inactive.
+install numpy "" 1.26.1
+
+# Install CPU numeric computation packages (level 2) regardless of stage settings.
+# Pseudo installation will be performed if installation stage is inactive.
+install ray "" 2.7.0
+install scipy "" 1.11.2
+
+# Install CPU numeric computation packages (level 3) regardless of stage settings.
+# Pseudo installation will be performed if installation stage is inactive.
+install datasketch "" 1.6.3
+install numba "" 0.58.1
+install scikit-learn "" 1.3.1
+install textdistance extras 4.5.0
+
+# Install rendering packages regardless of stage settings.
+# Pseudo installation will be performed if installation stage is inactive.
+install matplotlib "" 3.8.0
+
+# Install database packages regardless of stage settings.
+# Pseudo installation will be performed if installation stage is inactive.
+install pandas "" 2.1.2
+
+# Install database rendering packages regardless of stage settings.
+# Pseudo installation will be performed if installation stage is inactive.
+install seaborn "" 0.13.0
+
+# Install GPU deep learning packages (level 1) regardless of stage settings.
 # Pseudo installation will be performed if installation stage is inactive.
 install torch "" ${verth} --extra-index-url https://download.pytorch.org/whl/${vercu}
+
+# Install GPU deep learning packages (level 2) regardless of stage settings.
+# Pseudo installation will be performed if installation stage is inactive.
 install pyg_lib "" 0.2.0 -f https://data.pyg.org/whl/torch-${verth}+${vercu}.html
 install torch-scatter "" 2.1.2 -f https://data.pyg.org/whl/torch-${verth}+${vercu}.html
 install torch-sparse "" 0.6.18 -f https://data.pyg.org/whl/torch-${verth}+${vercu}.html
@@ -249,9 +277,6 @@ install torch-spline-conv "" 1.2.2 -f https://data.pyg.org/whl/torch-${verth}+${
 install torch-geometric "" 2.4.0 -f https://data.pyg.org/whl/torch-${verth}+${vercu}.html
 
 # Register update ignoring packages and reasons.
-ignores["numpy"]="For Numba support."
-ignores["torch"]="Use stable version."
-ignores["torch-geometric"]="Use stable version."
 
 # Outdate checking stage.
 if [[ ${flag_outdate} -gt 0 ]]; then
