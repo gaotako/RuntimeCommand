@@ -54,6 +54,20 @@ _PS_() {
         cmdhd="${cmdhd}:${yellow}%~${reset}"
         cmdhd="${cmdhd}|${brightyellow}%.${reset}"
         ;;
+    *sh*)
+        # If the shell is none of above items, we assume bash by default.
+        # Bash requires explicit operation to enable string variables in command line head.
+        shopt -s promptvars
+
+        # Command line head for Bash.
+        cmdhd=
+        cmdhd="${cmdhd}#${cyan}\#${reset}"
+        cmdhd="${cmdhd} ${brightgreen}\u${reset}"
+        cmdhd="${cmdhd}@${brightblue}\h${reset}"
+        cmdhd="${cmdhd}[${brightmagenta}${STY#*.}${reset}]"
+        cmdhd="${cmdhd}:${yellow}\w${reset}"
+        cmdhd="${cmdhd}|${brightyellow}\W${reset}"
+        ;;
     *)
         # Use default command line head for unsupported shells.
         # Thus, skip final broadcasting.
