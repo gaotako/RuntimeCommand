@@ -234,7 +234,7 @@ install seaborn "" 0.13.0
 
 # Install GPU deep learning packages (level 1) regardless of stage settings.
 # Pseudo installation will be performed if installation stage is inactive.
-install torch "" ${verth} --extra-index-url https://download.pytorch.org/whl/${vercu}
+install torch "" ${verth} --index-url https://download.pytorch.org/whl/${vercu}
 
 # Install GPU deep learning packages (level 2) regardless of stage settings.
 # Pseudo installation will be performed if installation stage is inactive.
