@@ -165,7 +165,13 @@ _CONDA_() {
     unset __conda_setup
 
     # Use personal default rather than Conda default base.
-    conda activate Default
+    if [[ -z ${VIRENV} ]]; then
+        # If virtual environment is not claimed, use default environment.
+        conda activate Default
+    else
+        # Otherwise, activate claimed environment.
+        conda activate "${VIRENV}"
+    fi
 }
 
 # Reset terminal settings.
