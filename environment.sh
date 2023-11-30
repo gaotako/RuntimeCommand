@@ -248,6 +248,7 @@ listing() {
     install ipython "" 8.18.1
     install seaborn "" 0.13.0
     install torch-geometric "" 2.4.0 -f https://data.pyg.org/whl/torch-${verth}+${vercu}.html
+    install ipykernel "" 6.27.1
     install ray "" 2.8.0
 }
 
