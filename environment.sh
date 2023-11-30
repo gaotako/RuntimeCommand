@@ -30,9 +30,32 @@ fi
 # - Packages installed by this script and their versions;
 # - Packages with available latest update and their update versions;
 # - Packages ignoring available latest update and ignoring reasons.
+declare -A levels
 declare -A installed
+declare -a history
 declare -A latests
 declare -A ignores
+
+# Load package order of reversed dependency generated from previous installation.
+# Then, we will start installation from bottom (0) level.
+if [[ -f orders.txt ]]; then
+    # Collect every line in order text file.
+    toplevel=0
+    while read line; do
+        # Each line is consisted by order level and package name.
+        name=${line##* }
+        level=${line%% *}
+        levels[${name}]=${level}
+
+        # Update maximum level.
+        if [[ ${level} -gt ${toplevel} ]]; then
+            # Overwrite top value.
+            toplevel=${level}
+        fi
+    done < orders.txt
+fi
+level=0
+toplevel=$((toplevel + 1))
 
 # Interface of using package installer for Python (pip) to install.
 #
@@ -61,6 +84,18 @@ install() {
     version=${3}
     shift 3
 
+    # Ensure that installation order is correct.
+    if [[ -z ${levels[${name}]} ]]; then
+        # Use the maximum known level as default level for missing dependency.
+        levels[${name}]=${toplevel}
+    fi
+    if [[ ${levels[${name}]} -lt ${level} ]]; then
+        # Report improper installation order error.
+        echo "error: package \"${name}\" is installed in the wrong order (${levels[${name}]} after ${level})."
+        exit 1
+    fi
+    level=${levels[${name}]}
+
     # Perform installation command only when installation stage is active.
     if [[ ${flag_install} -gt 0 ]]; then
         # Extra dependency will influence the form of pip installation command.
@@ -75,6 +110,7 @@ install() {
         fi
     fi
     installed[${name}]=${version}
+    history+=(${name})
 }
 
 # Parse package update information of package installer for Python (pip).
@@ -106,7 +142,6 @@ outdate() {
         name=$(echo ${line} | awk "{print \$1}")
         latest=$(echo ${line} | awk "{print \$3}")
         latests[${name}]=${latest}
-        echo "${name} can be upgraded to ${latest}."
     done <<< "${lines}"
 }
 
@@ -170,88 +205,67 @@ else
 fi
 verth=2.1.0
 
-# Install GPU deep learning packages (level 2) regardless of stage settings.
-# Pseudo installation will be performed if installation stage is inactive.
-install pyg_lib "" 0.2.0 -f https://data.pyg.org/whl/torch-${verth}+${vercu}.html
-install torch-scatter "" 2.1.2 -f https://data.pyg.org/whl/torch-${verth}+${vercu}.html
-install torch-sparse "" 0.6.18 -f https://data.pyg.org/whl/torch-${verth}+${vercu}.html
-install torch-cluster "" 1.6.3 -f https://data.pyg.org/whl/torch-${verth}+${vercu}.html
-install torch-spline-conv "" 1.2.2 -f https://data.pyg.org/whl/torch-${verth}+${vercu}.html
-install torch-geometric "" 2.4.0 -f https://data.pyg.org/whl/torch-${verth}+${vercu}.html
+# List all installation packages.
+#
+# Args
+# ----
+#
+# Returns
+# -------
+listing() {
+    # Install packages required for configuring environment following dependency and alphabet orders.
+    install isort "" 5.12.0
+    install lmdb "" 1.4.1
+    install more-itertools "" 10.1.0
+    install numpy "" 1.26.2
+    install pip "" 23.3.1
+    install pipdeptree "" 2.13.1
+    install pyg-lib "" 0.2.0 -f https://data.pyg.org/whl/torch-${verth}+${vercu}.html
+    install PyYAML "" 6.0.1
+    install setuptools "" 69.0.2
+    install torch-scatter "" 2.1.2 -f https://data.pyg.org/whl/torch-${verth}+${vercu}.html
+    install torch-spline-conv "" 1.2.2 -f https://data.pyg.org/whl/torch-${verth}+${vercu}.html
+    install types-PyYAML "" 6.0.12.12
+    install wheel "" 0.42.0
+    install black jupyter 23.11.0
+    install flake8 "" 6.1.0
+    install mypy "" 1.7.1
+    install numba "" 0.58.1
+    install pyarrow "" 14.0.1
+    install pytest "" 7.4.3
+    install requests "" 2.31.0
+    install scipy "" 1.11.4
+    install types-requests "" 2.31.0.10
+    install matplotlib "" 3.8.2
+    install pandas "" 2.1.3
+    install pytest-cov "" 4.1.0
+    install pytest-mock "" 3.12.0
+    install requests-mock "" 1.11.0
+    install scikit-learn "" 1.3.2
+    install torch "" ${verth} --index-url https://download.pytorch.org/whl/${vercu}
+    install torch-cluster "" 1.6.3 -f https://data.pyg.org/whl/torch-${verth}+${vercu}.html
+    install torch-sparse "" 0.6.18 -f https://data.pyg.org/whl/torch-${verth}+${vercu}.html
+    install ipython "" 8.18.1
+    install seaborn "" 0.13.0
+    install torch-geometric "" 2.4.0 -f https://data.pyg.org/whl/torch-${verth}+${vercu}.html
+    install ray "" 2.8.0
+}
 
-# Install GPU deep learning packages (level 1) regardless of stage settings.
-# Pseudo installation will be performed if installation stage is inactive.
-install torch "" ${verth} --index-url https://download.pytorch.org/whl/${vercu}
-
-# Install database rendering packages regardless of stage settings.
-# Pseudo installation will be performed if installation stage is inactive.
-install seaborn "" 0.13.0
-
-# Install database packages regardless of stage settings.
-# Pseudo installation will be performed if installation stage is inactive.
-install pandas "" 2.1.2
-install pyarrow "" 14.0.0
-
-# Install rendering packages regardless of stage settings.
-# Pseudo installation will be performed if installation stage is inactive.
-install matplotlib "" 3.8.1
-
-# Install CPU numeric computation packages (level 3) regardless of stage settings.
-# Pseudo installation will be performed if installation stage is inactive.
-install numba "" 0.58.1
-install lmdb "" 1.4.1
-install ray "" 2.7.1
-install scikit-learn "" 1.3.2
-
-# Install CPU numeric computation packages (level 2) regardless of stage settings.
-# Pseudo installation will be performed if installation stage is inactive.
-install scipy "" 1.11.3
-
-# Install CPU numeric computation packages (level 1) regardless of stage settings.
-# Pseudo installation will be performed if installation stage is inactive.
-install numpy "" 1.26.1
-
-# Install basic extension packages regardless of stage settings.
-# Pseudo installation will be performed if installation stage is inactive.
-install more-itertools "" 10.1.0
-install requests "" 2.31.0
-install requests-mock "" 1.11.0
-
-# Install unittest packages regardless of stage settings.
-# Pseudo installation will be performed if installation stage is inactive.
-install pytest "" 7.4.3
-install pytest-cov "" 4.1.0
-install pytest-mock "" 3.12.0
-
-# Install static typing packages regardless of stage settings.
-# Pseudo installation will be performed if installation stage is inactive.
-install mypy "" 1.6.1
-install PyYAML "" 6.0.1
-install types-requests "" 2.31.0.10
-install types-PyYAML "" 6.0.12.12
-
-# Install formatter packages regardless of stage settings.
-# Pseudo installation will be performed if installation stage is inactive.
-install black jupyter 23.10.1
-install flake8 "" 6.1.0
-install isort "" 5.12.0
-
-# Install environment packages.
-install pip 23.3.1
-install pipdeptree 2.13.0
-install setuptools 68.2.2
-install wheel 0.41.3
-
-# Register update ignoring packages and reasons.
+# Register update ignoring packages and reasons after installation listing.
+listing
+ignores["torch"]="Ignore release level update."
 
 # Outdate checking stage.
 if [[ ${flag_outdate} -gt 0 ]]; then
     # Collect all outdated packages.
+    echo "Sync package versions with cloud."
     outdate
+    echo "There are ${#latests[@]} packages to be updated, and we only list those being involved in this setup:"
 
     # Traverse every packages installed by this script.
-    for package in ${!installed[@]}; do
+    for i in ${!history[@]}; do
         # Capture outdated ones among those packages.
+        package=${history[${i}]}
         if [[ -n ${latests[${package}]} ]]; then
             # Outdate report varies according to ignoring settings.
             if [[ -z ${ignores[${package}]} ]]; then
@@ -273,4 +287,6 @@ if [[ ${flag_outdate} -gt 0 ]]; then
 fi
 
 # Colllect dependency tree of current environment after installation.
+echo "Build package dependency tree and order list."
 pipdeptree --json-tree > dependencies.json
+python pkgsort.py dependencies.json > orders.txt
