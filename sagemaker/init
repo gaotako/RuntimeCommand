@@ -13,5 +13,6 @@ done
 
 # Use SageMaker specific runtime command initialization.
 ln -s ${HOME}/SageMaker/RuntimeCommand/sagemaker/profile ${HOME}/.bash_profile
-ln -s ${HOME}/SageMaker/RuntimeCommand/sagemaker/bashrc ${HOME}/.bashrc
+cp -s ${HOME}/SageMaker/RuntimeCommand/sagemaker/bashrc ${HOME}/SageMaker/bashrc
+ln -s ${HOME}/SageMaker/bashrc ${HOME}/.bashrc
 ln -s ${HOME}/.bash_profile ${HOME}/.profile
