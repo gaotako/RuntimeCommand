@@ -6,10 +6,16 @@ if [[ ${#} -eq 0 ]]; then
     # By default (no arguments), perform all stages.
     flag_install=1
     flag_outdate=1
+    flag_unorder=0
+    force_cumajor=
+    force_cuminor=
 else
     # With given arguments, only execute specified actions.
     flag_install=0
     flag_outdate=0
+    flag_unorder=0
+    force_cumajor=
+    force_cuminor=
     while [[ ${#} -gt 0 ]]; do
         # Scan only acting stage arguments.
         case ${1} in
@@ -21,41 +27,50 @@ else
             # Act outdate checking.
             flag_outdate=1
             ;;
+        --unorder)
+            # Disable order checking.
+            flag_unorder=1
+            ;;
+        --cumajor)
+            # Disable order checking.
+            force_cumajor=${2}
+            shift 1
+            ;;
+        --cuminor)
+            # Disable order checking.
+            force_cuminor=${2}
+            shift 1
+            ;;
         esac
         shift 1
     done
 fi
 
 # Global mappings:
+# - Package levels defined in requirement;
 # - Packages installed by this script and their versions;
+# - Package installation order;
 # - Packages with available latest update and their update versions;
 # - Packages ignoring available latest update and ignoring reasons.
 declare -A levels
 declare -A installed
-declare -a history
+declare -a order
 declare -A latests
 declare -A ignores
 
-# Load package order of reversed dependency generated from previous installation.
+# Load package order in requirement generated from previous installation.
 # Then, we will start installation from bottom (0) level.
-if [[ -f orders.txt ]]; then
+if [[ -f requirements.txt ]]; then
     # Collect every line in order text file.
-    toplevel=0
+    level=0
     while read line; do
-        # Each line is consisted by order level and package name.
-        name=${line##* }
-        level=${line%% *}
-        levels[${name}]=${level}
-
-        # Update maximum level.
-        if [[ ${level} -gt ${toplevel} ]]; then
-            # Overwrite top value.
-            toplevel=${level}
-        fi
-    done < orders.txt
+        # Increase level per package line.
+        package=${line%% *}
+        levels[${package}]=${level}
+        level=$((level + 1))
+    done < requirements.txt
 fi
-level=0
-toplevel=$((toplevel + 1))
+toplevel=${level}
 
 # Interface of using package installer for Python (pip) to install.
 #
@@ -74,27 +89,28 @@ toplevel=$((toplevel + 1))
 # -------
 install() {
     # Local variables for argument aliases.
-    local name
-    local extra
+    local package
     local version
+    local extra
 
     # Parse arguments, and collect remaining arguments.
-    name=${1}
-    extra=${2}
-    version=${3}
+    package=${1}
+    version=${2}
+    extra=${3}
     shift 3
 
     # Ensure that installation order is correct.
-    if [[ -z ${levels[${name}]} ]]; then
+    if [[ -z ${levels[${package}]} ]]; then
         # Use the maximum known level as default level for missing dependency.
-        levels[${name}]=${toplevel}
+        levels[${package}]=${toplevel}
     fi
-    if [[ ${levels[${name}]} -lt ${level} ]]; then
+    if [[ ${flag_unorder} -eq 0 && -n ${recent} && ${levels[${package}]} -lt ${level} ]]; then
         # Report improper installation order error.
-        echo "error: package \"${name}\" is installed in the wrong order (${levels[${name}]} after ${level})."
+        echo "error: package \"${package}\" is installed in the wrong order (${levels[${package}]}) after \"${recent}\" (${level})."
         exit 1
     fi
-    level=${levels[${name}]}
+    recent=${package}
+    level=${levels[${recent}]}
 
     # Perform installation command only when installation stage is active.
     if [[ ${flag_install} -gt 0 ]]; then
@@ -103,14 +119,14 @@ install() {
         # Different extra denpendencies will still be identified as the same package version.
         if [[ ${#extra} -eq 0 ]]; then
             # Default installation.
-            pip install --no-cache-dir --upgrade ${name}==${version} ${*}
+            pip install --no-cache-dir --upgrade ${package}==${version} ${*}
         else
             # Extra dependency installation.
-            pip install --no-cache-dir --upgrade ${name}[${extra}]==${version} ${*}
+            pip install --no-cache-dir --upgrade ${package}[${extra}]==${version} ${*}
         fi
     fi
-    installed[${name}]=${version}
-    history+=(${name})
+    installed[${package}]=${version}
+    order+=(${package})
 }
 
 # Parse package update information of package installer for Python (pip).
@@ -139,9 +155,9 @@ outdate() {
         [[ ${nlns} -gt 2 ]] || continue
 
         # Get outdated package name and latest version.
-        name=$(echo ${line} | awk "{print \$1}")
+        package=$(echo ${line} | awk "{print \$1}")
         latest=$(echo ${line} | awk "{print \$3}")
-        latests[${name}]=${latest}
+        latests[${package}]=${latest}
     done <<< "${lines}"
 }
 
@@ -192,6 +208,16 @@ getcu() {
         echo "error: CUDA release string is not \"V\${major}.\${minor}.\${release}\"."
         exit 1
     fi
+
+    # Force to overwrite CUDA version numbers.
+    if [[ -n ${force_cumajor} ]]; then
+        # Overwrite major number.
+        cumajor=${force_cumajor}
+    fi
+    if [[ -n ${force_cuminor} ]]; then
+        # Overwrite minor number.
+        cuminor=${force_cuminor}
+    fi
 }
 
 # Package version related variables.
@@ -203,7 +229,7 @@ else
     getcu
     vercu=cu${cumajor}${cuminor}
 fi
-verth=2.1.0
+verth=2.2.0
 
 # List all installation packages.
 #
@@ -214,47 +240,61 @@ verth=2.1.0
 # -------
 listing() {
     # Install packages required for configuring environment following dependency and alphabet orders.
-    install isort "" 5.12.0
-    install lmdb "" 1.4.1
-    install more-itertools "" 10.1.0
-    install numpy "" 1.26.2
-    install pip "" 23.3.1
-    install pipdeptree "" 2.13.1
-    install pyg-lib "" 0.2.0 -f https://data.pyg.org/whl/torch-${verth}+${vercu}.html
-    install PyYAML "" 6.0.1
-    install setuptools "" 69.0.2
-    install torch-scatter "" 2.1.2 -f https://data.pyg.org/whl/torch-${verth}+${vercu}.html
-    install torch-spline-conv "" 1.2.2 -f https://data.pyg.org/whl/torch-${verth}+${vercu}.html
-    install types-PyYAML "" 6.0.12.12
-    install wheel "" 0.42.0
-    install black jupyter 23.11.0
-    install flake8 "" 6.1.0
-    install mypy "" 1.7.1
-    install numba "" 0.58.1
-    install pyarrow "" 14.0.1
-    install pytest "" 7.4.3
-    install requests "" 2.31.0
-    install scipy "" 1.11.4
-    install types-requests "" 2.31.0.10
-    install matplotlib "" 3.8.2
-    install pandas "" 2.1.3
-    install pytest-cov "" 4.1.0
-    install pytest-mock "" 3.12.0
-    install requests-mock "" 1.11.0
-    install scikit-learn "" 1.3.2
-    install torch "" ${verth} --index-url https://download.pytorch.org/whl/${vercu}
-    install torch-cluster "" 1.6.3 -f https://data.pyg.org/whl/torch-${verth}+${vercu}.html
-    install torch-sparse "" 0.6.18 -f https://data.pyg.org/whl/torch-${verth}+${vercu}.html
-    install ipython "" 8.18.1
-    install seaborn "" 0.13.0
-    install torch-geometric "" 2.4.0 -f https://data.pyg.org/whl/torch-${verth}+${vercu}.html
-    install ipykernel "" 6.27.1
-    install ray "" 2.8.0
+    install ray 2.9.2 ""
+    install seaborn 0.13.2 ""
+    install ipython 8.21.0 ""
+    install pytest-mock 3.12.0 ""
+    install requests-mock 1.11.0 ""
+    install matplotlib 3.8.3 ""
+    install pandas 2.2.0 ""
+    install torch ${verth} "" --index-url https://download.pytorch.org/whl/${vercu}
+    install black 23.3.0 jupyter
+    install scipy 1.12.0 ""
+    install flake8 7.0.0 ""
+    install mypy 1.8.0 ""
+    install numba 0.59.0 ""
+    install pytest-cov 4.1.0 ""
+    install pytest 8.0.1 ""
+    install requests 2.31.0 ""
+    install scikit-learn 1.4.1.post1 ""
+    install types-requests 2.31.0.20240218 ""
+    install numpy 1.26.4 ""
+    install Cython 3.0.8 ""
+    install isort 5.13.2 ""
+    install lmdb 1.4.1 ""
+    install more-itertools 10.2.0 ""
+    install pip 24.0 ""
+    install pipdeptree 2.14.0 ""
+    install pybind11 2.11.1 ""
+    install PyYAML 6.0.1 ""
+    install setuptools 69.1.0 ""
+    install tabulate 0.9.0 ""
+    install types-PyYAML 6.0.12.12 ""
+    install wheel 0.42.0 ""
 }
 
-# Register update ignoring packages and reasons after installation listing.
+# Traverse all installing packages.
 listing
-ignores["torch"]="Ignore release level update."
+
+# Colllect dependency tree of current environment after installation.
+echo "Build package dependency tree and order list."
+mkdir -p requires-python
+pipdeptree --json-tree > requires-python/dependencies.json
+python tools-python/pkgsort.py requires-python/dependencies.json requires-python/requirements.txt requires-python/installation.txt
+while read line; do
+    # Each line is consisted by package name and installed version.
+    package=${line%% *}
+    version=${line##* }
+    if [[ -n ${installed[${package}]} ]]; then
+        # Report installed packages in collected order.
+        echo ${package} ${version} >> requires-python/.installation.txt
+    fi
+done < requires-python/installation.txt
+mv requires-python/.installation.txt requires-python/installation.txt
+#:||pip install -r requires-python/requirements.txt
+
+# Register update ignoring packages and reasons after installation listing.
+ignores["black"]="Same as Brazil & Compatible with VSCode"
 
 # Outdate checking stage.
 if [[ ${flag_outdate} -gt 0 ]]; then
@@ -264,9 +304,9 @@ if [[ ${flag_outdate} -gt 0 ]]; then
     echo "There are ${#latests[@]} packages to be updated, and we only list those being involved in this setup:"
 
     # Traverse every packages installed by this script.
-    for i in ${!history[@]}; do
+    for i in ${!order[@]}; do
         # Capture outdated ones among those packages.
-        package=${history[${i}]}
+        package=${order[${i}]}
         if [[ -n ${latests[${package}]} ]]; then
             # Outdate report varies according to ignoring settings.
             if [[ -z ${ignores[${package}]} ]]; then
@@ -286,8 +326,3 @@ if [[ ${flag_outdate} -gt 0 ]]; then
         fi
     done
 fi
-
-# Colllect dependency tree of current environment after installation.
-echo "Build package dependency tree and order list."
-pipdeptree --json-tree > dependencies.json
-python pkgsort.py dependencies.json > orders.txt

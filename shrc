@@ -27,12 +27,16 @@ _PS_() {
     newline=$'\n'
 
     # Local variable to store the string of command line head.
+    local shell
     local cmdhd
 
     # Command line head construction will be different according to running shell.
-    case $(ps -p $$ | tail -1 | awk "{print \$NF}") in
+    shell=$(ps -p $$ | tail -1 | awk "{print \$NF}")
+    echo -e  "Detect shell: \"\e[91m${shell}\e[0m\"."
+    case ${shell} in
     *bash*)
         # Bash requires explicit operation to enable string variables in command line head.
+        echo Here
         shopt -s promptvars
 
         # Command line head for Bash.
@@ -79,6 +83,19 @@ _PS_() {
     export PS1="${newline}${reset}${cmdhd}${reset}${newline}$ "
 }
 
+
+# Python full formatting.
+#
+# Args
+# ----
+#
+# Returns
+# -------
+alias_python_format() {
+    # Run isort, flake8 and black in order.
+    python -m isort ${*} && python -m flake8 ${*} && python -m black ${*}
+}
+
 # Alias new commands.
 #
 # Args
@@ -96,6 +113,11 @@ _ALIAS_() {
         # CUDA commands.
         alias gpustats="watch -n 0.1 nvidia-smi"
     fi
+
+    # Commands related to Python.
+    alias python-format="alias_python_format"
+    alias python-type="python -m mypy"
+    alias python-test="python -m pytest"
 }
 
 # Prepare CUDA.

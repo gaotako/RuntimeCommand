@@ -1,0 +1,51 @@
+# Package metadata.
+# Definitions are based on [setuptools guidance](https://setuptools.pypa.io/en/latest/userguide/pyproject_config.html)
+# "requires-python", "dependencies" and "project.optional-dependencies" should be controlled by "Config" file.
+[project]
+name = "RuntimeCommand"
+authors = [{ name = "Jianfei Gao", email = "gaotako@outlook.com" }]
+description = "Runtime terminal configuration."
+keywords = ["Python", "Environment Setup"]
+classifiers = ["Programming Language :: Python :: 3"]
+license = { file = "LICENSE" }
+dynamic = ["readme"]
+version = "1.0"
+
+# Formatter `black` configurations.
+[tool.black]
+line-length = 100
+skip-magic-trailing-comma = true
+
+# Formatter `isort` configurations.
+[tool.isort]
+lines_after_imports = 2
+profile = "black"
+line_length = 100
+
+# Unittest `pytest` configurations.
+# Use `[tool.pytest.ini_options]` rather than `[tool.pytest]` because it is reserved for other usage.
+# See [offical statement](https://docs.pytest.org/en/stable/reference/customize.html#:~:text=integration%22%2C%0A%5D-,Note,-One%20might%20wonder).
+[tool.pytest.ini_options]
+xfail_strict = true
+addopts = [
+    "--color=yes",
+    "--exitfirst",
+    "--verbose",
+    "--cov=tools-python",
+    "--cov-report=term-missing",
+    "--cov-report=html:build/coverage",
+    "--cov-report=xml:build/coverage/coverage.xml",
+]
+testpaths = ["test-python"]
+
+# Unittest `pytest-cov` configurations.
+[tool.coverage.run]
+branch = false
+parallel = true
+
+# Static type checker `mypy` configurations.
+[tool.mypy]
+pretty = true
+show_error_codes = true
+strict = true
+ignore_missing_imports = true
