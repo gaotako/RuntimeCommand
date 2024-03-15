@@ -14,6 +14,7 @@ _PS_() {
     local brightmagenta
     local yellow
     local brightyellow
+    local brightred
     local newline
 
     # Define keyword symbols for all supporting shells.
@@ -24,6 +25,7 @@ _PS_() {
     brightmagenta=$'\e[95m'
     yellow=$'\e[33m'
     brightyellow=$'\e[93m'
+    brightred=$'\e[91m'
     newline=$'\n'
 
     # Local variable to store the string of command line head.
@@ -32,14 +34,13 @@ _PS_() {
 
     # Command line head construction will be different according to running shell.
     shell=$(ps -p $$ | tail -1 | awk "{print \$NF}")
-    echo -e  "Detect shell: \"\e[91m${shell}\e[0m\"."
     case ${shell} in
     *bash*)
         # Bash requires explicit operation to enable string variables in command line head.
-        echo Here
         shopt -s promptvars
 
         # Command line head for Bash.
+        echo -e "Detect shell: \"${brightred}${shell}${reset}\" (bash)."
         cmdhd=
         cmdhd="${cmdhd}#${cyan}\#${reset}"
         cmdhd="${cmdhd} ${brightgreen}\u${reset}"
@@ -50,6 +51,7 @@ _PS_() {
         ;;
     *zsh*)
         # Command line head for Zsh.
+        echo -e "Detect shell: \"${brightred}${shell}${reset}\" (zsh)."
         cmdhd=
         cmdhd="${cmdhd}#${cyan}%h${reset}"
         cmdhd="${cmdhd} ${brightgreen}%n${reset}"
@@ -64,6 +66,7 @@ _PS_() {
         shopt -s promptvars
 
         # Command line head for Bash.
+        echo -e "Detect shell: \"${brightred}${shell}${reset}\" (~bash)."
         cmdhd=
         cmdhd="${cmdhd}#${cyan}\#${reset}"
         cmdhd="${cmdhd} ${brightgreen}\u${reset}"
