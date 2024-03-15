@@ -240,61 +240,112 @@ verth=2.2.0
 # -------
 listing() {
     # Install packages required for configuring environment following dependency and alphabet orders.
+    install ipykernel 6.29.3 ""
     install ray 2.9.2 ""
-    install seaborn 0.13.2 ""
-    install ipython 8.21.0 ""
-    install pytest-mock 3.12.0 ""
-    install requests-mock 1.11.0 ""
-    install matplotlib 3.8.3 ""
-    install pandas 2.2.0 ""
     install torch ${verth} "" --index-url https://download.pytorch.org/whl/${vercu}
-    install black 23.3.0 jupyter
-    install scipy 1.12.0 ""
+    install black 23.3.0 ""
     install flake8 7.0.0 ""
-    install mypy 1.8.0 ""
+    install seaborn 0.13.2 ""
+    install mypy 1.9.0 ""
     install numba 0.59.0 ""
     install pytest-cov 4.1.0 ""
-    install pytest 8.0.1 ""
-    install requests 2.31.0 ""
-    install scikit-learn 1.4.1.post1 ""
+    install requests-mock 1.11.0 ""
+    install pytest-mock 3.12.0 ""
     install types-requests 2.31.0.20240218 ""
-    install numpy 1.26.4 ""
     install Cython 3.0.8 ""
     install isort 5.13.2 ""
     install lmdb 1.4.1 ""
     install more-itertools 10.2.0 ""
     install pip 24.0 ""
-    install pipdeptree 2.14.0 ""
+    install pipdeptree 2.16.1 ""
     install pybind11 2.11.1 ""
-    install PyYAML 6.0.1 ""
-    install setuptools 69.1.0 ""
+    install setuptools 69.2.0 ""
     install tabulate 0.9.0 ""
     install types-PyYAML 6.0.12.12 ""
-    install wheel 0.42.0 ""
+    install wheel 0.43.0 ""
+    install matplotlib 3.8.3 ""
+    install ipython 8.22.2 ""
+    install pandas 2.2.0 ""
+    install requests 2.31.0 ""
+    install scikit-learn 1.4.1.post1 ""
+    install pytest 8.1.1 ""
+    install PyYAML 6.0.1 ""
+    install scipy 1.12.0 ""
+    install numpy 1.26.4 ""
+    #:||install ipykernel 6.29.3 ""
+    #:||install ray 2.9.2 ""
+    #:||install torch ${verth} "" --index-url https://download.pytorch.org/whl/${vercu}
+    #:||install black 23.3.0 jupyter
+    #:||install seaborn 0.13.2 ""
+    #:||install flake8 7.0.0 ""
+    #:||install numba 0.59.0 ""
+    #:||install pytest-cov 4.1.0 ""
+    #:||install mypy 1.9.0 ""
+    #:||install requests-mock 1.11.0 ""
+    #:||install types-requests 2.31.0.20240218 ""
+    #:||install pytest-mock 3.12.0 ""
+    #:||install isort 5.13.2 ""
+    #:||install wheel 0.43.0 ""
+    #:||install lmdb 1.4.1 ""
+    #:||install Cython 3.0.8 ""
+    #:||install tabulate 0.9.0 ""
+    #:||install types-PyYAML 6.0.12.12 ""
+    #:||install more-itertools 10.2.0 ""
+    #:||install pip 24.0 ""
+    #:||install pybind11 2.11.1 ""
+    #:||install setuptools 69.2.0 ""
+    #:||install pipdeptree 2.16.1 ""
+    #:||install matplotlib 3.8.3 ""
+    #:||install ipython 8.22.2 ""
+    #:||install requests 2.31.0 ""
+    #:||install scikit-learn 1.4.1.post1 ""
+    #:||install pandas 2.2.0 ""
+    #:||install pytest 8.1.1 ""
+    #:||install PyYAML 6.0.1 ""
+    #:||install scipy 1.12.0 ""
+    #:||install numpy 1.26.4 ""
 }
 
 # Traverse all installing packages.
 listing
 
-# Colllect dependency tree of current environment after installation.
+# Colllect ordered dependency tree of current environment after installation.
 echo "Build package dependency tree and order list."
-mkdir -p requires-python
-pipdeptree --json-tree > requires-python/dependencies.json
-python tools-python/pkgsort.py requires-python/dependencies.json requires-python/requirements.txt requires-python/installation.txt
+mkdir -p .cache-python
+pipdeptree --json-tree > .cache-python/dependencies.json
+python src-python/pipord.py .cache-python
+mv .cache-python/requirements.txt .
+
+# Ensure customizaed installation is consistent with Python packaging system.
+pip install -r requirements.txt
+pipdeptree --json-tree > .cache-python/dependencies.json
+python src-python/pipord.py .cache-python
+if [[ $(cmp -s requirements.txt .cache-python/requirements.txt; echo ${?}) -ne 0 ]]; then
+    # Report inconsistency issue.
+    echo "Detect inconsistency of customized installation from Python packaging system."
+    exit 1
+fi
+
+# Collect final version of isntallation involved in this script.
 while read line; do
     # Each line is consisted by package name and installed version.
     package=${line%% *}
     version=${line##* }
     if [[ -n ${installed[${package}]} ]]; then
         # Report installed packages in collected order.
-        echo ${package} ${version} >> requires-python/.installation.txt
+        echo ${package} ${version} >> .cache-python/.installations.txt
     fi
-done < requires-python/installation.txt
-mv requires-python/.installation.txt requires-python/installation.txt
-#:||pip install -r requires-python/requirements.txt
+done < .cache-python/installations.txt
+mv .cache-python/.installations.txt .cache-python/installations.txt
 
 # Register update ignoring packages and reasons after installation listing.
+ignores["ray"]="Ignore update other than major and minor."
+ignores["torch"]="Ignore update other than major and minor."
 ignores["black"]="Same as Brazil & Compatible with VSCode"
+ignores["types-requests"]="Ignore update other than major and minor."
+ignores["Cython"]="Ignore update other than major and minor."
+ignores["types-PyYAML"]="Ignore update other than major and minor."
+ignores["pandas"]="Ignore update other than major and minor."
 
 # Outdate checking stage.
 if [[ ${flag_outdate} -gt 0 ]]; then

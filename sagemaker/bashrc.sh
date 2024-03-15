@@ -1,6 +1,3 @@
-# Uncomment the following line if you don't like systemctl's auto-paging feature:
-# export SYSTEMD_PAGER=
-
 # Register path variables.
 export CONDA="/home/ec2-user/anaconda3"
 export PROJECT=

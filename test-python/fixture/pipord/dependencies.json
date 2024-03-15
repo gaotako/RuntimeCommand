@@ -1,0 +1,364 @@
+[
+    {
+        "key": "black",
+        "package_name": "black",
+        "installed_version": "24.2.0",
+        "required_version": "24.2.0",
+        "dependencies": [
+            {
+                "key": "click",
+                "package_name": "click",
+                "installed_version": "8.1.7",
+                "required_version": ">=8.0.0",
+                "dependencies": []
+            },
+            {
+                "key": "mypy-extensions",
+                "package_name": "mypy-extensions",
+                "installed_version": "1.0.0",
+                "required_version": ">=0.4.3",
+                "dependencies": []
+            },
+            {
+                "key": "packaging",
+                "package_name": "packaging",
+                "installed_version": "24.0",
+                "required_version": ">=22.0",
+                "dependencies": []
+            },
+            {
+                "key": "pathspec",
+                "package_name": "pathspec",
+                "installed_version": "0.12.1",
+                "required_version": ">=0.9.0",
+                "dependencies": []
+            },
+            {
+                "key": "platformdirs",
+                "package_name": "platformdirs",
+                "installed_version": "4.2.0",
+                "required_version": ">=2",
+                "dependencies": []
+            },
+            {
+                "key": "tomli",
+                "package_name": "tomli",
+                "installed_version": "2.0.1",
+                "required_version": ">=1.1.0",
+                "dependencies": []
+            },
+            {
+                "key": "typing-extensions",
+                "package_name": "typing_extensions",
+                "installed_version": "4.10.0",
+                "required_version": ">=4.0.1",
+                "dependencies": []
+            }
+        ]
+    },
+    {
+        "key": "flake8",
+        "package_name": "flake8",
+        "installed_version": "7.0.0",
+        "required_version": "7.0.0",
+        "dependencies": [
+            {
+                "key": "mccabe",
+                "package_name": "mccabe",
+                "installed_version": "0.7.0",
+                "required_version": ">=0.7.0,<0.8.0",
+                "dependencies": []
+            },
+            {
+                "key": "pycodestyle",
+                "package_name": "pycodestyle",
+                "installed_version": "2.11.1",
+                "required_version": ">=2.11.0,<2.12.0",
+                "dependencies": []
+            },
+            {
+                "key": "pyflakes",
+                "package_name": "pyflakes",
+                "installed_version": "3.2.0",
+                "required_version": ">=3.2.0,<3.3.0",
+                "dependencies": []
+            }
+        ]
+    },
+    {
+        "key": "ipython",
+        "package_name": "ipython",
+        "installed_version": "8.12.3",
+        "required_version": "8.12.3",
+        "dependencies": [
+            {
+                "key": "backcall",
+                "package_name": "backcall",
+                "installed_version": "0.2.0",
+                "required_version": "Any",
+                "dependencies": []
+            },
+            {
+                "key": "decorator",
+                "package_name": "decorator",
+                "installed_version": "5.1.1",
+                "required_version": "Any",
+                "dependencies": []
+            },
+            {
+                "key": "jedi",
+                "package_name": "jedi",
+                "installed_version": "0.19.1",
+                "required_version": ">=0.16",
+                "dependencies": [
+                    {
+                        "key": "parso",
+                        "package_name": "parso",
+                        "installed_version": "0.8.3",
+                        "required_version": ">=0.8.3,<0.9.0",
+                        "dependencies": []
+                    }
+                ]
+            },
+            {
+                "key": "matplotlib-inline",
+                "package_name": "matplotlib-inline",
+                "installed_version": "0.1.6",
+                "required_version": "Any",
+                "dependencies": [
+                    {
+                        "key": "traitlets",
+                        "package_name": "traitlets",
+                        "installed_version": "5.14.2",
+                        "required_version": "Any",
+                        "dependencies": []
+                    }
+                ]
+            },
+            {
+                "key": "pexpect",
+                "package_name": "pexpect",
+                "installed_version": "4.9.0",
+                "required_version": ">4.3",
+                "dependencies": [
+                    {
+                        "key": "ptyprocess",
+                        "package_name": "ptyprocess",
+                        "installed_version": "0.7.0",
+                        "required_version": ">=0.5",
+                        "dependencies": []
+                    }
+                ]
+            },
+            {
+                "key": "pickleshare",
+                "package_name": "pickleshare",
+                "installed_version": "0.7.5",
+                "required_version": "Any",
+                "dependencies": []
+            },
+            {
+                "key": "prompt-toolkit",
+                "package_name": "prompt-toolkit",
+                "installed_version": "3.0.43",
+                "required_version": ">=3.0.30,<3.1.0,!=3.0.37",
+                "dependencies": [
+                    {
+                        "key": "wcwidth",
+                        "package_name": "wcwidth",
+                        "installed_version": "0.2.13",
+                        "required_version": "Any",
+                        "dependencies": []
+                    }
+                ]
+            },
+            {
+                "key": "pygments",
+                "package_name": "Pygments",
+                "installed_version": "2.17.2",
+                "required_version": ">=2.4.0",
+                "dependencies": []
+            },
+            {
+                "key": "stack-data",
+                "package_name": "stack-data",
+                "installed_version": "0.6.3",
+                "required_version": "Any",
+                "dependencies": [
+                    {
+                        "key": "asttokens",
+                        "package_name": "asttokens",
+                        "installed_version": "2.4.1",
+                        "required_version": ">=2.1.0",
+                        "dependencies": [
+                            {
+                                "key": "six",
+                                "package_name": "six",
+                                "installed_version": "1.16.0",
+                                "required_version": ">=1.12.0",
+                                "dependencies": []
+                            }
+                        ]
+                    },
+                    {
+                        "key": "executing",
+                        "package_name": "executing",
+                        "installed_version": "2.0.1",
+                        "required_version": ">=1.2.0",
+                        "dependencies": []
+                    },
+                    {
+                        "key": "pure-eval",
+                        "package_name": "pure-eval",
+                        "installed_version": "0.2.2",
+                        "required_version": "Any",
+                        "dependencies": []
+                    }
+                ]
+            },
+            {
+                "key": "traitlets",
+                "package_name": "traitlets",
+                "installed_version": "5.14.2",
+                "required_version": ">=5",
+                "dependencies": []
+            },
+            {
+                "key": "typing-extensions",
+                "package_name": "typing_extensions",
+                "installed_version": "4.10.0",
+                "required_version": "Any",
+                "dependencies": []
+            }
+        ]
+    },
+    {
+        "key": "more-itertools",
+        "package_name": "more-itertools",
+        "installed_version": "10.2.0",
+        "required_version": "10.2.0",
+        "dependencies": []
+    },
+    {
+        "key": "mypy",
+        "package_name": "mypy",
+        "installed_version": "1.9.0",
+        "required_version": "1.9.0",
+        "dependencies": [
+            {
+                "key": "mypy-extensions",
+                "package_name": "mypy-extensions",
+                "installed_version": "1.0.0",
+                "required_version": ">=1.0.0",
+                "dependencies": []
+            },
+            {
+                "key": "tomli",
+                "package_name": "tomli",
+                "installed_version": "2.0.1",
+                "required_version": ">=1.1.0",
+                "dependencies": []
+            },
+            {
+                "key": "typing-extensions",
+                "package_name": "typing_extensions",
+                "installed_version": "4.10.0",
+                "required_version": ">=4.1.0",
+                "dependencies": []
+            }
+        ]
+    },
+    {
+        "key": "pip",
+        "package_name": "pip",
+        "installed_version": "23.3.1",
+        "required_version": "23.3.1",
+        "dependencies": []
+    },
+    {
+        "key": "pipdeptree",
+        "package_name": "pipdeptree",
+        "installed_version": "2.16.1",
+        "required_version": "2.16.1",
+        "dependencies": []
+    },
+    {
+        "key": "pytest-cov",
+        "package_name": "pytest-cov",
+        "installed_version": "4.1.0",
+        "required_version": "4.1.0",
+        "dependencies": [
+            {
+                "key": "coverage",
+                "package_name": "coverage",
+                "installed_version": "7.4.4",
+                "required_version": ">=5.2.1",
+                "dependencies": []
+            },
+            {
+                "key": "pytest",
+                "package_name": "pytest",
+                "installed_version": "8.1.1",
+                "required_version": ">=4.6",
+                "dependencies": [
+                    {
+                        "key": "exceptiongroup",
+                        "package_name": "exceptiongroup",
+                        "installed_version": "1.2.0",
+                        "required_version": ">=1.0.0rc8",
+                        "dependencies": []
+                    },
+                    {
+                        "key": "iniconfig",
+                        "package_name": "iniconfig",
+                        "installed_version": "2.0.0",
+                        "required_version": "Any",
+                        "dependencies": []
+                    },
+                    {
+                        "key": "packaging",
+                        "package_name": "packaging",
+                        "installed_version": "24.0",
+                        "required_version": "Any",
+                        "dependencies": []
+                    },
+                    {
+                        "key": "pluggy",
+                        "package_name": "pluggy",
+                        "installed_version": "1.4.0",
+                        "required_version": ">=1.4,<2.0",
+                        "dependencies": []
+                    },
+                    {
+                        "key": "tomli",
+                        "package_name": "tomli",
+                        "installed_version": "2.0.1",
+                        "required_version": ">=1",
+                        "dependencies": []
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "key": "setuptools",
+        "package_name": "setuptools",
+        "installed_version": "68.2.2",
+        "required_version": "68.2.2",
+        "dependencies": []
+    },
+    {
+        "key": "tokenize-rt",
+        "package_name": "tokenize-rt",
+        "installed_version": "5.2.0",
+        "required_version": "5.2.0",
+        "dependencies": []
+    },
+    {
+        "key": "wheel",
+        "package_name": "wheel",
+        "installed_version": "0.41.2",
+        "required_version": "0.41.2",
+        "dependencies": []
+    }
+]
