@@ -40,7 +40,11 @@ _PS_() {
         shopt -s promptvars
 
         # Command line head for Bash.
+<<<<<<< HEAD
         echo -e "Detect shell: \"${brightred}${shell}${reset}\" (bash)."
+=======
+        echo -e "Detect shell: \"\e[91m${shell}\e[0m\" (bash)."
+>>>>>>> c170f43a52f520929f8a04a6e7d0f96afa28ef23
         cmdhd=
         cmdhd="${cmdhd}#${cyan}\#${reset}"
         cmdhd="${cmdhd} ${brightgreen}\u${reset}"
@@ -51,7 +55,11 @@ _PS_() {
         ;;
     *zsh*)
         # Command line head for Zsh.
+<<<<<<< HEAD
         echo -e "Detect shell: \"${brightred}${shell}${reset}\" (zsh)."
+=======
+        echo -e "Detect shell: \"\e[91m${shell}\e[0m\" (zsh)."
+>>>>>>> c170f43a52f520929f8a04a6e7d0f96afa28ef23
         cmdhd=
         cmdhd="${cmdhd}#${cyan}%h${reset}"
         cmdhd="${cmdhd} ${brightgreen}%n${reset}"
@@ -66,7 +74,11 @@ _PS_() {
         shopt -s promptvars
 
         # Command line head for Bash.
+<<<<<<< HEAD
         echo -e "Detect shell: \"${brightred}${shell}${reset}\" (~bash)."
+=======
+        echo -e "Detect shell: \"\e[91m${shell}\e[0m\" (~bash)."
+>>>>>>> c170f43a52f520929f8a04a6e7d0f96afa28ef23
         cmdhd=
         cmdhd="${cmdhd}#${cyan}\#${reset}"
         cmdhd="${cmdhd} ${brightgreen}\u${reset}"
