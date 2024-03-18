@@ -6,6 +6,9 @@ from typing import Sequence, Tuple
 # Import PyTest packages.
 import pytest
 
+# Import external packages.
+from py._path.local import LocalPath
+
 # Import relatively from other modules.
 from utils import rcimport
 
@@ -237,7 +240,7 @@ def test_parse_improper_literal() -> None:
     pipord.Literal("=1.7")
 
 
-def test_main(*, tmpdir: str) -> None:
+def test_main(*, tmpdir: LocalPath) -> None:
     r"""
     Test main program.
 
