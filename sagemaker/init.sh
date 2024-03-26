@@ -15,4 +15,4 @@ done
 ln -s ${HOME}/SageMaker/RuntimeCommand/sagemaker/profile.sh ${HOME}/.bash_profile
 cp -s ${HOME}/SageMaker/RuntimeCommand/sagemaker/bashrc.sh ${HOME}/SageMaker/bashrc.sh
 ln -s ${HOME}/SageMaker/bashrc.sh ${HOME}/.bashrc
-ln -s ${HOME}/.bash_profile.sh ${HOME}/.profile
+ln -s ${HOME}/.bash_profile ${HOME}/.profile
