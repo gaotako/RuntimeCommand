@@ -206,6 +206,9 @@ _CONDA_() {
         if [[ ${?} -eq 0 ]]; then
             # Early stop if previous activation is successful.
             continue
+        else
+            # Report failed environment.
+            echo -e "\033[95mwarning\033[0m: Fail to activate \"${title}\"."
         fi
     done
 }
