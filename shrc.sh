@@ -200,6 +200,9 @@ _CONDA_() {
             # Activate valid environment and earlu stop.
             conda activate "${title}"
             break
+        else
+            # Warn the failure.
+            echo -e "\033[95mwarning\033[0m: Can not find conda environment \"${title}\"."
         fi
     done
 }
