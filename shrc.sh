@@ -195,14 +195,17 @@ _CONDA_() {
 
     # Try three level of possible virtual environments.
     for title in "${VIRENV}" Default base; do
-        # Check environment title.
-        if [[ -n "${title}" && -n $(conda env list | grep "${title}") ]]; then
-            # Activate valid environment and earlu stop.
-            conda activate "${title}"
-            break
-        else
-            # Warn the failure.
-            echo -e "\033[95mwarning\033[0m: Can not find conda environment \"${title}\"."
+        # Test virtual environment title.
+        if [[ -z "${title}" ]]; then
+            # Skip empty title.
+            continue
+        fi
+
+        # Try activate to activate the environment.
+        conda activate "${title}"
+        if [[ ${?} -eq 0 ]]; then
+            # Early stop if previous activation is successful.
+            continue
         fi
     done
 }
