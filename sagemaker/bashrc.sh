@@ -19,4 +19,4 @@ if [[ -z ${STAGE} ]]; then
 fi
 
 # Customized runtime commands.
-. ${HOME}/SageMaker/RuntimeCommand/shrc
+. ${HOME}/SageMaker/RuntimeCommand/shrc.sh
