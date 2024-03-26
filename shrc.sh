@@ -167,6 +167,10 @@ _SLURM_() {
 # Returns
 # -------
 _CONDA_() {
+    # Local variables.
+    local __conda_setup
+    local title
+
     # Skip conda initialization if conda root is not defined.
     [[ -z ${CONDA} ]] && return
 
@@ -189,14 +193,15 @@ _CONDA_() {
     fi
     unset __conda_setup
 
-    # Use personal default rather than Conda default base.
-    if [[ -z ${VIRENV} ]]; then
-        # If virtual environment is not claimed, use default environment.
-        conda activate Default
-    else
-        # Otherwise, activate claimed environment.
-        conda activate "${VIRENV}"
-    fi
+    # Try three level of possible virtual environments.
+    for title in "${VIRENV}" Default base; do
+        # Check environment title.
+        if [[ -n "${title}" && -n $(conda env list | grep "${title}") ]]; then
+            # Activate valid environment and earlu stop.
+            conda activate "${title}"
+            break
+        fi
+    done
 }
 
 # Reset terminal settings.
