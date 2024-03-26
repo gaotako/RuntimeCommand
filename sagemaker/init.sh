@@ -2,7 +2,7 @@
 set -e
 
 # Clean runtime commands.
-for rcfile in "${HOME}/.bash_profile" "${HOME}/.bashrc" "${HOME}/.profile"; do
+for rcfile in "${HOME}/.bash_profile" "${HOME}/SageMaker/bashrc.sh" "${HOME}/.bashrc" "${HOME}/.profile"; do
     # Only proceed for existing runtime commands.
     if [[ -f ${rcfile} ]]; then
         # Make a backup of system runtime commands.
