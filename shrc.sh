@@ -211,6 +211,10 @@ _CONDA_() {
             echo -e "\033[95mwarning\033[0m: Fail to activate \"${title}\"."
         fi
     done
+
+    # Conda will overwrite command aliases which may cause issues.
+    # Recover those back to compatible system defaults.
+    alias clear="/usr/bin/clear"
 }
 
 # Reset terminal settings.
