@@ -20,7 +20,6 @@ def rcimport(name: str, /) -> ModuleType:
         Module.
     """
     # Load module from path.
-
     path = os.path.join(
         os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "src-python")),
         "{:s}.py".format(name),

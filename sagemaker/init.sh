@@ -6,6 +6,7 @@ for rcfile in "${HOME}/.bash_profile" "${HOME}/SageMaker/bashrc.sh" "${HOME}/.ba
     # Only proceed for existing runtime commands.
     if [[ -f ${rcfile} ]]; then
         # Make a backup of system runtime commands.
+        rm -f ${rcfile}.backup
         mv ${rcfile} ${rcfile}.backup
     fi
     rm -f ${rcfile}
