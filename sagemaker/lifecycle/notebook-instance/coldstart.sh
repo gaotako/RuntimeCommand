@@ -1,11 +1,7 @@
 set -eux
 
-if [[ -z ${HOME} ]]; then
-    export HOME=/home/ec2-user
-fi
-if [[ -z ${SAGEMAKER} ]]; then
-    export SAGEMAKER=${HOME}/SageMaker
-fi
+export HOME=/home/ec2-user
+export SAGEMAKER=${HOME}/SageMaker
 
 location=$(pwd)
 cd ${RC_ROOT}
