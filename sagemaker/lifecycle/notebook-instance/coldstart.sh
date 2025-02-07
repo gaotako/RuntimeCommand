@@ -7,12 +7,6 @@ if [[ -z ${SAGEMAKER} ]]; then
     export SAGEMAKER=${HOME}/SageMaker
 fi
 
-export RC_ROOT=${SAGEMAKER}/RuntimeCommandReadOnly
-
-if [[ ! -d ${RC_ROOT} ]]; then
-    git clone https://github.com/gaotako/RuntimeCommand.git ${RC_ROOT}
-fi
-
 location=$(pwd)
 cd ${RC_ROOT}
 git pull
@@ -35,6 +29,21 @@ export APP_BIN_HOME=${APP_ROOT}/bin
 
 mkdir -p ${APP_DATA_HOME}
 mkdir -p ${APP_BIN_HOME}
+
+export SSH_HOME=${XDG_ROOT}/ssh
+
+if [[ ! -f ${HOME}/.ssh/id_rsa ]]; then
+    ssh-keygen -t rsa -q -f "${HOME}/.ssh/id_rsa" -N ""
+fi
+
+rm -rf ${SSH_HOME}/*
+cp -r ${HOME}/.ssh/* ${SSH_HOME}
+
+export RC_ROOT=${SAGEMAKER}/RuntimeCommandReadOnly
+
+if [[ ! -d ${RC_ROOT} ]]; then
+    git clone https://github.com/gaotako/RuntimeCommand.git ${RC_ROOT}
+fi
 
 export CODE_SERVER_ROOT=${SAGEMAKER}/CodeServer
 export CODE_SERVER_VERSION=0.2.0
