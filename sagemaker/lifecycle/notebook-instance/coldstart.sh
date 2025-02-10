@@ -3,11 +3,6 @@ set -eux
 export HOME=/home/ec2-user
 export SAGEMAKER=${HOME}/SageMaker
 
-location=$(pwd)
-cd ${RC_ROOT}
-git pull
-cd ${location}
-
 export XDG_ROOT=${SAGEMAKER}/CrossDesktopGroup
 export XDG_CONFIG_HOME=${XDG_ROOT}/config
 export XDG_CACHE_HOME=${XDG_ROOT}/cache
@@ -32,6 +27,7 @@ if [[ ! -f ${HOME}/.ssh/id_rsa ]]; then
     ssh-keygen -t rsa -q -f "${HOME}/.ssh/id_rsa" -N ""
 fi
 
+mkdir -p ${SSH_HOME}
 rm -rf ${SSH_HOME}/*
 cp -r ${HOME}/.ssh/* ${SSH_HOME}
 
@@ -41,23 +37,32 @@ if [[ ! -d ${RC_ROOT} ]]; then
     git clone https://github.com/gaotako/RuntimeCommand.git ${RC_ROOT}
 fi
 
+location=$(pwd)
+cd ${RC_ROOT}
+git pull
+cd ${location}
+
 export CODE_SERVER_ROOT=${SAGEMAKER}/CodeServer
 export CODE_SERVER_VERSION=0.2.0
 export CODE_SERVER_PACKAGE=${CODE_SERVER_ROOT}/amazon-sagemaker-codeserver
 export CODE_SERVER_APPLICATION=${APP_DATA_HOME}/cs
 
 if [[ ! -d ${CODE_SERVER_PACKAGE} ]]; then
+    location=$(pwd)
+    mkdir -p ${CODE_SERVER_ROOT}
+    cd ${CODE_SERVER_ROOT}
+
     FILENAME=amazon-sagemaker-codeserver-${CODE_SERVER_VERSION}.tar.gz
     URL=https://github.com/aws-samples/amazon-sagemaker-codeserver/releases/download/v${CODE_SERVER_VERSION}/${FILENAME}
     curl -LO ${URL}
     tar -xvzf ${FILENAME}
     rm -f ${FILENAME}
 
-    location=$(pwd)
     cd ${CODE_SERVER_PACKAGE}/install-scripts/notebook-instances
     for filename in install-codeserver.sh setup-codeserver.sh uninstall-codeserver.sh; do
         cp ${filename} ${filename}.backup
     done
+    
     cd ${location}
 fi
 
@@ -67,10 +72,11 @@ if [[ ! -d ${CODE_SERVER_APPLICATION} ]]; then
 
     for filename in install-codeserver.sh setup-codeserver.sh uninstall-codeserver.sh; do
         cat ${filename}.backup > ${filename}
-        sed -i -e "s/^CODE_SERVER_INSTALL_LOC=\"\/home\/ec2-user\/SageMaker\/.cs\"\$/CODE_SERVER_INSTALL_LOC=\"${CODE_SERVER_ROOT//\//\\/}\/cs\"/g" ${filename}
-        sed -i -e "s/^XDG_DATA_HOME=\"\/home\/ec2-user\/SageMaker\/.xdg\/data\"\$/XDG_DATA_HOME=\"${XDG_DATA_HOME//\//\\/}\"/g" ${filename}
-        sed -i -e "s/^XDG_CONFIG_HOME=\"\/home\/ec2-user\/SageMaker\/.xdg\/config\"\$/XDG_CONFIG_HOME=\"${XDG_CONFIG_HOME//\//\\/}\"/g" ${filename}
-        sed -i -e "s/^CONDA_ENV_LOCATION=\'\/home\/ec2-user\/SageMaker\/.cs\/conda\/envs\/codeserver_py39\'\$/CONDA_ENV_LOCATION=\'${CODE_SERVER_APPLICATION//\//\\/}\/conda\/envs\/codeserver_py39'/g" ${filename}
+        sed -i -e "s/^CODE_SERVER_INSTALL_LOC=\"\/home\/ec2-user\/SageMaker\/.cs\"\$/CODE_SERVER_INSTALL_LOC=\"${CODE_SERVER_APPLICATION//\//\\/}\"/g" ${filename}
+        sed -i -e "s/^XDG_DATA_HOME=\"\/home\/ec2-user\/SageMaker\/\.xdg\/data\"\$/XDG_DATA_HOME=\"${XDG_DATA_HOME//\//\\/}\"/g" ${filename}
+        sed -i -e "s/^XDG_CONFIG_HOME=\"\/home\/ec2-user\/SageMaker\/\.xdg\/config\"\$/XDG_CONFIG_HOME=\"${XDG_CONFIG_HOME//\//\\/}\"/g" ${filename}
+        sed -i -e "s/^CONDA_ENV_LOCATION='\/home\/ec2-user\/SageMaker\/\.cs\/conda\/envs\/codeserver_py39'\$/CONDA_ENV_LOCATION='${CODE_SERVER_APPLICATION//\//\\/}\/conda\/envs\/codeserver_py312'/g" ${filename}
+        sed -i -e "s/^CONDA_ENV_PYTHON_VERSION=\"3\.9\"\$/CONDA_ENV_PYTHON_VERSION=\"3.12\"/g" ${filename}
         sed -i -e "s/^export XDG_DATA_HOME=\\\$XDG_DATA_HOME\$/#export XDG_DATA_HOME=\$XDG_DATA_HOME/g" ${filename}
         sed -i -e "s/^export XDG_CONFIG_HOME=\\\$XDG_CONFIG_HOME\$/#export XDG_CONFIG_HOME=\$XDG_CONFIG_HOME/g" ${filename}
     done
