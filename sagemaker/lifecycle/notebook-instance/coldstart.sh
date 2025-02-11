@@ -101,3 +101,5 @@ fi
 eval "$(${APP_BIN_HOME}/mise activate bash)"
 
 mise install python@3.11 python@3.12
+
+cp ${RC_ROOT}/unix/rc.sh ${SAGEMAKER}/rc.sh

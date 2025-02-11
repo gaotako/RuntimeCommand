@@ -1,5 +1,3 @@
-set -eux
-
 export HOME=/home/ec2-user
 export SAGEMAKER=${HOME}/SageMaker
 
@@ -36,3 +34,5 @@ cd ${CODE_SERVER_PACKAGE}/install-scripts/notebook-instances
 cd ${location}
 
 eval "$(${APP_BIN_HOME}/mise activate bash)"
+
+cp 
