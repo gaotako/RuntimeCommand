@@ -15,8 +15,13 @@ export APP_BIN_HOME=${APP_ROOT}/bin
 
 export SSH_HOME=${XDG_ROOT}/ssh
 
-rm -rf ${HOME}/.ssh/*
-cp -r ${SSH_HOME}/* ${HOME}/.ssh
+if [[ ! -f ${HOME}/.ssh/id_rsa ]]; then
+    ssh-keygen -t rsa -q -f "${HOME}/.ssh/id_rsa" -N ""
+fi
+
+mkdir -p ${SSH_HOME}
+rm -rf ${SSH_HOME}/*
+cp -r ${HOME}/.ssh/id_rsa.pub ${SSH_HOME}
 
 export RC_ROOT=${SAGEMAKER}/RuntimeCommandReadOnly
 

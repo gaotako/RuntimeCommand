@@ -31,7 +31,7 @@ fi
 
 mkdir -p ${SSH_HOME}
 rm -rf ${SSH_HOME}/*
-cp -r ${HOME}/.ssh/* ${SSH_HOME}
+cp -r ${HOME}/.ssh/id_rsa.pub ${SSH_HOME}
 
 export RC_ROOT=${SAGEMAKER}/RuntimeCommandReadOnly
 
@@ -64,7 +64,7 @@ if [[ ! -d ${CODE_SERVER_PACKAGE} ]]; then
     for filename in install-codeserver.sh setup-codeserver.sh uninstall-codeserver.sh; do
         cp ${filename} ${filename}.backup
     done
-    
+
     cd ${location}
 fi
 
