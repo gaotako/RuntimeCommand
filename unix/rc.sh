@@ -1,9 +1,9 @@
-export CISH=$(ps -p $$ | tail -1 | awk "{print \$NF}")
+CISH=$(ps -p $$ | tail -1 | awk "{print \$NF}")
 
 if [[ -n $(which tmux) ]]; then
-    export WISHID=$(tmux display-message -p "#S/#I" 2>/dev/null)
+    WISHID=$(tmux display-message -p "#S/#I" 2>/dev/null)
 else
-    export WISHID=""
+    WISHID=""
 fi
 
 PSC_ASCII_RESET=$'\e[0m'

@@ -1,5 +1,7 @@
 set -eux
 
+CISH=$(ps -p $$ | tail -1 | awk "{print \$NF}")
+
 export HOME=/home/ec2-user
 export SAGEMAKER=${HOME}/SageMaker
 
@@ -98,8 +100,41 @@ cd ${location}
 if [[ ! -f ${APP_BIN_HOME}/mise ]]; then
     curl https://mise.run | MISE_INSTALL_PATH=${APP_BIN_HOME}/mise sh
 fi
-eval "$(${APP_BIN_HOME}/mise activate bash)"
+case ${CISH} in
+*bash*)
+    eval "$(${APP_BIN_HOME}/mise activate bash)"
+    ;;
+*zsh*)
+    eval "$(${APP_BIN_HOME}/mise activate zsh)"
+    ;;
+*sh*)
+    eval "$(${APP_BIN_HOME}/mise activate bash)"
+    ;;
+*)
+    echo -e "Detect UNKNOWN Current Interactive Shell (CISH): \"${CISH}\", thus MISE is not activated."
+    ;;
+esac
 
 mise install python@3.11 python@3.12
 
 cp ${RC_ROOT}/unix/rc.sh ${SAGEMAKER}/rc.sh
+case ${CISH} in
+*bash*)
+    rm -f ${HOME}/.profile ${HOME}/.bashrc
+    ln -s ${SAGEMAKER}/rc.sh ${HOME}/.profile
+    ln -s ${SAGEMAKER}/rc.sh ${HOME}/.bashrc
+    ;;
+*zsh*)
+    rm -f ${HOME}/.profile ${HOME}/.zshrc
+    ln -s ${SAGEMAKER}/rc.sh ${HOME}/.profile
+    ln -s ${SAGEMAKER}/rc.sh ${HOME}/.zshrc
+    ;;
+*sh*)
+    rm -f ${HOME}/.profile ${HOME}/.bashrc
+    ln -s ${SAGEMAKER}/rc.sh ${HOME}/.profile
+    ln -s ${SAGEMAKER}/rc.sh ${HOME}/.bashrc
+    ;;
+*)
+    echo -e "Detect UNKNOWN Current Interactive Shell (CISH): \"${CISH}\", thus Runtime Command is not registered."
+    ;;
+esac
