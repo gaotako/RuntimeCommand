@@ -107,3 +107,6 @@ case ${CISH} in
     echo -e "Detect UNKNOWN Current Interactive Shell (CISH): \"${CISH}\", thus MISE is not activated."
     ;;
 esac
+
+mise settings experimental=true
+mise use -g python@3.11 python@3.12
