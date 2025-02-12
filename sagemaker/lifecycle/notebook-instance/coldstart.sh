@@ -25,19 +25,18 @@ mkdir -p ${APP_BIN_HOME}
 
 export SSH_HOME=${XDG_ROOT}/ssh
 
-if [[ ! -f ${HOME}/.ssh/id_rsa ]]; then
-    ssh-keygen -t rsa -q -f "${HOME}/.ssh/id_rsa" -N ""
-fi
-
-mkdir -p ${SSH_HOME}
-rm -rf ${SSH_HOME}/*
-cp -r ${HOME}/.ssh/id_rsa.pub ${SSH_HOME}
+rm -rf ${SSH_HOME}
+rm -rf ${HOME}/.ssh
+ln -s ${SSH_HOME} ${HOME}/.ssh
 
 export RC_ROOT=${SAGEMAKER}/RuntimeCommandReadOnly
 
 if [[ ! -d ${RC_ROOT} ]]; then
     git clone https://github.com/gaotako/RuntimeCommand.git ${RC_ROOT}
 fi
+
+rm -f ${SAGEMAKER}/rc.sh
+ln -s ${RC_ROOT}/unix/rc.sh ${SAGEMAKER}/rc.sh
 
 location=$(pwd)
 cd ${RC_ROOT}
@@ -138,3 +137,5 @@ case ${CISH} in
     echo -e "Detect UNKNOWN Current Interactive Shell (CISH): \"${CISH}\", thus Runtime Command is not registered."
     ;;
 esac
+
+source ${HOME}/.profile

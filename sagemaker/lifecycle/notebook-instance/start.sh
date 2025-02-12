@@ -15,13 +15,9 @@ export APP_BIN_HOME=${APP_ROOT}/bin
 
 export SSH_HOME=${XDG_ROOT}/ssh
 
-if [[ ! -f ${HOME}/.ssh/id_rsa ]]; then
-    ssh-keygen -t rsa -q -f "${HOME}/.ssh/id_rsa" -N ""
-fi
-
-mkdir -p ${SSH_HOME}
-rm -rf ${SSH_HOME}/*
-cp -r ${HOME}/.ssh/id_rsa.pub ${SSH_HOME}
+rm -rf ${SSH_HOME}
+rm -rf ${HOME}/.ssh
+ln -s ${SSH_HOME} ${HOME}/.ssh
 
 export RC_ROOT=${SAGEMAKER}/RuntimeCommandReadOnly
 
@@ -39,21 +35,6 @@ location=$(pwd)
 cd ${CODE_SERVER_PACKAGE}/install-scripts/notebook-instances
 ./setup-codeserver.sh
 cd ${location}
-
-case ${CISH} in
-*bash*)
-    eval "$(${APP_BIN_HOME}/mise activate bash)"
-    ;;
-*zsh*)
-    eval "$(${APP_BIN_HOME}/mise activate zsh)"
-    ;;
-*sh*)
-    eval "$(${APP_BIN_HOME}/mise activate bash)"
-    ;;
-*)
-    echo -e "Detect UNKNOWN Current Interactive Shell (CISH): \"${CISH}\", thus MISE is not activated."
-    ;;
-esac
 
 case ${CISH} in
 *bash*)
