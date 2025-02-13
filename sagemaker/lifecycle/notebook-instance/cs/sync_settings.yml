@@ -2,4 +2,4 @@ hostname: ""
 profile: main
 repository:
     type: file
-    path: /home/ec2-user/SageMaker/RuntimeCommand/src/RuntimeCommand/sagemaker/lifecycle/notebook-instance/cs/sync_settings
+    path: /home/ec2-user/SageMaker/RuntimeCommandReadOnly/sagemaker/lifecycle/notebook-instance/cs/sync_settings
