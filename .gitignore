@@ -1,4 +1,6 @@
 /build
+.venv/
+/.mise.toml
 
 __pycache__/
 *.pyc
