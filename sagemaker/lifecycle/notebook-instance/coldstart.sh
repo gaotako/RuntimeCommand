@@ -110,6 +110,9 @@ cd ${location}
 rm -f ${XDG_DATA_HOME}/code-server/User/settings.json
 rm -f ${XDG_DATA_HOME}/code-server/User/globalStorage/zokugun.sync-settings/settings.yml
 
+mkdir -p ${XDG_DATA_HOME}/code-server/User
+mkdir -p ${XDG_DATA_HOME}/code-server/User/globalStorage/zokugun.sync-settings
+
 ln -s ${RC_ROOT}/sagemaker/lifecycle/notebook-instance/cs/settings.json ${XDG_DATA_HOME}/code-server/User/settings.json
 ln -s ${RC_ROOT}/sagemaker/lifecycle/notebook-instance/cs/sync_settings.yml ${XDG_DATA_HOME}/code-server/User/globalStorage/zokugun.sync-settings/settings.yml
 
