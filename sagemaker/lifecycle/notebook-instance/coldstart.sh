@@ -5,11 +5,18 @@ CISH=$(ps -p $$ | tail -1 | awk "{print \$NF}")
 export HOME=/home/ec2-user
 export SAGEMAKER=${HOME}/SageMaker
 
+rm -f ${SAGEMAKER}/rc.sh
+
 export XDG_ROOT=${SAGEMAKER}/CrossDesktopGroup
 export XDG_CONFIG_HOME=${XDG_ROOT}/config
 export XDG_CACHE_HOME=${XDG_ROOT}/cache
 export XDG_DATA_HOME=${XDG_ROOT}/local/share
 export XDG_STATE_HOME=${XDG_ROOT}/local/state
+
+rm -rf ${XDG_CONFIG_HOME}
+rm -rf ${XDG_CACHE_HOME}
+rm -rf ${XDG_DATA_HOME}
+rm -rf ${XDG_STATE_HOME}
 
 mkdir -p ${XDG_CONFIG_HOME}
 mkdir -p ${XDG_CACHE_HOME}
@@ -20,23 +27,25 @@ export APP_ROOT=${SAGEMAKER}/Application
 export APP_DATA_HOME=${APP_ROOT}/data
 export APP_BIN_HOME=${APP_ROOT}/bin
 
+rm -rf ${APP_DATA_HOME}
+rm -rf ${APP_BIN_HOME}
+
 mkdir -p ${APP_DATA_HOME}
 mkdir -p ${APP_BIN_HOME}
 
 export SSH_HOME=${XDG_ROOT}/ssh
 
-rm -rf ${SSH_HOME}
-rm -rf ${HOME}/.ssh
-ln -s ${SSH_HOME} ${HOME}/.ssh
+if [[ $(readlink -f ${HOME}/.ssh) != ${SSH_HOME} ]]; then
+    rm -rf ${SSH_HOME}
+    rm -rf ${HOME}/.ssh
+    ln -s ${SSH_HOME} ${HOME}/.ssh
+fi
 
 export RC_ROOT=${SAGEMAKER}/RuntimeCommandReadOnly
 
 if [[ ! -d ${RC_ROOT} ]]; then
     git clone https://github.com/gaotako/RuntimeCommand.git ${RC_ROOT}
 fi
-
-rm -f ${SAGEMAKER}/rc.sh
-ln -s ${RC_ROOT}/unix/rc.sh ${SAGEMAKER}/rc.sh
 
 location=$(pwd)
 cd ${RC_ROOT}
@@ -45,6 +54,7 @@ cd ${location}
 
 export CODE_SERVER_ROOT=${SAGEMAKER}/CodeServer
 export CODE_SERVER_VERSION=0.2.0
+export CODE_SERVER_PYTHON_VERSION=3.11
 export CODE_SERVER_PACKAGE=${CODE_SERVER_ROOT}/amazon-sagemaker-codeserver
 export CODE_SERVER_APPLICATION=${APP_DATA_HOME}/cs
 
@@ -76,8 +86,8 @@ if [[ ! -d ${CODE_SERVER_APPLICATION} ]]; then
         sed -i -e "s/^CODE_SERVER_INSTALL_LOC=\"\/home\/ec2-user\/SageMaker\/.cs\"\$/CODE_SERVER_INSTALL_LOC=\"${CODE_SERVER_APPLICATION//\//\\/}\"/g" ${filename}
         sed -i -e "s/^XDG_DATA_HOME=\"\/home\/ec2-user\/SageMaker\/\.xdg\/data\"\$/XDG_DATA_HOME=\"${XDG_DATA_HOME//\//\\/}\"/g" ${filename}
         sed -i -e "s/^XDG_CONFIG_HOME=\"\/home\/ec2-user\/SageMaker\/\.xdg\/config\"\$/XDG_CONFIG_HOME=\"${XDG_CONFIG_HOME//\//\\/}\"/g" ${filename}
-        sed -i -e "s/^CONDA_ENV_LOCATION='\/home\/ec2-user\/SageMaker\/\.cs\/conda\/envs\/codeserver_py39'\$/CONDA_ENV_LOCATION='${CODE_SERVER_APPLICATION//\//\\/}\/conda\/envs\/codeserver_py312'/g" ${filename}
-        sed -i -e "s/^CONDA_ENV_PYTHON_VERSION=\"3\.9\"\$/CONDA_ENV_PYTHON_VERSION=\"3.12\"/g" ${filename}
+        sed -i -e "s/^CONDA_ENV_LOCATION='\/home\/ec2-user\/SageMaker\/\.cs\/conda\/envs\/codeserver_py39'\$/CONDA_ENV_LOCATION='${CODE_SERVER_APPLICATION//\//\\/}\/conda\/envs\/cs'/g" ${filename}
+        sed -i -e "s/^CONDA_ENV_PYTHON_VERSION=\"3\.9\"\$/CONDA_ENV_PYTHON_VERSION=\"${CODE_SERVER_PYTHON_VERSION}\"/g" ${filename}
         sed -i -e "s/^export XDG_DATA_HOME=\\\$XDG_DATA_HOME\$/#export XDG_DATA_HOME=\$XDG_DATA_HOME/g" ${filename}
         sed -i -e "s/^export XDG_CONFIG_HOME=\\\$XDG_CONFIG_HOME\$/#export XDG_CONFIG_HOME=\$XDG_CONFIG_HOME/g" ${filename}
     done
@@ -86,6 +96,7 @@ if [[ ! -d ${CODE_SERVER_APPLICATION} ]]; then
     chmod +x setup-codeserver.sh
     chmod +x uninstall-codeserver.sh
 
+    rm -rf ${CODE_SERVER_APPLICATION}/conda/envs/cs/*
     ./install-codeserver.sh
 
     cd ${location}
@@ -116,7 +127,7 @@ esac
 
 mise install python@3.11 python@3.12
 
-cp ${RC_ROOT}/unix/rc.sh ${SAGEMAKER}/rc.sh
+ln -s ${RC_ROOT}/unix/rc.sh ${SAGEMAKER}/rc.sh
 case ${CISH} in
 *bash*)
     rm -f ${HOME}/.profile ${HOME}/.bashrc
@@ -137,5 +148,3 @@ case ${CISH} in
     echo -e "Detect UNKNOWN Current Interactive Shell (CISH): \"${CISH}\", thus Runtime Command is not registered."
     ;;
 esac
-
-source ${HOME}/.profile
