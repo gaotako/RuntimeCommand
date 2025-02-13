@@ -2,5 +2,5 @@ hostname: ""
 profile: main
 repository:
     type: git
-    url: https://github.com/gaotako/CodeServerSyncSettings.git
+    path: /home/ec2-user/SageMaker/RuntimeCommand/src/RuntimeCommand/sagemaker/lifecycle/notebook-instance/cs/sync_settings
     branch: main
