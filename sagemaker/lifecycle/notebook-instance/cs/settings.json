@@ -1,0 +1,540 @@
+{
+    // ---------------------------------------------------------------------------------------------
+    // ## Table of Contents
+    //
+    // * Must-Start-With
+    // + Graphic User Interface
+    //   - Icon Theme and Customization
+    //   - Color Theme and Customization
+    //   - Explorer Themem and Customization
+    //   - Font
+    //   - White Space
+    //   - Escape Character
+    //   - Editing Focus
+    // + File System
+    //   - File Category Association
+    //   - File Monitoring and Ignoring
+    // + Programming Language Specified Item
+    //   - Python
+    //   - Cython
+    //   - JSON
+    //   - TOML
+    //   - YAML
+    //   - Markdown
+    //   - Shell
+    //   - Text
+    //   - Lark
+    // + Programming Language Formatter
+    //   - Automatic Formatting Trigger
+    //   - Black
+    //   - Prettier
+    // + Interpreter Notebook
+    //   - Jupyter
+    // + Unclassified
+    // * Must-End-With
+    // ---------------------------------------------------------------------------------------------
+
+    // ---------------------------------------------------------------------------------------------
+    // ## Must Start-With
+    // ---------------------------------------------------------------------------------------------
+
+    "json.schemaDownload.enable": true,
+
+    // ---------------------------------------------------------------------------------------------
+    // ## Graphic User Interface
+    // ---------------------------------------------------------------------------------------------
+
+    // ---------------------------------------------------------------------------------------------
+    // ### Icon Theme and Customization
+    // ---------------------------------------------------------------------------------------------
+
+    // Use Material theme.
+    "workbench.iconTheme": "material-icon-theme",
+
+    // Customize Material folder icon.
+    // See [this link](https://gist.github.com/rupeshtiwari/6860fbc1b3e2f6711c780070d6f59748) for details.
+    "material-icon-theme.folders.associations": {
+        "type": "Coverage",
+        "types": "Coverage",
+        "typing": "Coverage",
+        "typings": "Coverage",
+        "const": "Constant",
+        "consts": "Constant",
+        "constant": "Constant",
+        "constants": "Constant",
+        "util": "Tools",
+        "utils": "Tools",
+        "tool": "Tools",
+        "tools": "Tools",
+        "toolkit": "Tools",
+        "toolkits": "Tools",
+        "fautograd": "Functions",
+        "fautograds": "Functions",
+        "function": "Functions",
+        "functions": "Functions",
+        "transform": "Job",
+        "transforms": "Job",
+        "transgrad": "Job",
+        "transgrads": "Job",
+        "transdatum": "Job",
+        "transdata": "Job",
+        "transdatas": "Job",
+        "transdataset": "Job",
+        "transdatasets": "Job",
+        "datum": "Database",
+        "data": "Database",
+        "dataset": "Database",
+        "datasets": "Database",
+        "time": "Temp",
+        "times": "Temp",
+        "io": "Dump",
+        "ios": "Dump",
+        "dio": "Dump",
+        "dios": "Dump",
+        "nn": "graphql",
+        "nns": "graphql",
+        "neural": "graphql",
+        "neurals": "graphql",
+        "test": "Test",
+        "tests": "Test",
+        "exp": "Layout",
+        "exps": "Layout",
+        "experiment": "Layout",
+        "experiments": "Layout",
+        "runtime": "Command",
+        "backup": "Resource",
+        "fixture": "Config",
+        "proto": "Custom",
+        "protos": "Custom",
+        "prototype": "Custom",
+        "prototypes": "Custom",
+        "harbor": "Global"
+    },
+
+    // ---------------------------------------------------------------------------------------------
+    // ### Color Theme and Customization
+    // ---------------------------------------------------------------------------------------------
+
+    // Use "One Dark" theme.
+    "workbench.colorTheme": "One Dark Pro",
+
+    // Customize color regardless of theme.
+    "workbench.colorCustomizations": {
+        // Cursor color.
+        "editorCursor.foreground": "#00ffffff",
+
+        // Focusing line color.
+        "editor.lineHighlightBackground": "#00000000",
+        "editor.lineHighlightBorder": "#ffffff77"
+    },
+
+    // Customize coding token color regardless of theme.
+    "editor.tokenColorCustomizations": {
+        "[One Dark Pro]": {
+            "textMateRules": [
+                {
+                    "scope": [
+                        "string.quoted.docstring.multi.python",
+                        "string.quoted.docstring.multi.python punctuation.definition.string.begin.python",
+                        "string.quoted.docstring.multi.python punctuation.definition.string.end.python",
+                        "string.quoted.docstring.raw.multi.python",
+                        "string.quoted.docstring.raw.multi.python punctuation.definition.string.begin.python",
+                        "string.quoted.docstring.raw.multi.python punctuation.definition.string.end.python"
+                    ],
+                    "settings": {
+                        "foreground": "#7F848Eff",
+                        "fontStyle": "italic"
+                    }
+                }
+            ]
+        }
+    },
+
+    // ---------------------------------------------------------------------------------------------
+    // ### Explorer Theme and Customization
+    // ---------------------------------------------------------------------------------------------
+
+    "workbench.tree.indent": 16,
+
+    // ---------------------------------------------------------------------------------------------
+    // ### Font
+    // ---------------------------------------------------------------------------------------------
+
+    // Editor font.
+    "editor.fontSize": 18,
+    "terminal.integrated.fontSize": 18,
+
+    // ---------------------------------------------------------------------------------------------
+    // ### White Space
+    // ---------------------------------------------------------------------------------------------
+
+    // Indent.
+    "editor.detectIndentation": false,
+
+    // Trailing.
+    "files.trimTrailingWhitespace": false,
+
+    // White spaces, e.g., space, newline.
+    // Requires extension "Render Line Endings".
+    "editor.renderWhitespace": "all",
+    "files.eol": "\n",
+    "code-eol.newlineCharacter": "↓",
+    "code-eol.crlfCharacter": "↵",
+    "code-eol.returnCharacter": "←",
+    "code-eol.highlightExtraWhitespace": true,
+    "code-eol.decorateBeforeEol": true,
+
+    // ---------------------------------------------------------------------------------------------
+    // ### Escape Character
+    // ---------------------------------------------------------------------------------------------
+
+    // Escape characters.
+    "editor.renderControlCharacters": true,
+
+    // ---------------------------------------------------------------------------------------------
+    // ### Editing Focus
+    // ---------------------------------------------------------------------------------------------
+
+    // Cursor focusing line.
+    "editor.renderLineHighlight": "all",
+
+    // Do not put additional focus on ambiguous characters.
+    "editor.unicodeHighlight.ambiguousCharacters": false,
+
+    // ---------------------------------------------------------------------------------------------
+    // ## File System
+    // ---------------------------------------------------------------------------------------------
+
+    // ---------------------------------------------------------------------------------------------
+    // ### File Category Association
+    // ---------------------------------------------------------------------------------------------
+
+    // File extension to programming language associations.
+    "files.associations": {
+        "setup.cfg": "ini",
+        "Config": "brazilPackageConfig"
+    },
+
+    // Jupyter Notebook file extension.
+    "workbench.editorAssociations": {
+        "*.ipynb": "jupyter-notebook"
+    },
+
+    // ---------------------------------------------------------------------------------------------
+    // ### File Monitoring and Ignoring
+    // ---------------------------------------------------------------------------------------------
+
+    // Ignore path patterns (glob) in internal file explorer.
+    "files.exclude": {
+        ".viceroy": true,
+        "apollo-overrides": true,
+        "release-info": true,
+        "src/*/build": false,
+        "build": false,
+        "env": true,
+        "packageInfo*": true,
+        ".bemol": true,
+        "**/.git": true,
+        "**/.svn": true,
+        "**/.hg": true,
+        "**/CVS": true,
+        "**/.DS_Store": true,
+        "**/Thumbs.db": true,
+        "**/__pycache__": true,
+        "**/.mypy_cache": true,
+        "**/.pytest_cache": true,
+        "**/conda": true,
+        "**/build": true,
+        "**/env": true
+    },
+
+    // Ignore path patterns (glob) in true file action monitoring.
+    "files.watcherExclude": {
+        "**/build/**": true,
+        "**/.git/objects/**": true,
+        "**/.git/subtree-cache/**": true,
+        "**/node_modules/*/**": true,
+        "**/.hg/store/**": true,
+        "**/__pycache__": true,
+        "**/.mypy_cache": true,
+        "**/.pytest_cache": true,
+        "**/conda": true,
+        "**/build": true,
+        "**/env": true
+    },
+
+    // ---------------------------------------------------------------------------------------------
+    // ## Programming Language Specified Item
+    // ---------------------------------------------------------------------------------------------
+
+    // ---------------------------------------------------------------------------------------------
+    // ### Python
+    // ---------------------------------------------------------------------------------------------
+
+    // Language basic settings.
+    "[python]": {
+        "editor.rulers": [
+            {
+                "column": 4,
+                "color": "#ffffff22"
+            },
+            {
+                "column": 100,
+                "color": "#ffffff88"
+            },
+            {
+                "column": 120,
+                "color": "#ffffff88"
+            },
+            {
+                "column": 124,
+                "color": "#ffffff44"
+            }
+        ],
+        "editor.defaultFormatter": "ms-python.black-formatter",
+        "editor.formatOnType": true,
+        "editor.formatOnSave": true
+    },
+
+    // ---------------------------------------------------------------------------------------------
+    // ### Cython
+    // ---------------------------------------------------------------------------------------------
+
+    // Language basic settings.
+    "[cython]": {
+        "editor.rulers": [
+            {
+                "column": 4,
+                "color": "#ffffff22"
+            },
+            {
+                "column": 100,
+                "color": "#ffffff88"
+            },
+            {
+                "column": 120,
+                "color": "#ffffff88"
+            },
+            {
+                "column": 124,
+                "color": "#ffffff44"
+            }
+        ]
+    },
+
+    // ---------------------------------------------------------------------------------------------
+    // ### JSON
+    // ---------------------------------------------------------------------------------------------
+
+    // Language basic settings.
+    "[jsonc]": {
+        "editor.rulers": [
+            {
+                "column": 100,
+                "color": "#ffffff22"
+            }
+        ],
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "editor.formatOnType": true,
+        "editor.formatOnSave": true
+    },
+    "[json]": {
+        "editor.rulers": [
+            {
+                "column": 100,
+                "color": "#ffffff22"
+            }
+        ],
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "editor.formatOnType": true,
+        "editor.formatOnSave": true
+    },
+
+    // ---------------------------------------------------------------------------------------------
+    // ### TOML
+    // ---------------------------------------------------------------------------------------------
+
+    // Language basic settings.
+    "[toml]": {
+        "editor.rulers": [
+            {
+                "column": 100,
+                "color": "#ffffff22"
+            }
+        ],
+        "editor.defaultFormatter": "tamasfe.even-better-toml",
+        "editor.formatOnType": true,
+        "editor.formatOnSave": true
+    },
+
+    // ---------------------------------------------------------------------------------------------
+    // ### YAML
+    // ---------------------------------------------------------------------------------------------
+
+    // Language basic settings.
+    "[yaml]": {
+        "editor.rulers": [
+            {
+                "column": 100,
+                "color": "#ffffff22"
+            }
+        ],
+        "editor.defaultFormatter": "redhat.vscode-yaml",
+        "editor.formatOnType": true,
+        "editor.formatOnSave": true,
+        "editor.insertSpaces": true,
+        "editor.tabSize": 4
+    },
+
+    // YAML by Red Hat configuration.
+    "redhat.telemetry.enabled": false,
+
+    // ---------------------------------------------------------------------------------------------
+    // ### Markdown
+    // ---------------------------------------------------------------------------------------------
+
+    // Language basic settings.
+    "[markdown]": {
+        "editor.rulers": [
+            {
+                "column": 100,
+                "color": "#ffffff88"
+            }
+        ],
+        "editor.defaultFormatter": "yzhang.markdown-all-in-one",
+        "editor.formatOnType": true,
+        "editor.formatOnSave": true
+    },
+
+    // Enable Markdown math mode.
+    "markdown.extension.math.enabled": false,
+
+    // ---------------------------------------------------------------------------------------------
+    // ### Shell
+    // ---------------------------------------------------------------------------------------------
+
+    // Language basic settings.
+    "[shellscript]": {
+        "editor.rulers": [
+            {
+                "column": 100,
+                "color": "#ffffff88"
+            }
+        ],
+        "editor.formatOnType": true,
+        "editor.formatOnSave": true
+    },
+
+    // ---------------------------------------------------------------------------------------------
+    // ### Text
+    // ---------------------------------------------------------------------------------------------
+
+    // Language basic settings.
+    "[plaintext]": {
+        "editor.rulers": [
+            {
+                "column": 100,
+                "color": "#ffffff88"
+            }
+        ],
+        "editor.formatOnType": true,
+        "editor.formatOnSave": true
+    },
+
+    // ---------------------------------------------------------------------------------------------
+    // ### Lark
+    // ---------------------------------------------------------------------------------------------
+
+    // Language basic settings.
+    "[lark]": {
+        "editor.rulers": [
+            {
+                "column": 100,
+                "color": "#ffffff88"
+            }
+        ],
+        "editor.formatOnType": true,
+        "editor.formatOnSave": true
+    },
+
+    // ---------------------------------------------------------------------------------------------
+    // ## Programming Language Formatter
+    // ---------------------------------------------------------------------------------------------
+
+    // ---------------------------------------------------------------------------------------------
+    // ### Automatic Formatting Trigger
+    // ---------------------------------------------------------------------------------------------
+
+    // Auto formatting.
+    "editor.formatOnPaste": false,
+    "editor.formatOnType": true,
+    "editor.formatOnSave": true,
+
+    // ---------------------------------------------------------------------------------------------
+    // ### Black
+    // ---------------------------------------------------------------------------------------------
+
+    // Python interpreter.
+    "black-formatter.importStrategy": "fromEnvironment",
+
+    // ---------------------------------------------------------------------------------------------
+    // ### Prettier
+    // ---------------------------------------------------------------------------------------------
+
+    // White space.
+    "prettier.tabWidth": 4,
+
+    // ---------------------------------------------------------------------------------------------
+    // ## Interpreter Notebook
+    // ---------------------------------------------------------------------------------------------
+
+    // ---------------------------------------------------------------------------------------------
+    // ### Jupyter
+    // ---------------------------------------------------------------------------------------------
+
+    // Notebook layout.
+    "notebook.cellToolbarLocation": {
+        "default": "right",
+        "jupyter-notebook": "left"
+    },
+
+    // Loose warning restrictions.
+    "jupyter.askForKernelRestart": false,
+
+    // ---------------------------------------------------------------------------------------------
+    // ## Workspace Management
+    // ---------------------------------------------------------------------------------------------
+
+    // ---------------------------------------------------------------------------------------------
+    // ## Unclassified
+    // ---------------------------------------------------------------------------------------------
+
+    // Ignore Git warnings.
+    "git.ignoreMissingGitWarning": true,
+    "git.openRepositoryInParentFolders": "never",
+
+    // Interaction with background terminal.
+    "terminal.integrated.inheritEnv": false,
+
+    // Allow untrusted files to be opened.
+    "security.workspace.trust.untrustedFiles": "open",
+
+    // Screen record related settings.
+    "editor.accessibilitySupport": "off",
+
+    // Sync Settings extension.
+    "syncSettings.resources": [
+        "settings",
+        "extensions",
+        "uiState",
+        "keybindings",
+        "snippets"
+    ],
+
+    // Disable VSCode auto update.
+    "update.mode": "none"
+
+    // ---------------------------------------------------------------------------------------------
+    // ## Must End-With
+    // ---------------------------------------------------------------------------------------------
+}

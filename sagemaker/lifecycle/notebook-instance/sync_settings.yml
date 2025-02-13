@@ -9,8 +9,8 @@ repository:
     # repository's type, required (dummy: no sync)
     type: git
     # if on developement instance, use SSH (the first) instead of HTTPS (the second, default)
-    # url: git@github.com:gaotako/CodeServerSyncSettings.git
-    url: https://github.com/gaotako/CodeServerSyncSettings.git
+    url: git@github.com:gaotako/CodeServerSyncSettings.git
+    # url: https://github.com/gaotako/CodeServerSyncSettings.git
     branch: main
 # # how to run commands before and after events at https://github.com/zokugun/vscode-sync-settings/blob/master/docs/hooks.md
 # hooks:

@@ -107,6 +107,12 @@ cd ${CODE_SERVER_PACKAGE}/install-scripts/notebook-instances
 ./setup-codeserver.sh
 cd ${location}
 
+rm -f ${XDG_DATA_HOME}/code-server/User/settings.json
+rm -f ${XDG_DATA_HOME}/code-server/User/globalStorage/zokugun.sync-settings/settings.yml
+
+ln -s ${RC_ROOT}/sagemaker/lifecycle/notebook-instance/cs/settings.json ${XDG_DATA_HOME}/code-server/User/settings.json
+ln -s ${RC_ROOT}/sagemaker/lifecycle/notebook-instance/cs/sync_settings.yml ${XDG_DATA_HOME}/code-server/User/globalStorage/zokugun.sync-settings/settings.yml
+
 if [[ ! -f ${APP_BIN_HOME}/mise ]]; then
     curl https://mise.run | MISE_INSTALL_PATH=${APP_BIN_HOME}/mise sh
 fi

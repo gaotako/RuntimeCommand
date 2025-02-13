@@ -1,0 +1,6 @@
+hostname: ""
+profile: main
+repository:
+    type: git
+    url: https://github.com/gaotako/CodeServerSyncSettings.git
+    branch: main
