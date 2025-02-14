@@ -93,20 +93,22 @@ export CODE_SERVER_VERSION=0.2.0
 export CODE_SERVER_PACKAGE=${CODE_SERVER_ROOT}/amazon-sagemaker-codeserver
 export CODE_SERVER_APPLICATION=${APP_DATA_HOME}/cs
 
-case ${CISH} in
-*bash*)
-    eval "$(${APP_BIN_HOME}/mise activate bash)"
-    ;;
-*zsh*)
-    eval "$(${APP_BIN_HOME}/mise activate zsh)"
-    ;;
-*sh*)
-    eval "$(${APP_BIN_HOME}/mise activate bash)"
-    ;;
-*)
-    echo -e "Detect UNKNOWN Current Interactive Shell (CISH): \"${CISH}\", thus MISE is not activated."
-    ;;
-esac
+if [[ -z $(which mise) ]]; then
+    case ${CISH} in
+    *bash*)
+        eval "$(${APP_BIN_HOME}/mise activate bash)"
+        ;;
+    *zsh*)
+        eval "$(${APP_BIN_HOME}/mise activate zsh)"
+        ;;
+    *sh*)
+        eval "$(${APP_BIN_HOME}/mise activate bash)"
+        ;;
+    *)
+        echo -e "Detect UNKNOWN Current Interactive Shell (CISH): \"${CISH}\", thus MISE is not activated."
+        ;;
+    esac
+fi
 
 mise settings experimental=true
 mise use -g python@3.11 python@3.12
