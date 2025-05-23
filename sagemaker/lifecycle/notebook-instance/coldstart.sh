@@ -1,6 +1,9 @@
 set -eux
 
-CISH=$(ps -p $$ | tail -1 | awk "{print \$NF}")
+conda update -n base -c conda-forge conda -y
+conda update -c conda-forge conda -y
+
+export CISH=$(ps -p $$ | tail -1 | awk "{print \$NF}")
 
 export HOME=/home/ec2-user
 export SAGEMAKER=${HOME}/SageMaker
@@ -47,49 +50,83 @@ if [[ ! -d ${RC_ROOT} ]]; then
     git clone https://github.com/gaotako/RuntimeCommand.git ${RC_ROOT}
 fi
 
+export READ_GITHUB_RELEASE_METADATA="python ${SAGEMAKER}/RuntimeCommand/src/RuntimeCommand/sagemaker/lifecycle/notebook-instance/python/read_github_release_metadata.py" #!!!
+
 location=$(pwd)
 cd ${RC_ROOT}
 git pull
 cd ${location}
 
-export CODE_SERVER_ROOT=${SAGEMAKER}/CodeServer
-export CODE_SERVER_VERSION=0.2.0
-export CODE_SERVER_PYTHON_VERSION=3.11
-export CODE_SERVER_PACKAGE=${CODE_SERVER_ROOT}/amazon-sagemaker-codeserver
-export CODE_SERVER_APPLICATION=${APP_DATA_HOME}/cs
+export CODE_SERVER_SAGEMAKER_SETUP_ROOT=${SAGEMAKER}/CodeServerSageMakerSetup
+export CODE_SERVER_SAGEMAKER_SETUP_VERSION=
+if [[ -z ${CODE_SERVER_SAGEMAKER_SETUP_VERSION} ]]; then
+    export CODE_SERVER_SAGEMAKER_SETUP_VERSION=$(${READ_GITHUB_RELEASE_METADATA} "$(curl --silent https://api.github.com/repos/aws-samples/amazon-sagemaker-codeserver/releases/latest)" | grep tag_name | awk "{print \$2;}")
+fi
+export CODE_SERVER_SAGEMAKER_SETUP_VERSION=${CODE_SERVER_SAGEMAKER_SETUP_VERSION#v}
+export CODE_SERVER_SAGEMAKER_SETUP_PACKAGE=${CODE_SERVER_SAGEMAKER_SETUP_ROOT}/amazon-sagemaker-codeserver
 
-if [[ ! -d ${CODE_SERVER_PACKAGE} ]]; then
+if [[ ! -d ${CODE_SERVER_SAGEMAKER_SETUP_PACKAGE} ]]; then
     location=$(pwd)
-    mkdir -p ${CODE_SERVER_ROOT}
-    cd ${CODE_SERVER_ROOT}
+    mkdir -p ${CODE_SERVER_SAGEMAKER_SETUP_ROOT}
+    cd ${CODE_SERVER_SAGEMAKER_SETUP_ROOT}
 
-    FILENAME=amazon-sagemaker-codeserver-${CODE_SERVER_VERSION}.tar.gz
-    URL=https://github.com/aws-samples/amazon-sagemaker-codeserver/releases/download/v${CODE_SERVER_VERSION}/${FILENAME}
-    curl -LO ${URL}
-    tar -xvzf ${FILENAME}
-    rm -f ${FILENAME}
+    filename=amazon-sagemaker-codeserver-${CODE_SERVER_SAGEMAKER_SETUP_VERSION}.tar.gz
+    url=https://github.com/aws-samples/amazon-sagemaker-codeserver/releases/download/v${CODE_SERVER_SAGEMAKER_SETUP_VERSION}/${filename}
+    curl -LO ${url}
+    tar -xvzf ${filename}
+    rm -f ${filename}
 
-    cd ${CODE_SERVER_PACKAGE}/install-scripts/notebook-instances
+    cd ${CODE_SERVER_SAGEMAKER_SETUP_PACKAGE}/install-scripts/notebook-instances
     for filename in install-codeserver.sh setup-codeserver.sh uninstall-codeserver.sh; do
-        cp ${filename} ${filename}.backup
+        name=${filename%.*}
+        extension=${filename##*.}
+        cp ${filename} ${name}.backup.${extension}
     done
 
     cd ${location}
 fi
 
+export CODE_SERVER_VERSION=
+if [[ -z ${CODE_SERVER_VERSION} ]]; then
+    export CODE_SERVER_VERSION=$(${READ_GITHUB_RELEASE_METADATA} "$(curl --silent https://api.github.com/repos/coder/code-server/releases/latest)" | grep tag_name | awk "{print \$2;}")
+fi
+export CODE_SERVER_VERSION=${CODE_SERVER_VERSION#v}
+export CODE_SERVER_PYTHON_VERSION=3.11
+export CODE_SERVER_APPLICATION=${APP_DATA_HOME}/cs
+
 if [[ ! -d ${CODE_SERVER_APPLICATION} ]]; then
     location=$(pwd)
-    cd ${CODE_SERVER_PACKAGE}/install-scripts/notebook-instances
+    cd ${CODE_SERVER_SAGEMAKER_SETUP_PACKAGE}/install-scripts/notebook-instances
 
     for filename in install-codeserver.sh setup-codeserver.sh uninstall-codeserver.sh; do
-        cat ${filename}.backup > ${filename}
+        name=${filename%.*}
+        extension=${filename##*.}
+        cat ${name}.backup.${extension} > ${filename}
+        
+        sed -i -e "s/^export XDG_DATA_HOME=\\\$XDG_DATA_HOME\$/#export XDG_DATA_HOME=\$XDG_DATA_HOME/g" ${filename}
+        sed -i -e "s/^export XDG_CONFIG_HOME=\\\$XDG_CONFIG_HOME\$/#export XDG_CONFIG_HOME=\$XDG_CONFIG_HOME/g" ${filename}
+
+        grep -q -F -x "CODE_SERVER_INSTALL_LOC=\"/home/ec2-user/SageMaker/.cs\"" ${filename} || ( echo "CODE_SERVER_INSTALL_LOC template not match!" && exit 1 )
+        grep -q -F -x "XDG_DATA_HOME=\"/home/ec2-user/SageMaker/.xdg/data\"" ${filename} || ( echo "XDG_DATA_HOME template not match!" && exit 1 )
+        grep -q -F -x "XDG_CONFIG_HOME=\"/home/ec2-user/SageMaker/.xdg/config\"" ${filename} || ( echo "XDG_CONFIG_HOME template not match!" && exit 1 )
+        grep -q -F -x "CONDA_ENV_LOCATION='/home/ec2-user/SageMaker/.cs/conda/envs/codeserver_py39'" ${filename} || ( echo "CONDA_ENV_LOCATION template not match!" && exit 1 )
+
         sed -i -e "s/^CODE_SERVER_INSTALL_LOC=\"\/home\/ec2-user\/SageMaker\/.cs\"\$/CODE_SERVER_INSTALL_LOC=\"${CODE_SERVER_APPLICATION//\//\\/}\"/g" ${filename}
         sed -i -e "s/^XDG_DATA_HOME=\"\/home\/ec2-user\/SageMaker\/\.xdg\/data\"\$/XDG_DATA_HOME=\"${XDG_DATA_HOME//\//\\/}\"/g" ${filename}
         sed -i -e "s/^XDG_CONFIG_HOME=\"\/home\/ec2-user\/SageMaker\/\.xdg\/config\"\$/XDG_CONFIG_HOME=\"${XDG_CONFIG_HOME//\//\\/}\"/g" ${filename}
         sed -i -e "s/^CONDA_ENV_LOCATION='\/home\/ec2-user\/SageMaker\/\.cs\/conda\/envs\/codeserver_py39'\$/CONDA_ENV_LOCATION='${CODE_SERVER_APPLICATION//\//\\/}\/conda\/envs\/cs'/g" ${filename}
-        sed -i -e "s/^CONDA_ENV_PYTHON_VERSION=\"3\.9\"\$/CONDA_ENV_PYTHON_VERSION=\"${CODE_SERVER_PYTHON_VERSION}\"/g" ${filename}
-        sed -i -e "s/^export XDG_DATA_HOME=\\\$XDG_DATA_HOME\$/#export XDG_DATA_HOME=\$XDG_DATA_HOME/g" ${filename}
-        sed -i -e "s/^export XDG_CONFIG_HOME=\\\$XDG_CONFIG_HOME\$/#export XDG_CONFIG_HOME=\$XDG_CONFIG_HOME/g" ${filename}
+
+        if [[ ${filename} != uninstall-codeserver.sh ]]; then
+            grep -q -F -x "CODE_SERVER_VERSION=\"4.16.1\"" ${filename} || ( echo "CODE_SERVER_VERSION template not match!" && exit 1 )
+            
+            sed -i -e "s/^CODE_SERVER_VERSION=\"4\.16\.1\"\$/CODE_SERVER_VERSION=\"${CODE_SERVER_VERSION}\"/g" ${filename}
+        fi
+
+        if [[ ${filename} == install-codeserver.sh ]]; then
+            grep -q -F -x "CONDA_ENV_PYTHON_VERSION=\"3.9\"" ${filename} || ( echo "CONDA_ENV_PYTHON_VERSION template not match!" && exit 1 )
+            
+            sed -i -e "s/^CONDA_ENV_PYTHON_VERSION=\"3\.9\"\$/CONDA_ENV_PYTHON_VERSION=\"${CODE_SERVER_PYTHON_VERSION}\"/g" ${filename}
+        fi
     done
 
     chmod +x install-codeserver.sh
@@ -125,7 +162,7 @@ case ${CISH} in
     ;;
 esac
 
-mise install python@3.11 python@3.12
+mise install python@3.12 python@3.11 python@3.10 python@3.9
 
 ln -s ${RC_ROOT}/unix/rc.sh ${SAGEMAKER}/rc.sh
 case ${CISH} in

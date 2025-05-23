@@ -1,13 +1,12 @@
 import json
 import sys
 from typing import Mapping, TextIO
-from pathlib import Path
 
 
-PATH_RESOURCR_METADATA = Path("/opt/ml/metadata/resource-metadata.json")
+PATH_RESOURCR_METADATA = "/opt/ml/metadata/resource-metadata.json"
 
 
-def read_resource_metadata(path: Path | None = None) -> Mapping[str, str]:
+def read_resource_metadata(path: str | None = None) -> Mapping[str, str]:
     r"""
     Read resource metadata.
 
@@ -26,8 +25,9 @@ def read_resource_metadata(path: Path | None = None) -> Mapping[str, str]:
     -----
     Resource metadata only has ARN and name, and we further extract metadata item from ARN.
     """
-    if PATH_RESOURCR_METADATA.exists():
-        with open(PATH_RESOURCR_METADATA, "r") as file:
+    path = path if path is not None else PATH_RESOURCR_METADATA
+    if path.exists():
+        with open(path, "r") as file:
             resource_metadata = json.load(file)
         arn = str(resource_metadata["ResourceArn"])
         resource_name = str(resource_metadata["ResourceName"])
@@ -66,19 +66,21 @@ def show_resource_metadata(
         It must be a single ASCII character, if violated, it will only take the first ASCII
         character from the string.
         By default, whitespace is used.
+    - output
+        Output direction.
 
     Returns
     -------
     (No-Returns)
     """
     sep_unit_ascii_code = ord(sep_unit[0]) if sep_unit else ord(" ")
-    sep_unit_ = chr(sep_unit_ascii_code) if sep_unit_ascii_code else " "
-    output_ = output if output else sys.stdout
+    sep_unit = chr(sep_unit_ascii_code) if sep_unit_ascii_code is not None else " "
+    output = output if output is not None else sys.stdout
     maxlen_key = max(len(key) for key in resource_metadata)
     for key, value in resource_metadata.items():
-        line = key + sep_unit_ * (maxlen_key - len(key) + 1) + value
-        print(line)
+        line = key + sep_unit * (maxlen_key - len(key) + 1) + value
+        print(line, file=output)
 
 
 if __name__ == "__main__":
-    show_resource_metadata(read_resource_metadata())
+    show_resource_metadata(read_resource_metadata(sys.argv[1] if len(sys.argv) > 1 else None))
