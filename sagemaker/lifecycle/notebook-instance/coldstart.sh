@@ -1,7 +1,6 @@
 set -eux
 
-conda update -n base -c conda-forge conda -y
-conda update -c conda-forge conda -y
+conda update -n base -c anaconda conda -y
 
 export CISH=$(ps -p $$ | tail -1 | awk "{print \$NF}")
 
@@ -86,7 +85,7 @@ if [[ ! -d ${CODE_SERVER_SAGEMAKER_SETUP_PACKAGE} ]]; then
     cd ${location}
 fi
 
-export CODE_SERVER_VERSION=
+export CODE_SERVER_VERSION=4.16.1 # Due to glibc == 2.26 on AL2 (starting from 4.17.0 requires glibc >= 2.28)
 if [[ -z ${CODE_SERVER_VERSION} ]]; then
     export CODE_SERVER_VERSION=$(${READ_GITHUB_RELEASE_METADATA} "$(curl --silent https://api.github.com/repos/coder/code-server/releases/latest)" | grep tag_name | awk "{print \$2;}")
 fi
@@ -140,7 +139,7 @@ if [[ ! -d ${CODE_SERVER_APPLICATION} ]]; then
 fi
 
 location=$(pwd)
-cd ${CODE_SERVER_PACKAGE}/install-scripts/notebook-instances
+cd ${CODE_SERVER_SAGEMAKER_SETUP_PACKAGE}/install-scripts/notebook-instances
 ./setup-codeserver.sh
 cd ${location}
 

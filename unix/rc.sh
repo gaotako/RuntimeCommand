@@ -87,6 +87,9 @@ if [[ ! -f ${SSH_HOME}/id_rsa ]]; then
 fi
 
 export RC_ROOT=${SAGEMAKER}/RuntimeCommandReadOnly
+if [[ -d ${SAGEMAKER}/RuntimeCommand/src/RuntimeCommand ]]; then
+    export RC_ROOT=${SAGEMAKER}/RuntimeCommand/src/RuntimeCommand
+fi
 
 export CODE_SERVER_ROOT=${SAGEMAKER}/CodeServer
 export CODE_SERVER_VERSION=0.2.0
@@ -111,4 +114,4 @@ if [[ -z $(which mise) ]]; then
 fi
 
 mise settings experimental=true
-mise use -g python@3.11 python@3.12
+mise use -g python@3.11 python@3.10 python@3.12 python@3.9

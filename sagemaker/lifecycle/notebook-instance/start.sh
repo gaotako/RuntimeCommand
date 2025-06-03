@@ -20,6 +20,9 @@ rm -rf ${HOME}/.ssh
 ln -s ${SSH_HOME} ${HOME}/.ssh
 
 export RC_ROOT=${SAGEMAKER}/RuntimeCommandReadOnly
+if [[ -d ${SAGEMAKER}/RuntimeCommand ]]; then
+    export RC_ROOT=${SAGEMAKER}/RuntimeCommand/src/RuntimeCommand
+fi
 
 location=$(pwd)
 cd ${RC_ROOT}
