@@ -1,15 +1,18 @@
 set -eux
 
-conda update -n base -c anaconda conda -y
-
 export CISH=$(ps -p $$ | tail -1 | awk "{print \$NF}")
 
-export HOME=/home/ec2-user
-export SAGEMAKER=${HOME}/SageMaker
+if [[ -f /opt/ml/metadata/resource-metadata.json ]]; then
+    export HOME=/home/ec2-user
+    export WORKSPACE=${HOME}/SageMaker
+else
+    echo -e "Can not coldstart SageMaker setup on Non-SageMaker instance."
+    exit 1
+fi
 
-rm -f ${SAGEMAKER}/rc.sh
+rm -f ${WORKSPACE}/rc.sh
 
-export XDG_ROOT=${SAGEMAKER}/CrossDesktopGroup
+export XDG_ROOT=${WORKSPACE}/CrossDesktopGroup
 export XDG_CONFIG_HOME=${XDG_ROOT}/config
 export XDG_CACHE_HOME=${XDG_ROOT}/cache
 export XDG_DATA_HOME=${XDG_ROOT}/local/share
@@ -25,7 +28,7 @@ mkdir -p ${XDG_CACHE_HOME}
 mkdir -p ${XDG_DATA_HOME}
 mkdir -p ${XDG_STATE_HOME}
 
-export APP_ROOT=${SAGEMAKER}/Application
+export APP_ROOT=${WORKSPACE}/Application
 export APP_DATA_HOME=${APP_ROOT}/data
 export APP_BIN_HOME=${APP_ROOT}/bin
 
@@ -43,20 +46,22 @@ if [[ $(readlink -f ${HOME}/.ssh) != ${SSH_HOME} ]]; then
     ln -s ${SSH_HOME} ${HOME}/.ssh
 fi
 
-export RC_ROOT=${SAGEMAKER}/RuntimeCommandReadOnly
+export RC_ROOT=${WORKSPACE}/RuntimeCommandReadOnly
 
 if [[ ! -d ${RC_ROOT} ]]; then
     git clone https://github.com/gaotako/RuntimeCommand.git ${RC_ROOT}
 fi
 
-export READ_GITHUB_RELEASE_METADATA="python ${SAGEMAKER}/RuntimeCommand/src/RuntimeCommand/sagemaker/lifecycle/notebook-instance/python/read_github_release_metadata.py" #!!!
+export READ_GITHUB_RELEASE_METADATA="python ${WORKSPACE}/RuntimeCommand/src/RuntimeCommand/sagemaker/lifecycle/notebook-instance/python/read_github_release_metadata.py" #!!!
 
 location=$(pwd)
 cd ${RC_ROOT}
 git pull
 cd ${location}
 
-export CODE_SERVER_SAGEMAKER_SETUP_ROOT=${SAGEMAKER}/CodeServerSageMakerSetup
+conda update -n base -c anaconda conda -y
+
+export CODE_SERVER_SAGEMAKER_SETUP_ROOT=${WORKSPACE}/CodeServerSageMakerSetup
 export CODE_SERVER_SAGEMAKER_SETUP_VERSION=
 if [[ -z ${CODE_SERVER_SAGEMAKER_SETUP_VERSION} ]]; then
     export CODE_SERVER_SAGEMAKER_SETUP_VERSION=$(${READ_GITHUB_RELEASE_METADATA} "$(curl --silent https://api.github.com/repos/aws-samples/amazon-sagemaker-codeserver/releases/latest)" | grep tag_name | awk "{print \$2;}")
@@ -85,7 +90,7 @@ if [[ ! -d ${CODE_SERVER_SAGEMAKER_SETUP_PACKAGE} ]]; then
     cd ${location}
 fi
 
-export CODE_SERVER_VERSION=4.16.1 # Due to glibc == 2.26 on AL2 (starting from 4.17.0 requires glibc >= 2.28)
+export CODE_SERVER_VERSION=4.16.1 # Due to glibc == 2.26 on AL2 (starting from 4.17.0 requires glibc >= 2.28) which is fixed for SageMaker
 if [[ -z ${CODE_SERVER_VERSION} ]]; then
     export CODE_SERVER_VERSION=$(${READ_GITHUB_RELEASE_METADATA} "$(curl --silent https://api.github.com/repos/coder/code-server/releases/latest)" | grep tag_name | awk "{print \$2;}")
 fi
@@ -158,27 +163,28 @@ case ${CISH} in
     ;;
 *)
     echo -e "Detect UNKNOWN Current Interactive Shell (CISH): \"${CISH}\", thus MISE is not activated."
+    exit 1
     ;;
 esac
 
 mise install python@3.12 python@3.11 python@3.10 python@3.9
 
-ln -s ${RC_ROOT}/unix/rc.sh ${SAGEMAKER}/rc.sh
+ln -s ${RC_ROOT}/unix/rc.sh ${WORKSPACE}/rc.sh
 case ${CISH} in
 *bash*)
     rm -f ${HOME}/.profile ${HOME}/.bashrc
-    ln -s ${SAGEMAKER}/rc.sh ${HOME}/.profile
-    ln -s ${SAGEMAKER}/rc.sh ${HOME}/.bashrc
+    ln -s ${WORKSPACE}/rc.sh ${HOME}/.profile
+    ln -s ${WORKSPACE}/rc.sh ${HOME}/.bashrc
     ;;
 *zsh*)
     rm -f ${HOME}/.profile ${HOME}/.zshrc
-    ln -s ${SAGEMAKER}/rc.sh ${HOME}/.profile
-    ln -s ${SAGEMAKER}/rc.sh ${HOME}/.zshrc
+    ln -s ${WORKSPACE}/rc.sh ${HOME}/.profile
+    ln -s ${WORKSPACE}/rc.sh ${HOME}/.zshrc
     ;;
 *sh*)
     rm -f ${HOME}/.profile ${HOME}/.bashrc
-    ln -s ${SAGEMAKER}/rc.sh ${HOME}/.profile
-    ln -s ${SAGEMAKER}/rc.sh ${HOME}/.bashrc
+    ln -s ${WORKSPACE}/rc.sh ${HOME}/.profile
+    ln -s ${WORKSPACE}/rc.sh ${HOME}/.bashrc
     ;;
 *)
     echo -e "Detect UNKNOWN Current Interactive Shell (CISH): \"${CISH}\", thus Runtime Command is not registered."

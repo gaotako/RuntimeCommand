@@ -1,5 +1,10 @@
 CISH=$(ps -p $$ | tail -1 | awk "{print \$NF}")
 
+if [[ -z ${HOME} || -z ${WORKSPACE} ]]; then
+    echo -e "UNIX system must have HOME and WORKSPACE claimed before execute runtime command."
+    exit 1
+fi
+
 if [[ -n $(which tmux) && -n ${TMUX} ]]; then
     WISHID=$(tmux display-message -p "#S/#I" 2>/dev/null)
 else
@@ -64,16 +69,13 @@ case ${CISH} in
     ;;
 esac
 
-export HOME=/home/ec2-user
-export SAGEMAKER=${HOME}/SageMaker
-
-export XDG_ROOT=${SAGEMAKER}/CrossDesktopGroup
+export XDG_ROOT=${WORKSPACE}/CrossDesktopGroup
 export XDG_CONFIG_HOME=${XDG_ROOT}/config
 export XDG_CACHE_HOME=${XDG_ROOT}/cache
 export XDG_DATA_HOME=${XDG_ROOT}/local/share
 export XDG_STATE_HOME=${XDG_ROOT}/local/state
 
-export APP_ROOT=${SAGEMAKER}/Application
+export APP_ROOT=${WORKSPACE}/Application
 export APP_DATA_HOME=${APP_ROOT}/data
 export APP_BIN_HOME=${APP_ROOT}/bin
 
@@ -86,15 +88,10 @@ if [[ ! -f ${SSH_HOME}/id_rsa ]]; then
     ssh-kgq
 fi
 
-export RC_ROOT=${SAGEMAKER}/RuntimeCommandReadOnly
-if [[ -d ${SAGEMAKER}/RuntimeCommand/src/RuntimeCommand ]]; then
-    export RC_ROOT=${SAGEMAKER}/RuntimeCommand/src/RuntimeCommand
+export RC_ROOT=${WORKSPACE}/RuntimeCommandReadOnly
+if [[ -d ${WORKSPACE}/RuntimeCommand/src/RuntimeCommand ]]; then
+    export RC_ROOT=${WORKSPACE}/RuntimeCommand/src/RuntimeCommand
 fi
-
-export CODE_SERVER_ROOT=${SAGEMAKER}/CodeServer
-export CODE_SERVER_VERSION=0.2.0
-export CODE_SERVER_PACKAGE=${CODE_SERVER_ROOT}/amazon-sagemaker-codeserver
-export CODE_SERVER_APPLICATION=${APP_DATA_HOME}/cs
 
 if [[ -z $(which mise) ]]; then
     case ${CISH} in
@@ -109,9 +106,10 @@ if [[ -z $(which mise) ]]; then
         ;;
     *)
         echo -e "Detect UNKNOWN Current Interactive Shell (CISH): \"${CISH}\", thus MISE is not activated."
+        exit 1
         ;;
     esac
-fi
 
-mise settings experimental=true
-mise use -g python@3.11 python@3.10 python@3.12 python@3.9
+    mise settings experimental=true
+    mise use -g python@3.11 python@3.10 python@3.12 python@3.9
+fi
