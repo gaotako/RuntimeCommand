@@ -110,6 +110,10 @@ if [[ -z $(which mise) ]]; then
         ;;
     esac
 
-    mise settings experimental=true
-    mise use -g python@3.11 python@3.10 python@3.12 python@3.9
 fi
+
+mise settings experimental=true 2> /dev/null
+if [[ $? -gt 0 ]]; then
+    echo -e "mise of installed version does not have experimental option."
+fi
+mise use -g python@3.11 python@3.10 python@3.12 python@3.9
