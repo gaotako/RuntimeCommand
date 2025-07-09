@@ -99,6 +99,39 @@ for rcfile in bashrc zshrc; do
     fi
 done
 
+if [[ ! -f ${APP_BIN_HOME}/mise ]]; then
+    curl https://mise.run | MISE_INSTALL_PATH=${APP_BIN_HOME}/mise sh
+fi
+case ${CISH} in
+*bash*)
+    eval "$(${APP_BIN_HOME}/mise activate bash)"
+    ;;
+*zsh*)
+    eval "$(${APP_BIN_HOME}/mise activate zsh)"
+    ;;
+*sh*)
+    eval "$(${APP_BIN_HOME}/mise activate bash)"
+    ;;
+*)
+    echo -e "Detect UNKNOWN Current Interactive Shell (CISH): \"${CISH}\", thus MISE is not activated."
+    exit 1
+    ;;
+esac
+if [[ -f ${HOME}/.config/mise/config.toml ]]; then
+    mv ${HOME}/.config/mise/config.toml ${XDG_CONFIG_HOME}/mise/config.toml
+fi
+for module_alt in node python; do
+    if [[ -d ${HOME}/.local/share/mise/installs/${module_alt} ]]; then
+        rm -rf ${XDG_DATA_HOME}/mise/installs/${module_alt}
+        mkdir -p ${XDG_DATA_HOME}/mise/installs/${module_alt}
+        for version in `ls ${HOME}/.local/share/mise/installs/${module_alt}`; do
+            ln -s ${HOME}/.local/share/mise/installs/${module_alt}/${version} ${XDG_DATA_HOME}/mise/installs/${module_alt}/${version}
+        done
+    fi
+done
+mise settings experimental=true
+mise use -g node@18.20 python@3.12 python@3.11 python@3.10 python@3.9
+
 case ${CISH} in
 *bash*)
     rcfile=${HOME}/.bashrc
