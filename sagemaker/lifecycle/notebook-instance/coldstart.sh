@@ -7,7 +7,7 @@ if [[ -f /opt/ml/metadata/resource-metadata.json ]]; then
     export WORKSPACE=${HOME}/SageMaker
 else
     echo -e "Can not coldstart SageMaker setup on Non-SageMaker instance."
-    exit 1
+    return 1
 fi
 
 rm -f ${WORKSPACE}/rc.sh
@@ -105,15 +105,15 @@ if [[ ! -d ${CODE_SERVER_APPLICATION} ]]; then
     for filename in install-codeserver.sh setup-codeserver.sh uninstall-codeserver.sh; do
         name=${filename%.*}
         extension=${filename##*.}
-        cat ${name}.backup.${extension} > ${filename}
-        
+        cat ${name}.backup.${extension} >${filename}
+
         sed -i -e "s/^export XDG_DATA_HOME=\\\$XDG_DATA_HOME\$/#export XDG_DATA_HOME=\$XDG_DATA_HOME/g" ${filename}
         sed -i -e "s/^export XDG_CONFIG_HOME=\\\$XDG_CONFIG_HOME\$/#export XDG_CONFIG_HOME=\$XDG_CONFIG_HOME/g" ${filename}
 
-        grep -q -F -x "CODE_SERVER_INSTALL_LOC=\"/home/ec2-user/SageMaker/.cs\"" ${filename} || ( echo "CODE_SERVER_INSTALL_LOC template not match!" && exit 1 )
-        grep -q -F -x "XDG_DATA_HOME=\"/home/ec2-user/SageMaker/.xdg/data\"" ${filename} || ( echo "XDG_DATA_HOME template not match!" && exit 1 )
-        grep -q -F -x "XDG_CONFIG_HOME=\"/home/ec2-user/SageMaker/.xdg/config\"" ${filename} || ( echo "XDG_CONFIG_HOME template not match!" && exit 1 )
-        grep -q -F -x "CONDA_ENV_LOCATION='/home/ec2-user/SageMaker/.cs/conda/envs/codeserver_py39'" ${filename} || ( echo "CONDA_ENV_LOCATION template not match!" && exit 1 )
+        grep -q -F -x "CODE_SERVER_INSTALL_LOC=\"/home/ec2-user/SageMaker/.cs\"" ${filename} || (echo "CODE_SERVER_INSTALL_LOC template not match!" && exit 1)
+        grep -q -F -x "XDG_DATA_HOME=\"/home/ec2-user/SageMaker/.xdg/data\"" ${filename} || (echo "XDG_DATA_HOME template not match!" && exit 1)
+        grep -q -F -x "XDG_CONFIG_HOME=\"/home/ec2-user/SageMaker/.xdg/config\"" ${filename} || (echo "XDG_CONFIG_HOME template not match!" && exit 1)
+        grep -q -F -x "CONDA_ENV_LOCATION='/home/ec2-user/SageMaker/.cs/conda/envs/codeserver_py39'" ${filename} || (echo "CONDA_ENV_LOCATION template not match!" && exit 1)
 
         sed -i -e "s/^CODE_SERVER_INSTALL_LOC=\"\/home\/ec2-user\/SageMaker\/.cs\"\$/CODE_SERVER_INSTALL_LOC=\"${CODE_SERVER_APPLICATION//\//\\/}\"/g" ${filename}
         sed -i -e "s/^XDG_DATA_HOME=\"\/home\/ec2-user\/SageMaker\/\.xdg\/data\"\$/XDG_DATA_HOME=\"${XDG_DATA_HOME//\//\\/}\"/g" ${filename}
@@ -121,14 +121,14 @@ if [[ ! -d ${CODE_SERVER_APPLICATION} ]]; then
         sed -i -e "s/^CONDA_ENV_LOCATION='\/home\/ec2-user\/SageMaker\/\.cs\/conda\/envs\/codeserver_py39'\$/CONDA_ENV_LOCATION='${CODE_SERVER_APPLICATION//\//\\/}\/conda\/envs\/cs'/g" ${filename}
 
         if [[ ${filename} != uninstall-codeserver.sh ]]; then
-            grep -q -F -x "CODE_SERVER_VERSION=\"4.16.1\"" ${filename} || ( echo "CODE_SERVER_VERSION template not match!" && exit 1 )
-            
+            grep -q -F -x "CODE_SERVER_VERSION=\"4.16.1\"" ${filename} || (echo "CODE_SERVER_VERSION template not match!" && exit 1)
+
             sed -i -e "s/^CODE_SERVER_VERSION=\"4\.16\.1\"\$/CODE_SERVER_VERSION=\"${CODE_SERVER_VERSION}\"/g" ${filename}
         fi
 
         if [[ ${filename} == install-codeserver.sh ]]; then
-            grep -q -F -x "CONDA_ENV_PYTHON_VERSION=\"3.9\"" ${filename} || ( echo "CONDA_ENV_PYTHON_VERSION template not match!" && exit 1 )
-            
+            grep -q -F -x "CONDA_ENV_PYTHON_VERSION=\"3.9\"" ${filename} || (echo "CONDA_ENV_PYTHON_VERSION template not match!" && exit 1)
+
             sed -i -e "s/^CONDA_ENV_PYTHON_VERSION=\"3\.9\"\$/CONDA_ENV_PYTHON_VERSION=\"${CODE_SERVER_PYTHON_VERSION}\"/g" ${filename}
         fi
     done
