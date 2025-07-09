@@ -55,7 +55,7 @@ if [[ -n $(which toolbox) ]]; then
     fi
 fi
 
-if [[ -n $(which brew) ]]; then
+if [[ $(uname) == Darwin && -n $(which brew) ]]; then
     add_homebrew="eval \"\$(/opt/homebrew/bin/brew shellenv)\""
     if ! grep "^${add_homebrew}\$" ${rcfile}; then
         warning "homebrew path is not included"
