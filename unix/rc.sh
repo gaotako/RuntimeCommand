@@ -1,3 +1,5 @@
+cish=$(ps -o comm -p $$ | tail -1 | awk "{print \$NF}")
+
 export PSC_ASCII_RESET=$'\e[0m'
 export PSC_ASCII_RED=$'\e[31m'
 export PSC_ASCII_GREEN=$'\e[32m'
@@ -13,8 +15,6 @@ export PSC_ASCII_BRIGHT_CYAN=$'\e[95m'
 export PSC_ASCII_BRIGHT_MAGENTA=$'\e[96m'
 export PSC_ASCII_NEWLINE=$'\n'
 echo -e "${PSC_ASCII_RESET}" >/dev/null
-
-export CISH=$(ps -o comm -p $$ | tail -1 | awk "{print \$NF}")
 
 error() {
     echo -e "${PSC_ASCII_BRIGHT_RED}${1}${PSC_ASCII_RESET}"
@@ -100,7 +100,7 @@ done
 if [[ ! -f ${APP_BIN_HOME}/mise ]]; then
     curl https://mise.run | MISE_INSTALL_PATH=${APP_BIN_HOME}/mise sh
 fi
-case ${CISH} in
+case ${cish} in
 *bash*)
     eval "$(${APP_BIN_HOME}/mise activate bash)"
     ;;
@@ -112,9 +112,10 @@ case ${CISH} in
     ;;
 *)
     echo -e "Detect UNKNOWN Current Interactive Shell (CISH): \"${CISH}\", thus MISE is not activated."
-    exit 1
+    return 1
     ;;
 esac
+
 if [[ -f ${HOME}/.config/mise/config.toml ]]; then
     mv ${HOME}/.config/mise/config.toml ${XDG_CONFIG_HOME}/mise/config.toml
 fi
@@ -131,50 +132,50 @@ mise settings experimental=true
 mise use -g node@18.20 python@3.12 python@3.11 python@3.10 python@3.9
 
 if [[ -n $(which tmux) && -n ${TMUX} ]]; then
-    WISHID=$(tmux display-message -p "#S/#I" 2>/dev/null)
+    wishid=$(tmux display-message -p "#S/#I" 2>/dev/null)
 else
-    WISHID=""
+    wishid=""
 fi
 
-case ${CISH} in
+case ${cish} in
 *bash*)
     shopt -s promptvars
-    echo -e "Detect Current Interactive Shell (CISH): \"${PSC_ASCII_BRIGHT_RED}${CISH}${PSC_ASCII_RESET}\" (bash)."
+    echo -e "Detect Current Interactive Shell (CISH): \"${PSC_ASCII_BRIGHT_RED}${cish}${PSC_ASCII_RESET}\" (bash)."
     CLI_HEADER=
     CLI_HEADER="${CLI_HEADER}#${PSC_ASCII_CYAN}\#${PSC_ASCII_RESET}"
     CLI_HEADER="${CLI_HEADER} ${PSC_ASCII_BRIGHT_GREEN}\u${PSC_ASCII_RESET}"
     CLI_HEADER="${CLI_HEADER}@${PSC_ASCII_BRIGHT_BLUE}\h${PSC_ASCII_RESET}"
-    CLI_HEADER="${CLI_HEADER}[${PSC_ASCII_BRIGHT_MAGENTA}${WISHID}${PSC_ASCII_RESET}]"
+    CLI_HEADER="${CLI_HEADER}[${PSC_ASCII_BRIGHT_MAGENTA}${wishid}${PSC_ASCII_RESET}]"
     CLI_HEADER="${CLI_HEADER}:${PSC_ASCII_YELLOW}\w${PSC_ASCII_RESET}"
     CLI_HEADER="${CLI_HEADER}|${PSC_ASCII_BRIGHT_YELLOW}\W${PSC_ASCII_RESET}"
     export PS1="${PSC_ASCII_NEWLINE}${PSC_ASCII_RESET}${CLI_HEADER}${PSC_ASCII_RESET}${PSC_ASCII_NEWLINE}$ "
     ;;
 *zsh*)
-    echo -e "Detect Current Interactive Shell (CISH): \"${PSC_ASCII_BRIGHT_RED}${CISH}${PSC_ASCII_RESET}\" (zsh)."
+    echo -e "Detect Current Interactive Shell (CISH): \"${PSC_ASCII_BRIGHT_RED}${cish}${PSC_ASCII_RESET}\" (zsh)."
     CLI_HEADER=
     CLI_HEADER="${CLI_HEADER}#${PSC_ASCII_CYAN}%h${PSC_ASCII_RESET}"
     CLI_HEADER="${CLI_HEADER} ${PSC_ASCII_BRIGHT_GREEN}%n${PSC_ASCII_RESET}"
     CLI_HEADER="${CLI_HEADER}@${PSC_ASCII_BRIGHT_BLUE}%m${PSC_ASCII_RESET}"
-    CLI_HEADER="${CLI_HEADER}[${PSC_ASCII_BRIGHT_MAGENTA}${WISHID}${PSC_ASCII_RESET}]"
+    CLI_HEADER="${CLI_HEADER}[${PSC_ASCII_BRIGHT_MAGENTA}${wishid}${PSC_ASCII_RESET}]"
     CLI_HEADER="${CLI_HEADER}:${PSC_ASCII_YELLOW}%~${PSC_ASCII_RESET}"
     CLI_HEADER="${CLI_HEADER}|${PSC_ASCII_BRIGHT_YELLOW}%c${PSC_ASCII_RESET}"
     export PS1="${PSC_ASCII_NEWLINE}${PSC_ASCII_RESET}${CLI_HEADER}${PSC_ASCII_RESET}${PSC_ASCII_NEWLINE}$ "
     ;;
 *sh*)
     shopt -s promptvars
-    echo -e "Detect Current Interactive Shell (CISH): \"${PSC_ASCII_BRIGHT_RED}${CISH}${PSC_ASCII_RESET}\" (~bash)."
+    echo -e "Detect Current Interactive Shell (CISH): \"${PSC_ASCII_BRIGHT_RED}${cish}${PSC_ASCII_RESET}\" (~bash)."
     CLI_HEADER=
     CLI_HEADER="${CLI_HEADER}#${PSC_ASCII_CYAN}\#${PSC_ASCII_RESET}"
     CLI_HEADER="${CLI_HEADER} ${PSC_ASCII_BRIGHT_GREEN}\u${PSC_ASCII_RESET}"
     CLI_HEADER="${CLI_HEADER}@${PSC_ASCII_BRIGHT_BLUE}\h${PSC_ASCII_RESET}"
-    CLI_HEADER="${CLI_HEADER}[${PSC_ASCII_BRIGHT_MAGENTA}${WISHID}${PSC_ASCII_RESET}]"
+    CLI_HEADER="${CLI_HEADER}[${PSC_ASCII_BRIGHT_MAGENTA}${wishid}${PSC_ASCII_RESET}]"
     CLI_HEADER="${CLI_HEADER}:${PSC_ASCII_YELLOW}\w${PSC_ASCII_RESET}"
     CLI_HEADER="${CLI_HEADER}|${PSC_ASCII_BRIGHT_YELLOW}\W${PSC_ASCII_RESET}"
     export PS1="${PSC_ASCII_NEWLINE}${PSC_ASCII_RESET}${CLI_HEADER}${PSC_ASCII_RESET}${PSC_ASCII_NEWLINE}$ "
     ;;
 *)
-    echo -e "Detect UNKNOWN Current Interactive Shell (CISH): \"${CISH}\", thus adopt UNFORMATTED header."
-    CLI_HEADER="#\# \u@\h[${WISHID}]:\w|\W"
+    echo -e "Detect UNKNOWN Current Interactive Shell (CISH): \"${cish}\", thus adopt UNFORMATTED header."
+    CLI_HEADER="#\# \u@\h[${wishid}]:\w|\W"
     export PS1="${PSC_ASCII_NEWLINE}${CLI_HEADER}${PSC_ASCII_NEWLINE}$ "
     ;;
 esac
