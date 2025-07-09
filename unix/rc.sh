@@ -53,7 +53,7 @@ export APP_BIN_HOME=${APP_ROOT}/bin
 [[ -d ${APP_DATA_HOME} ]] || mkdir -p ${APP_DATA_HOME}
 [[ -d ${APP_BIN_HOME} ]] || mkdir -p ${APP_BIN_HOME}
 
-export SSH_HOME=${XDG_ROOT}/ssh
+export SSH_HOME=${WORKSPACE}/RuntimeCommand/ssh
 
 mkdir -p ${SSH_HOME}
 if [[ ! -L ${HOME}/.ssh || $(readlink -f ${HOME}/.ssh) != ${SSH_HOME} ]]; then
