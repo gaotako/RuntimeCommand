@@ -1,4 +1,4 @@
-cish=$(ps -o comm -p $$ | tail -1 | awk "{print \$NF}")
+cish=$(ps -o comm -p $$ | tail -1 | cut -d " " -f 1)
 
 export PSC_ASCII_RESET=$'\e[0m'
 export PSC_ASCII_RED=$'\e[31m'

@@ -1,4 +1,4 @@
-cish=$(ps -o comm -p $$ | tail -1 | awk "{print \$NF}")
+cish=$(ps -o comm -p $$ | tail -1 | cut -d " " -f 1)
 
 case ${cish} in
 *bash*)
@@ -11,7 +11,7 @@ case ${cish} in
     shdir=$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)
     ;;
 *)
-    echo -e "Detect UNKNOWN Current Interactive Shell (CISH): \"${cish}\", thus script directory can not be detected."
+    echo -e "Detect UNKNOWN Current Interactive Shell (cish): \"${cish}\", thus script directory can not be detected."
     return 1
     ;;
 esac
@@ -29,7 +29,7 @@ case ${cish} in
     rcfile=${HOME}/.bashrc
     ;;
 *)
-    error "Detect UNKNOWN Current Interactive Shell (CISH): \"${cish}\", thus rc file is not defined."
+    error "Detect UNKNOWN Current Interactive Shell (cish): \"${cish}\", thus rc file is not defined."
     return 1
     ;;
 esac
@@ -65,7 +65,7 @@ if [[ $(uname) == Darwin && -n $(which brew) ]]; then
 fi
 
 if [[ -n $(which rustup) ]]; then
-    case ${CISH} in
+    case ${cish} in
     *bash*)
         add_rustup="source \${HOME}/.cargo/env"
         add_rustup_alt=". \"\$HOME/.cargo/env\""
@@ -79,7 +79,7 @@ if [[ -n $(which rustup) ]]; then
         add_rustup_alt=". \"\$HOME/.cargo/env\""
         ;;
     *)
-        error "Detect UNKNOWN Current Interactive Shell (CISH): \"${CISH}\", thus skip brazil check."
+        error "Detect UNKNOWN Current Interactive Shell (cish): \"${cish}\", thus skip brazil check."
         return 1
         ;;
     esac
@@ -108,7 +108,7 @@ if [[ -n $(which brazil) ]]; then
         brazil_completion=${HOME}/.brazil_completion/bash_completion
         ;;
     *)
-        error "Detect UNKNOWN Current Interactive Shell (CISH): \"${cish}\", thus skip brazil check."
+        error "Detect UNKNOWN Current Interactive Shell (cish): \"${cish}\", thus skip brazil check."
         return 1
         ;;
     esac
