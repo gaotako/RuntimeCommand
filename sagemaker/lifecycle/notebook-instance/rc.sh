@@ -70,6 +70,7 @@ case ${cish} in
     ;;
 esac
 
+export RC_COMMAND_BOOT="source ${RC_ROOT}/sagemaker/lifecycle/notebook-instance/rc.sh"
 if [[ ${coldstart} -eq 0 ]]; then
     source ${shdir}/../../../unix/rc.sh
 else

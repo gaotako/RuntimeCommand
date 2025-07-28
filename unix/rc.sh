@@ -85,12 +85,13 @@ else
     mkdir -p ${APP_BIN_HOME}
 fi
 
-export RC_TOP=${WORKSPACE}/RuntimeCommandReadOnly
-export RC_ROOT=${RC_TOP}/src/RuntimeCommand
-if [[ -d ${WORKSPACE}/RuntimeCommand/src/RuntimeCommand ]]; then
-    export RC_TOP=${WORKSPACE}/RuntimeCommand
-    export RC_ROOT=${RC_TOP}/src/RuntimeCommand
+if [[ -z ${RC_TOP} ]]; then
+    export RC_TOP=${WORKSPACE}/RuntimeCommandReadOnly
+    if [[ -d ${WORKSPACE}/RuntimeCommand/src/RuntimeCommand ]]; then
+        export RC_TOP=${WORKSPACE}/RuntimeCommand
+    fi
 fi
+export RC_ROOT=${RC_TOP}/src/RuntimeCommand
 if [[ ! -d ${RC_ROOT} ]]; then
     if [[ ${coldstart} -eq 0 ]]; then
         error "Runtime command root directory \"${RC_ROOT}\" is not ready."
@@ -150,7 +151,6 @@ for encrypt in ecdsa rsa; do
         break
     fi
 done
-
 
 case ${cish} in
 *bash*)
@@ -278,7 +278,10 @@ else
 fi
 mise use -g node@${node_version} python@3.12 python@3.11 python@3.10 python@3.9
 
-command="source ${RC_ROOT}/unix/rc.sh"
+if [[ -z ${RC_COMMAND_BOOT} ]]; then
+    export RC_COMMAND_BOOT="source ${RC_ROOT}/unix/rc.sh"
+fi
+command="${RC_COMMAND_BOOT}"
 if [[ -n ${command} && -z $(grep "^${command}$" ${RC_TOP}/${rcfile}.sh) ]]; then
     if [[ ${coldstart} -eq 0 ]]; then
         error "Runtime command script \"${command}\" is not properly included into system runtime command."
