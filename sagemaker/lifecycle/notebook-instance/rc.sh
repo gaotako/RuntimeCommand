@@ -70,11 +70,22 @@ case ${cish} in
     ;;
 esac
 
+if [[ -z ${RC_TOP} ]]; then
+    export RC_TOP=${WORKSPACE}/RuntimeCommandReadOnly
+    if [[ -d ${WORKSPACE}/RuntimeCommand/src/RuntimeCommand ]]; then
+        export RC_TOP=${WORKSPACE}/RuntimeCommand
+    fi
+fi
+export RC_ROOT=${RC_TOP}/src/RuntimeCommand
+
 export RC_COMMAND_BOOT="source ${RC_ROOT}/sagemaker/lifecycle/notebook-instance/rc.sh"
 if [[ ${coldstart} -eq 0 ]]; then
     source ${shdir}/../../../unix/rc.sh
 else
     source ${shdir}/../../../unix/rc.sh -C
+fi
+if [[ $? -ne 0 ]]; then
+    return 1
 fi
 
 case ${cish} in
@@ -106,14 +117,9 @@ fi
 export CODE_SERVER_SAGEMAKER_SETUP_ROOT=${WORKSPACE}/CodeServerSageMakerSetup
 export CODE_SERVER_SAGEMAKER_SETUP_PACKAGE=${CODE_SERVER_SAGEMAKER_SETUP_ROOT}/amazon-sagemaker-codeserver
 
-if [[ -z ${APP_DATA_HOME} ]]; then
-    error "Runtime command dependent directory \"\${APP_DATA_HOME}\" is not defined."
-    return 1
-fi
 if [[ ! ( -L ${APP_DATA_HOME}/cs/bin/code-server && -f $(readlink -f ${APP_DATA_HOME}/cs/bin/code-server)) ]]; then
     if [[ ${coldstart} -eq 0 ]]; then
-        error "Code Server \"${APP_DATA_HOME}/cs/bin/code-server\" is not ready."
-        return 1
+        echo "Code Server \"${APP_DATA_HOME}/cs/bin/code-server\" is not ready, thus Code Server runtime command is skipped."
     else
         rm -rf ${APP_DATA_HOME}/cs
         conda update -n base -c anaconda conda -y
@@ -200,6 +206,8 @@ if [[ ! ( -L ${APP_DATA_HOME}/cs/bin/code-server && -f $(readlink -f ${APP_DATA_
 
             cd ${location}
         fi
+
+        conda clean --all -y
 
         location=$(pwd)
         cd ${CODE_SERVER_SAGEMAKER_SETUP_PACKAGE}/install-scripts/notebook-instances
