@@ -12,7 +12,7 @@ case ${cish} in
     ;;
 *)
     echo -e "Detect UNKNOWN Current Interactive Shell (cish): \"${cish}\", thus this script directory can not be detected."
-    return 1
+    return 1 2>/dev/null || exit 1
     ;;
 esac
 

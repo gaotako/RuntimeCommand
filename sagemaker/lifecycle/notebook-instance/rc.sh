@@ -28,6 +28,22 @@ pass() {
     echo -e "${PSC_ASCII_BRIGHT_GREEN}${1}${PSC_ASCII_RESET}"
 }
 
+case ${cish} in
+*bash*)
+    shdir=$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)
+    ;;
+*zsh*)
+    shdir=${0:a:h}
+    ;;
+*sh*)
+    shdir=$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)
+    ;;
+*)
+    error "Detect UNKNOWN Current Interactive Shell (cish): \"${cish}\", thus script directory can not be detected."
+    return 1 2>/dev/null || exit 1
+    ;;
+esac
+
 args=()
 coldstart=0
 while [[ $# -gt 0 ]]; do
@@ -51,7 +67,25 @@ if [[ -f /opt/ml/metadata/resource-metadata.json ]]; then
     export WORKSPACE=${HOME}/SageMaker
 else
     error "Can not execute SageMaker runtime command on Non-SageMaker instance."
-    return 1
+    return 1 2>/dev/null || exit 1
+fi
+
+if [[ -z ${RC_TOP} ]]; then
+    export RC_TOP=${WORKSPACE}/RuntimeCommandReadOnly
+    if [[ -d ${WORKSPACE}/RuntimeCommand/src/RuntimeCommand ]]; then
+        export RC_TOP=${WORKSPACE}/RuntimeCommand
+    fi
+fi
+export RC_ROOT=${RC_TOP}/src/RuntimeCommand
+
+export RC_COMMAND_BOOT="source ${RC_ROOT}/sagemaker/lifecycle/notebook-instance/rc.sh"
+if [[ ${coldstart} -eq 0 ]]; then
+    source ${shdir}/../../../unix/rc.sh -M
+else
+    source ${shdir}/../../../unix/rc.sh -M -C
+fi
+if [[ $? -ne 0 ]]; then
+    return 1 2>/dev/null || exit 1
 fi
 
 case ${cish} in
@@ -66,27 +100,9 @@ case ${cish} in
     ;;
 *)
     error "Detect UNKNOWN Current Interactive Shell (cish): \"${cish}\", thus script directory can not be detected."
-    return 1
+    return 1 2>/dev/null || exit 1
     ;;
 esac
-
-if [[ -z ${RC_TOP} ]]; then
-    export RC_TOP=${WORKSPACE}/RuntimeCommandReadOnly
-    if [[ -d ${WORKSPACE}/RuntimeCommand/src/RuntimeCommand ]]; then
-        export RC_TOP=${WORKSPACE}/RuntimeCommand
-    fi
-fi
-export RC_ROOT=${RC_TOP}/src/RuntimeCommand
-
-export RC_COMMAND_BOOT="source ${RC_ROOT}/sagemaker/lifecycle/notebook-instance/rc.sh"
-if [[ ${coldstart} -eq 0 ]]; then
-    source ${shdir}/../../../unix/rc.sh
-else
-    source ${shdir}/../../../unix/rc.sh -C
-fi
-if [[ $? -ne 0 ]]; then
-    return 1
-fi
 
 case ${cish} in
 *bash*)
@@ -100,30 +116,32 @@ case ${cish} in
     ;;
 *)
     error "Detect UNKNOWN Current Interactive Shell (cish): \"${cish}\", thus rc file is not defined."
-    return 1
+    return 1 2>/dev/null || exit 1
     ;;
 esac
 
 if [[ ! -f ${HOME}/.profile ]]; then
     if [[ ${coldstart} -eq 0 ]]; then
         error "Runtime command script entrance \"${HOME}/.${cish}\" is not ready."
-        return 1
+        return 1 2>/dev/null || exit 1
     else
         rm -f ${HOME}/.profile
         echo "source ${HOME}/.${rcfile}" > ${HOME}/.profile
     fi
 fi
 
+export JUPYTER_CONFIG=${HOME}/.jupyter/jupyter_notebook_config.py
+
 export CODE_SERVER_SAGEMAKER_SETUP_ROOT=${WORKSPACE}/CodeServerSageMakerSetup
 export CODE_SERVER_SAGEMAKER_SETUP_PACKAGE=${CODE_SERVER_SAGEMAKER_SETUP_ROOT}/amazon-sagemaker-codeserver
+export CODE_SERVER_APPLICATION=${APP_DATA_HOME}/cs
+export CODE_SERVER=${CODE_SERVER_APPLICATION}/bin/code-server
+export CODE_SERVER_PYTHON_VERSION=3.11
 
-if [[ ! ( -L ${APP_DATA_HOME}/cs/bin/code-server && -f $(readlink -f ${APP_DATA_HOME}/cs/bin/code-server)) ]]; then
+if [[ ! ( -L ${CODE_SERVER} && -f $(readlink -f ${CODE_SERVER}) ) ]]; then
     if [[ ${coldstart} -eq 0 ]]; then
-        echo "Code Server \"${APP_DATA_HOME}/cs/bin/code-server\" is not ready, thus Code Server runtime command is skipped."
+        echo "Code Server \"${CODE_SERVER}\" is not ready, thus Code Server runtime command is skipped."
     else
-        rm -rf ${APP_DATA_HOME}/cs
-        conda update -n base -c anaconda conda -y
-
         export READ_GITHUB_RELEASE_METADATA="python ${shdir}/python/read_github_release_metadata.py"
 
         export CODE_SERVER_SAGEMAKER_SETUP_VERSION=
@@ -132,86 +150,94 @@ if [[ ! ( -L ${APP_DATA_HOME}/cs/bin/code-server && -f $(readlink -f ${APP_DATA_
         fi
         export CODE_SERVER_SAGEMAKER_SETUP_VERSION=${CODE_SERVER_SAGEMAKER_SETUP_VERSION#v}
 
-        if [[ ! -d ${CODE_SERVER_SAGEMAKER_SETUP_PACKAGE} ]]; then
-            location=$(pwd)
-            mkdir -p ${CODE_SERVER_SAGEMAKER_SETUP_ROOT}
-            cd ${CODE_SERVER_SAGEMAKER_SETUP_ROOT}
-
-            filename=amazon-sagemaker-codeserver-${CODE_SERVER_SAGEMAKER_SETUP_VERSION}.tar.gz
-            url=https://github.com/aws-samples/amazon-sagemaker-codeserver/releases/download/v${CODE_SERVER_SAGEMAKER_SETUP_VERSION}/${filename}
-            curl -LO ${url}
-            tar -xvzf ${filename}
-            rm -f ${filename}
-
-            cd ${CODE_SERVER_SAGEMAKER_SETUP_PACKAGE}/install-scripts/notebook-instances
-            for filename in install-codeserver.sh setup-codeserver.sh uninstall-codeserver.sh; do
-                name=${filename%.*}
-                extension=${filename##*.}
-                cp ${filename} ${name}.backup.${extension}
-            done
-
-            cd ${location}
-        fi
-
-        export CODE_SERVER_VERSION=4.16.1 # Due to glibc == 2.26 on AL2 (starting from 4.17.0 requires glibc >= 2.28) which is fixed for SageMaker
+        export CODE_SERVER_VERSION=
         if [[ -z ${CODE_SERVER_VERSION} ]]; then
             export CODE_SERVER_VERSION=$(${READ_GITHUB_RELEASE_METADATA} "$(curl --silent https://api.github.com/repos/coder/code-server/releases/latest)" | grep tag_name | awk "{print \$2;}")
         fi
+        warning "Due to glibc == 2.26 on AL2 (starting from 4.17.0 requires glibc >= 2.28) which is fixed for SageMaker, Code Server must be no later than 4.16.1."
+        export CODE_SERVER_VERSION=4.16.1
         export CODE_SERVER_VERSION=${CODE_SERVER_VERSION#v}
+
+        rm -rf ${CODE_SERVER_SAGEMAKER_SETUP_PACKAGE}
         
-        export CODE_SERVER_PYTHON_VERSION=3.11
-        export CODE_SERVER_APPLICATION=${APP_DATA_HOME}/cs
-
-        if [[ ! -d ${CODE_SERVER_APPLICATION} ]]; then
-            location=$(pwd)
-            cd ${CODE_SERVER_SAGEMAKER_SETUP_PACKAGE}/install-scripts/notebook-instances
-
-            for filename in install-codeserver.sh setup-codeserver.sh uninstall-codeserver.sh; do
-                name=${filename%.*}
-                extension=${filename##*.}
-                cat ${name}.backup.${extension} >${filename}
-
-                sed -i -e "s/^export XDG_DATA_HOME=\\\$XDG_DATA_HOME\$/#export XDG_DATA_HOME=\$XDG_DATA_HOME/g" ${filename}
-                sed -i -e "s/^export XDG_CONFIG_HOME=\\\$XDG_CONFIG_HOME\$/#export XDG_CONFIG_HOME=\$XDG_CONFIG_HOME/g" ${filename}
-
-                grep -q -F -x "CODE_SERVER_INSTALL_LOC=\"/home/ec2-user/SageMaker/.cs\"" ${filename} || (echo "CODE_SERVER_INSTALL_LOC template not match!" && return 1)
-                grep -q -F -x "XDG_DATA_HOME=\"/home/ec2-user/SageMaker/.xdg/data\"" ${filename} || (echo "XDG_DATA_HOME template not match!" && return 1)
-                grep -q -F -x "XDG_CONFIG_HOME=\"/home/ec2-user/SageMaker/.xdg/config\"" ${filename} || (echo "XDG_CONFIG_HOME template not match!" && return 1)
-                grep -q -F -x "CONDA_ENV_LOCATION='/home/ec2-user/SageMaker/.cs/conda/envs/codeserver_py39'" ${filename} || (echo "CONDA_ENV_LOCATION template not match!" && return 1)
-
-                sed -i -e "s/^CODE_SERVER_INSTALL_LOC=\"\/home\/ec2-user\/SageMaker\/.cs\"\$/CODE_SERVER_INSTALL_LOC=\"${CODE_SERVER_APPLICATION//\//\\/}\"/g" ${filename}
-                sed -i -e "s/^XDG_DATA_HOME=\"\/home\/ec2-user\/SageMaker\/\.xdg\/data\"\$/XDG_DATA_HOME=\"${XDG_DATA_HOME//\//\\/}\"/g" ${filename}
-                sed -i -e "s/^XDG_CONFIG_HOME=\"\/home\/ec2-user\/SageMaker\/\.xdg\/config\"\$/XDG_CONFIG_HOME=\"${XDG_CONFIG_HOME//\//\\/}\"/g" ${filename}
-                sed -i -e "s/^CONDA_ENV_LOCATION='\/home\/ec2-user\/SageMaker\/\.cs\/conda\/envs\/codeserver_py39'\$/CONDA_ENV_LOCATION='${CODE_SERVER_APPLICATION//\//\\/}\/conda\/envs\/cs'/g" ${filename}
-
-                if [[ ${filename} != uninstall-codeserver.sh ]]; then
-                    grep -q -F -x "CODE_SERVER_VERSION=\"4.16.1\"" ${filename} || (echo "CODE_SERVER_VERSION template not match!" && return 1)
-
-                    sed -i -e "s/^CODE_SERVER_VERSION=\"4\.16\.1\"\$/CODE_SERVER_VERSION=\"${CODE_SERVER_VERSION}\"/g" ${filename}
-                fi
-
-                if [[ ${filename} == install-codeserver.sh ]]; then
-                    grep -q -F -x "CONDA_ENV_PYTHON_VERSION=\"3.9\"" ${filename} || (echo "CONDA_ENV_PYTHON_VERSION template not match!" && return 1)
-
-                    sed -i -e "s/^CONDA_ENV_PYTHON_VERSION=\"3\.9\"\$/CONDA_ENV_PYTHON_VERSION=\"${CODE_SERVER_PYTHON_VERSION}\"/g" ${filename}
-                fi
-            done
-
-            chmod +x install-codeserver.sh
-            chmod +x setup-codeserver.sh
-            chmod +x uninstall-codeserver.sh
-
-            rm -rf ${CODE_SERVER_APPLICATION}/conda/envs/cs/*
-            ./install-codeserver.sh
-
-            cd ${location}
+        rm -rf ${CODE_SERVER_APPLICATION}
+        rm -rf ${XDG_DATA_HOME}/code-server
+        rm -rf ${XDG_CONFIG_HOME}/code-server
+        if [[ -f ${JUPYTER_CONFIG} && -n $(grep "${CODE_SERVER_APPLICATION}/bin/code-server" ${JUPYTER_CONFIG}) ]]; then
+            error "Previous Code Server setup is not completely deleted (NOT commented) from \"${JUPYTER_CONFIG}\"."
+            return 1 2>/dev/null || exit 1
         fi
 
-        conda clean --all -y
+        rm -rf /home/ec2-user/SageMaker/.cs
+        rm -rf /home/ec2-user/SageMaker/.xdg/data/code-server
+        rm -rf /home/ec2-user/SageMaker/.xdg/config/code-server
+        if [[ -f ${JUPYTER_CONFIG} && -n $(grep "/home/ec2-user/SageMaker/.cs/bin/code-server" ${JUPYTER_CONFIG}) ]]; then
+            error "Previous Code Server setup is not completely deleted (NOT commented) from \"${JUPYTER_CONFIG}\"."
+            return 1 2>/dev/null || exit 1
+        fi
 
-        location=$(pwd)
-        cd ${CODE_SERVER_SAGEMAKER_SETUP_PACKAGE}/install-scripts/notebook-instances
-        ./setup-codeserver.sh
-        cd ${location}
+        mkdir -p ${CODE_SERVER_SAGEMAKER_SETUP_ROOT}
+
+        filename=amazon-sagemaker-codeserver-${CODE_SERVER_SAGEMAKER_SETUP_VERSION}.tar.gz
+        url=https://github.com/aws-samples/amazon-sagemaker-codeserver/releases/download/v${CODE_SERVER_SAGEMAKER_SETUP_VERSION}/${filename}
+        curl -Lo ${CODE_SERVER_SAGEMAKER_SETUP_ROOT}/${filename} ${url} 
+        tar -xvzf ${CODE_SERVER_SAGEMAKER_SETUP_ROOT}/${filename} -C $(dirname ${CODE_SERVER_SAGEMAKER_SETUP_PACKAGE})
+        rm -f ${filename}
+
+        for filename in install-codeserver.sh setup-codeserver.sh uninstall-codeserver.sh; do
+            name=${filename%.*}
+            extension=${filename##*.}
+            path=${CODE_SERVER_SAGEMAKER_SETUP_PACKAGE}/install-scripts/notebook-instances/${filename}
+            [[ -f ${path} ]] || ( error "Code Server setup file \"${path}\" does not exist." && ( return 1 2>/dev/null || exit 1 ) )
+            cp ${path} ${CODE_SERVER_SAGEMAKER_SETUP_PACKAGE}/install-scripts/notebook-instances/${name}.backup.${extension}
+        done
+
+        for filename in install-codeserver.sh setup-codeserver.sh uninstall-codeserver.sh; do
+            name=${filename%.*}
+            extension=${filename##*.}
+            path=${CODE_SERVER_SAGEMAKER_SETUP_PACKAGE}/install-scripts/notebook-instances/${filename}
+            cat ${CODE_SERVER_SAGEMAKER_SETUP_PACKAGE}/install-scripts/notebook-instances/${name}.backup.${extension} >${path}
+            
+            grep -q "^CODE_SERVER_INSTALL_LOC=\"/home/ec2-user/SageMaker/.cs\"\$" ${path} || ( echo "CODE_SERVER_INSTALL_LOC template is not match in \"${path}\"." && ( return 1 2>/dev/null || exit 1 ) )
+            grep -q "^XDG_DATA_HOME=\"/home/ec2-user/SageMaker/.xdg/data\"\$" ${path} || ( echo "XDG_DATA_HOME template is not match in \"${path}\"." && ( return 1 2>/dev/null || exit 1 ) )
+            grep -q "^XDG_CONFIG_HOME=\"/home/ec2-user/SageMaker/.xdg/config\"\$" ${path} || ( echo "XDG_CONFIG_HOME template is not match in \"${path}\"." && ( return 1 2>/dev/null || exit 1 ) )
+            grep -q "^CONDA_ENV_LOCATION='/home/ec2-user/SageMaker/.cs/conda/envs/codeserver_py39'\$" ${path} || (echo "CONDA_ENV_LOCATION template is not match in \"${path}\"." && ( return 1 2>/dev/null || exit 1 ) )
+
+            sed -i -e "s/^CODE_SERVER_INSTALL_LOC=\"\/home\/ec2-user\/SageMaker\/.cs\"\$/CODE_SERVER_INSTALL_LOC=\"${CODE_SERVER_APPLICATION//\//\\/}\"/g" ${path}
+            sed -i -e "s/^XDG_DATA_HOME=\"\/home\/ec2-user\/SageMaker\/\.xdg\/data\"\$/XDG_DATA_HOME=\"${XDG_DATA_HOME//\//\\/}\"/g" ${path}
+            sed -i -e "s/^XDG_CONFIG_HOME=\"\/home\/ec2-user\/SageMaker\/\.xdg\/config\"\$/XDG_CONFIG_HOME=\"${XDG_CONFIG_HOME//\//\\/}\"/g" ${path}
+            sed -i -e "s/^CONDA_ENV_LOCATION='\/home\/ec2-user\/SageMaker\/\.cs\/conda\/envs\/codeserver_py39'\$/CONDA_ENV_LOCATION='${CODE_SERVER_APPLICATION//\//\\/}\/conda\/envs\/cs'/g" ${path}
+
+            if [[ ${filename} != uninstall-codeserver.sh ]]; then
+                grep -q "^CODE_SERVER_VERSION=\"4\.16\.1\"\$" ${path} || ( echo "CODE_SERVER_VERSION template is not match in \"${path}\"." && ( return 1 2>/dev/null || exit 1 ) )
+                grep -q "^export XDG_DATA_HOME=\\\$XDG_DATA_HOME$" ${path} || ( echo "XDG_DATA_HOME exporting template is not match in \"${path}\"." && ( return 1 2>/dev/null || exit 1 ) )
+                grep -q "^export XDG_CONFIG_HOME=\\\$XDG_CONFIG_HOME$" ${path} || ( echo "XDG_CONFIG_HOME exporting template is not match in \"${path}\"." && ( return 1 2>/dev/null || exit 1 ) )
+
+                sed -i -e "s/^CODE_SERVER_VERSION=\"4\.16\.1\"\$/CODE_SERVER_VERSION=\"${CODE_SERVER_VERSION}\"/g" ${path}
+                sed -i -e "s/^export XDG_DATA_HOME=\\\$XDG_DATA_HOME\$/#export XDG_DATA_HOME=\$XDG_DATA_HOME/g" ${path}
+                sed -i -e "s/^export XDG_CONFIG_HOME=\\\$XDG_CONFIG_HOME\$/#export XDG_CONFIG_HOME=\$XDG_CONFIG_HOME/g" ${path}
+            fi
+            
+            if [[ ${filename} == install-codeserver.sh ]]; then
+                grep -q "^CONDA_ENV_PYTHON_VERSION=\"3\.9\"\$" ${path} || ( echo "CONDA_ENV_PYTHON_VERSION template is not match in \"${path}\"." && ( return 1 2>/dev/null || exit 1 ) )
+
+                sed -i -e "s/^CONDA_ENV_PYTHON_VERSION=\"3\.9\"\$/CONDA_ENV_PYTHON_VERSION=\"${CODE_SERVER_PYTHON_VERSION}\"/g" ${path}
+            fi
+        done
+
+        chmod +x ${CODE_SERVER_SAGEMAKER_SETUP_PACKAGE}/install-scripts/notebook-instances/install-codeserver.sh
+        chmod +x ${CODE_SERVER_SAGEMAKER_SETUP_PACKAGE}/install-scripts/notebook-instances/setup-codeserver.sh
+        chmod +x ${CODE_SERVER_SAGEMAKER_SETUP_PACKAGE}/install-scripts/notebook-instances/uninstall-codeserver.sh
+
+        conda update -n base -c anaconda conda -y
+        ${CODE_SERVER_SAGEMAKER_SETUP_PACKAGE}/install-scripts/notebook-instances/install-codeserver.sh
+        conda clean --all -y
+        ${CODE_SERVER_SAGEMAKER_SETUP_PACKAGE}/install-scripts/notebook-instances/setup-codeserver.sh
     fi
+fi
+
+source ${shdir}/../../../unix/mise.sh
+
+if [[ ${coldstart} -ne 0 ]]; then
+    source ${shdir}/cs/coldstart.sh
 fi

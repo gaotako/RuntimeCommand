@@ -28,12 +28,33 @@ pass() {
     echo -e "${PSC_ASCII_BRIGHT_GREEN}${1}${PSC_ASCII_RESET}"
 }
 
+case ${cish} in
+*bash*)
+    shdir=$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)
+    ;;
+*zsh*)
+    shdir=${0:a:h}
+    ;;
+*sh*)
+    shdir=$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)
+    ;;
+*)
+    echo -e "Detect UNKNOWN Current Interactive Shell (cish): \"${cish}\", thus this script directory can not be detected."
+    return 1 2>/dev/null || exit 1
+    ;;
+esac
+
 args=()
 coldstart=0
+mise=1
 while [[ $# -gt 0 ]]; do
     case ${1} in
     -C|--coldstart)
         coldstart=1
+        shift 1
+        ;;
+    -M|--no-mise)
+        mise=0
         shift 1
         ;;
     *)
@@ -48,7 +69,7 @@ fi
 
 if [[ -z ${HOME} || -z ${WORKSPACE} ]]; then
     error "UNIX system must have HOME and WORKSPACE claimed before execute runtime command."
-    return 1
+    return 1 2>/dev/null || exit 1
 fi
 
 export XDG_ROOT=${WORKSPACE}/CrossDesktopGroup
@@ -58,11 +79,11 @@ export XDG_DATA_HOME=${XDG_ROOT}/local/share
 export XDG_STATE_HOME=${XDG_ROOT}/local/state
 
 if [[ ${coldstart} -eq 0 ]]; then
-    [[ -d ${XDG_ROOT} ]] || ( error "Runtime command dependent directory \"${XDG_ROOT}\" is not ready." && return 1 )
-    [[ -d ${XDG_CONFIG_HOME} ]] || ( error "\"${XDG_CONFIG_HOME}\" is not ready." && return 1 )
-    [[ -d ${XDG_CACHE_HOME} ]] || ( error "Runtime command dependent directory \"${XDG_CACHE_HOME}\" is not ready." && return 1 )
-    [[ -d ${XDG_DATA_HOME} ]] || ( error "Runtime command dependent directory \"${XDG_DATA_HOME}\" is not ready." && return 1 )
-    [[ -d ${XDG_STATE_HOME} ]] || ( error "Runtime command dependent directory \"${XDG_STATE_HOME}\" is not ready." && return 1 )
+    [[ -d ${XDG_ROOT} ]] || ( error "Runtime command dependent directory \"${XDG_ROOT}\" is not ready." && ( return 1 2>/dev/null || exit 1 ) )
+    [[ -d ${XDG_CONFIG_HOME} ]] || ( error "Runtime command dependent directory \"${XDG_CONFIG_HOME}\" is not ready." && ( return 1 2>/dev/null || exit 1 ) )
+    [[ -d ${XDG_CACHE_HOME} ]] || ( error "Runtime command dependent directory \"${XDG_CACHE_HOME}\" is not ready." && ( return 1 2>/dev/null || exit 1 ) )
+    [[ -d ${XDG_DATA_HOME} ]] || ( error "Runtime command dependent directory \"${XDG_DATA_HOME}\" is not ready." && ( return 1 2>/dev/null || exit 1 ) )
+    [[ -d ${XDG_STATE_HOME} ]] || ( error "Runtime command dependent directory \"${XDG_STATE_HOME}\" is not ready." && ( return 1 2>/dev/null || exit 1 ) )
 else
     mkdir -p ${XDG_ROOT}
     mkdir -p ${XDG_CONFIG_HOME}
@@ -76,9 +97,9 @@ export APP_DATA_HOME=${APP_ROOT}/data
 export APP_BIN_HOME=${APP_ROOT}/bin
 
 if [[ ${coldstart} -eq 0 ]]; then
-    [[ -d ${APP_ROOT} ]] || ( error "Runtime command dependent directory \"${APP_ROOT}\" is not ready." && return 1 )
-    [[ -d ${APP_DATA_HOME} ]] || ( error "Runtime command dependent directory \"${APP_DATA_HOME}\" is not ready." && return 1 )
-    [[ -d ${APP_BIN_HOME} ]] || ( error "Runtime command dependent directory \"${APP_BIN_HOME}\" is not ready." && return 1 )
+    [[ -d ${APP_ROOT} ]] || ( error "Runtime command dependent directory \"${APP_ROOT}\" is not ready." && ( return 1 2>/dev/null || exit 1 ) )
+    [[ -d ${APP_DATA_HOME} ]] || ( error "Runtime command dependent directory \"${APP_DATA_HOME}\" is not ready." && ( return 1 2>/dev/null || exit 1 ) )
+    [[ -d ${APP_BIN_HOME} ]] || ( error "Runtime command dependent directory \"${APP_BIN_HOME}\" is not ready." && ( return 1 2>/dev/null || exit 1 ) )
 else
     mkdir -p ${APP_ROOT}
     mkdir -p ${APP_DATA_HOME}
@@ -95,7 +116,7 @@ export RC_ROOT=${RC_TOP}/src/RuntimeCommand
 if [[ ! -d ${RC_ROOT} ]]; then
     if [[ ${coldstart} -eq 0 ]]; then
         error "Runtime command root directory \"${RC_ROOT}\" is not ready."
-        return 1
+        return 1 2>/dev/null || exit 1
     else
         mkdir -p $(dirname ${RC_ROOT})
         git clone https://github.com/gaotako/RuntimeCommand.git ${RC_ROOT}
@@ -109,7 +130,7 @@ mkdir -p ${SSH_HOME}
 if [[ ! -L ${HOME}/.ssh || $(readlink -f ${HOME}/.ssh) != ${SSH_HOME} ]]; then
     if [[ ${coldstart} -eq 0 ]]; then
         error "SSH directory \"${SSH_HOME}\" is not properly relinked."
-        return 1
+        return 1 2>/dev/null || exit 1
     else
         if [[ -n $(ls ${HOME}/.ssh/* 2>/dev/null) ]]; then
             cp ${HOME}/.ssh/* ${SSH_HOME}
@@ -123,7 +144,7 @@ mkdir -p ${AWS_HOME}
 if [[ ! -L ${HOME}/.aws || $(readlink -f ${HOME}/.aws) != ${AWS_HOME} ]]; then
     if [[ ${coldstart} -eq 0 ]]; then
         error "AWS directory \"${AWS_HOME}\" is not properly relinked."
-        return 1
+        return 1 2>/dev/null || exit 1
     else
         if [[ -n $(ls ${HOME}/.aws/* 2>/dev/null) ]]; then
             cp ${HOME}/.aws/* ${AWS_HOME}
@@ -164,17 +185,17 @@ case ${cish} in
     ;;
 *)
     error "Detect UNKNOWN Current Interactive Shell (cish): \"${cish}\", thus rc file is not defined."
-    return 1
+    return 1 2>/dev/null || exit 1
     ;;
 esac
 if [[ ! -f ${HOME}/.${rcfile} ]]; then
     error "Runtime command script entrance \"${HOME}/.${rcfile}\" is not ready."
-    return 1
+    return 1 2>/dev/null || exit 1
 fi
 if [[ ! -L ${RC_TOP}/${rcfile}.sh || $(readlink -f ${RC_TOP}/${rcfile}.sh) != ${HOME}/.${rcfile} ]]; then
     if [[ ${coldstart} -eq 0 ]]; then
         error "Runtime command script \"${RC_TOP}/${rcfile}.sh\" is not properly relinked."
-        return 1
+        return 1 2>/dev/null || exit 1
     else
         rm -rf ${RC_TOP}/${rcfile}.sh
         ln -s ${HOME}/.${rcfile} ${RC_TOP}/${rcfile}.sh
@@ -230,54 +251,6 @@ case ${cish} in
     ;;
 esac
 
-if [[ ! -f ${APP_BIN_HOME}/mise ]]; then
-    if [[ ${coldstart} -eq 0 ]]; then
-        error "mise is not properly installed."
-        return 1
-    else
-        curl https://mise.run | MISE_INSTALL_PATH=${APP_BIN_HOME}/mise sh
-    fi
-fi
-case ${cish} in
-*bash*)
-    eval "$(${APP_BIN_HOME}/mise activate bash)"
-    ;;
-*zsh*)
-    eval "$(${APP_BIN_HOME}/mise activate zsh)"
-    ;;
-*sh*)
-    eval "$(${APP_BIN_HOME}/mise activate bash)"
-    ;;
-*)
-    echo -e "Detect UNKNOWN Current Interactive Shell (CISH): \"${cish}\", thus MISE is not activated."
-    return 1
-    ;;
-esac
-
-if [[ -f ${HOME}/.config/mise/config.toml ]]; then
-    mv ${HOME}/.config/mise/config.toml ${XDG_CONFIG_HOME}/mise/config.toml
-fi
-for module_alt in node python; do
-    if [[ -d ${HOME}/.local/share/mise/installs/${module_alt} ]]; then
-        warning "There is \"${module_alt}\" managed by mise not configured by runtime command, and we will adopt it."
-        rm -rf ${XDG_DATA_HOME}/mise/installs/${module_alt}
-        mkdir -p ${XDG_DATA_HOME}/mise/installs/${module_alt}
-        for version in `ls ${HOME}/.local/share/mise/installs/${module_alt}`; do
-            ln -s ${HOME}/.local/share/mise/installs/${module_alt}/${version} ${XDG_DATA_HOME}/mise/installs/${module_alt}/${version}
-        done
-    fi
-done
-mise settings experimental=true
-if [[ ${coldstart} -eq 0 ]]; then
-    mise settings set not_found_auto_install 0
-fi
-if [[ -f /opt/ml/metadata/resource-metadata.json ]]; then
-    node_version=16
-else
-    node_version=18.20
-fi
-mise use -g node@${node_version} python@3.12 python@3.11 python@3.10 python@3.9
-
 if [[ -z ${RC_COMMAND_BOOT} ]]; then
     export RC_COMMAND_BOOT="source ${RC_ROOT}/unix/rc.sh"
 fi
@@ -288,7 +261,7 @@ if [[ -n ${command} && -z $(grep "^${command}$" ${RC_TOP}/${rcfile}.sh) ]]; then
     else
         echo -e "Please ensure standalone \"${command}\" is in \"${RC_TOP}/${rcfile}.sh\"."
     fi
-    return 1
+    return 1 2>/dev/null || exit 1
 fi
 
 if [[ -n $(which toolbox 2>/dev/null) ]]; then
@@ -299,7 +272,7 @@ if [[ -n $(which toolbox 2>/dev/null) ]]; then
         else
             echo -e "Please ensure standalone \"${command}\" is in \"${RC_TOP}/${rcfile}.sh\"."
         fi
-        return 1
+        return 1 2>/dev/null || exit 1
     fi
 fi
 
@@ -311,7 +284,7 @@ if [[ $(uname) == Darwin && -n $(which brew 2>/dev/null) ]]; then
         else
             echo -e "Please ensure standalone \"${command}\" is in \"${RC_TOP}/${rcfile}.sh\"."
         fi
-        return 1
+        return 1 2>/dev/null || exit 1
     fi
 fi
 
@@ -328,7 +301,7 @@ if [[ -n $(which rustup 2>/dev/null) ]]; then
         ;;
     *)
         error "Detect UNKNOWN Current Interactive Shell (cish): \"${cish}\", thus rustup is not defined."
-        return 1
+        return 1 2>/dev/null || exit 1
         ;;
     esac
     if [[ -n ${command} && -z $(grep "^${command}$" ${RC_TOP}/${rcfile}.sh) ]]; then
@@ -337,7 +310,7 @@ if [[ -n $(which rustup 2>/dev/null) ]]; then
         else
             echo -e "Please ensure standalone \"${command}\" is in \"${RC_TOP}/${rcfile}.sh\"."
         fi
-        return 1
+        return 1 2>/dev/null || exit 1
     fi
 fi
 
@@ -354,7 +327,7 @@ if [[ -n $(which brazil 2>/dev/null) ]]; then
         ;;
     *)
         error "Detect UNKNOWN Current Interactive Shell (cish): \"${cish}\", thus brazil auto-complete is not defined."
-        return 1
+        return 1 2>/dev/null || exit 1
         ;;
     esac
     if [[ -n ${command} && -z $(grep "^${command}$" ${RC_TOP}/${rcfile}.sh) ]]; then
@@ -363,6 +336,12 @@ if [[ -n $(which brazil 2>/dev/null) ]]; then
         else
             echo -e "Please ensure standalone \"${command}\" is in \"${RC_TOP}/${rcfile}.sh\"."
         fi
-        return 1
+        return 1 2>/dev/null || exit 1
     fi
+fi
+
+if [[ ${mise} -ne 0 ]]; then
+    source ${shdir}/mise.sh
+else
+    warning "Due to explicit argument, mise is skipped in runtime command."
 fi
