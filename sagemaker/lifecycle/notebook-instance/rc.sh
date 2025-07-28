@@ -159,7 +159,7 @@ if [[ ! ( -L ${CODE_SERVER} && -f $(readlink -f ${CODE_SERVER}) ) ]]; then
         export CODE_SERVER_VERSION=${CODE_SERVER_VERSION#v}
 
         rm -rf ${CODE_SERVER_SAGEMAKER_SETUP_PACKAGE}
-        
+
         rm -rf ${CODE_SERVER_APPLICATION}
         rm -rf ${XDG_DATA_HOME}/code-server
         rm -rf ${XDG_CONFIG_HOME}/code-server
@@ -197,7 +197,7 @@ if [[ ! ( -L ${CODE_SERVER} && -f $(readlink -f ${CODE_SERVER}) ) ]]; then
             extension=${filename##*.}
             path=${CODE_SERVER_SAGEMAKER_SETUP_PACKAGE}/install-scripts/notebook-instances/${filename}
             cat ${CODE_SERVER_SAGEMAKER_SETUP_PACKAGE}/install-scripts/notebook-instances/${name}.backup.${extension} >${path}
-            
+
             grep -q "^CODE_SERVER_INSTALL_LOC=\"/home/ec2-user/SageMaker/.cs\"\$" ${path} || ( echo "CODE_SERVER_INSTALL_LOC template is not match in \"${path}\"." && ( return 1 2>/dev/null || exit 1 ) )
             grep -q "^XDG_DATA_HOME=\"/home/ec2-user/SageMaker/.xdg/data\"\$" ${path} || ( echo "XDG_DATA_HOME template is not match in \"${path}\"." && ( return 1 2>/dev/null || exit 1 ) )
             grep -q "^XDG_CONFIG_HOME=\"/home/ec2-user/SageMaker/.xdg/config\"\$" ${path} || ( echo "XDG_CONFIG_HOME template is not match in \"${path}\"." && ( return 1 2>/dev/null || exit 1 ) )
@@ -217,7 +217,7 @@ if [[ ! ( -L ${CODE_SERVER} && -f $(readlink -f ${CODE_SERVER}) ) ]]; then
                 sed -i -e "s/^export XDG_DATA_HOME=\\\$XDG_DATA_HOME\$/#export XDG_DATA_HOME=\$XDG_DATA_HOME/g" ${path}
                 sed -i -e "s/^export XDG_CONFIG_HOME=\\\$XDG_CONFIG_HOME\$/#export XDG_CONFIG_HOME=\$XDG_CONFIG_HOME/g" ${path}
             fi
-            
+
             if [[ ${filename} == install-codeserver.sh ]]; then
                 grep -q "^CONDA_ENV_PYTHON_VERSION=\"3\.9\"\$" ${path} || ( echo "CONDA_ENV_PYTHON_VERSION template is not match in \"${path}\"." && ( return 1 2>/dev/null || exit 1 ) )
 
