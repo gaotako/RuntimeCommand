@@ -121,7 +121,7 @@ fi
 mkdir -p ${AWS_HOME}
 if [[ ! -L ${HOME}/.aws || $(readlink -f ${HOME}/.aws) != ${AWS_HOME} ]]; then
     if [[ ${coldstart} -eq 0 ]]; then
-        error "AWS directory \"${SSH_HOME}\" is not properly relinked."
+        error "AWS directory \"${AWS_HOME}\" is not properly relinked."
         return 1
     else
         if [[ -n $(ls ${HOME}/.aws/* 2>/dev/null) ]]; then
@@ -279,7 +279,7 @@ fi
 mise use -g node@${node_version} python@3.12 python@3.11 python@3.10 python@3.9
 
 command="source ${RC_ROOT}/unix/rc.sh"
-if [[ -z $(grep "^${command}$" ${RC_TOP}/${rcfile}.sh) ]]; then
+if [[ -n ${command} && -z $(grep "^${command}$" ${RC_TOP}/${rcfile}.sh) ]]; then
     if [[ ${coldstart} -eq 0 ]]; then
         error "Runtime command script \"${command}\" is not properly included into system runtime command."
     else
@@ -290,9 +290,9 @@ fi
 
 if [[ -n $(which toolbox 2>/dev/null) ]]; then
     command="export PATH=\${HOME}/.toolbox/bin:\${PATH}"
-    if [[ -z $(grep "^${command}$" ${RC_TOP}/${rcfile}.sh) ]]; then
+    if [[ -n ${command} && -z $(grep "^${command}$" ${RC_TOP}/${rcfile}.sh) ]]; then
         if [[ ${coldstart} -eq 0 ]]; then
-            error "Runtime command script \"${command}\" is not properly included into system runtime command."
+            error "Runtime command script (toolbox) \"${command}\" is not properly included into system runtime command."
         else
             echo -e "Please ensure standalone \"${command}\" is in \"${RC_TOP}/${rcfile}.sh\"."
         fi
@@ -302,9 +302,9 @@ fi
 
 if [[ $(uname) == Darwin && -n $(which brew 2>/dev/null) ]]; then
     command="eval \"\$(/opt/homebrew/bin/brew shellenv)\""
-    if [[ -z $(grep "^${command}$" ${RC_TOP}/${rcfile}.sh) ]]; then
+    if [[ -n ${command} && -z $(grep "^${command}$" ${RC_TOP}/${rcfile}.sh) ]]; then
         if [[ ${coldstart} -eq 0 ]]; then
-            error "Runtime command script \"${command}\" is not properly included into system runtime command."
+            error "Runtime command script (homebrew) \"${command}\" is not properly included into system runtime command."
         else
             echo -e "Please ensure standalone \"${command}\" is in \"${RC_TOP}/${rcfile}.sh\"."
         fi
@@ -328,9 +328,9 @@ if [[ -n $(which rustup 2>/dev/null) ]]; then
         return 1
         ;;
     esac
-    if [[ -z $(grep "^${command}$" ${RC_TOP}/${rcfile}.sh) ]]; then
+    if [[ -n ${command} && -z $(grep "^${command}$" ${RC_TOP}/${rcfile}.sh) ]]; then
         if [[ ${coldstart} -eq 0 ]]; then
-            error "Runtime command script \"${command}\" is not properly included into system runtime command."
+            error "Runtime command script (rustup) \"${command}\" is not properly included into system runtime command."
         else
             echo -e "Please ensure standalone \"${command}\" is in \"${RC_TOP}/${rcfile}.sh\"."
         fi
@@ -341,22 +341,22 @@ fi
 if [[ -n $(which brazil 2>/dev/null) ]]; then
     case ${cish} in
     *bash*)
-        command="${HOME}/.brazil_completion/bash_completion"
+        command="source ${HOME}/.brazil_completion/bash_completion"
         ;;
     *zsh*)
-        command="${HOME}/.brazil_completion/zsh_completion"
+        command="source ${HOME}/.brazil_completion/zsh_completion"
         ;;
     *sh*)
-        command="${HOME}/.brazil_completion/bash_completion"
+        command="source ${HOME}/.brazil_completion/bash_completion"
         ;;
     *)
         error "Detect UNKNOWN Current Interactive Shell (cish): \"${cish}\", thus brazil auto-complete is not defined."
         return 1
         ;;
     esac
-    if [[ -z $(grep "^${command}$" ${RC_TOP}/${rcfile}.sh) ]]; then
+    if [[ -n ${command} && -z $(grep "^${command}$" ${RC_TOP}/${rcfile}.sh) ]]; then
         if [[ ${coldstart} -eq 0 ]]; then
-            error "Runtime command script \"${command}\" is not properly included into system runtime command."
+            error "Runtime command script (brazil auto-complete) \"${command}\" is not properly included into system runtime command."
         else
             echo -e "Please ensure standalone \"${command}\" is in \"${RC_TOP}/${rcfile}.sh\"."
         fi
