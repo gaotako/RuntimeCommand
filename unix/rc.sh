@@ -119,7 +119,16 @@ if [[ ! -d ${RC_ROOT} ]]; then
         return 1 2>/dev/null || exit 1
     else
         mkdir -p $(dirname ${RC_ROOT})
-        git clone https://github.com/gaotako/RuntimeCommand.git ${RC_ROOT}
+        git clone git@github.com:gaotako/RuntimeCommand.git ${RC_ROOT}
+        if [[ $? -ne 0 ]]; then
+            rm -rf $(dirname ${RC_ROOT})
+            warning "Fail to clone by ssh, fall back to read-only clone by tcp."
+            export RC_TOP=${WORKSPACE}/RuntimeCommandReadOnly
+            export RC_ROOT=${RC_TOP}/src/RuntimeCommand
+            mkdir -p $(dirname ${RC_ROOT})
+            git clone https://github.com/gaotako/RuntimeCommand.git ${RC_ROOT}
+            chmod -R a=rX ${RC_ROOT}
+        fi
     fi
 fi
 
