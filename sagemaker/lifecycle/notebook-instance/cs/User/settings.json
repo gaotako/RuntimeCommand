@@ -246,7 +246,8 @@
         "**/conda": true,
         "**/build": true,
         "**/env": true,
-        ".venv": true
+        ".venv": true,
+        "**/.venv": true
     },
 
     // Ignore path patterns (glob) in true file action monitoring.
@@ -262,7 +263,8 @@
         "**/conda": true,
         "**/build": true,
         "**/env": true,
-        ".venv": true
+        ".venv": true,
+        "**/.venv": true
     },
 
     // ---------------------------------------------------------------------------------------------
