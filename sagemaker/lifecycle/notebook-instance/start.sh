@@ -53,6 +53,8 @@ fi
 if [[ ! -f ${HOME}/.bashrc ]]; then
     touch ${HOME}/.bashrc
 fi
+: > ${HOME}/.profile
+: > ${HOME}/.bashrc
 
 if [[ ! -L ${RC_TOP}/bashrc.sh || $(readlink -f ${RC_TOP}/bashrc.sh) != $(readlink -f ${HOME}/.bashrc) ]]; then
     rm -rf ${RC_TOP}/bashrc.sh

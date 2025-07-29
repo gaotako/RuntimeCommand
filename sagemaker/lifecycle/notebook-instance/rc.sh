@@ -224,6 +224,12 @@ if [[ ! ( -L ${CODE_SERVER} && -f $(readlink -f ${CODE_SERVER}) ) ]]; then
 
                 sed -i -e "s/^CONDA_ENV_PYTHON_VERSION=\"3\.9\"\$/CONDA_ENV_PYTHON_VERSION=\"${CODE_SERVER_PYTHON_VERSION}\"/g" ${path}
             fi
+
+            if [[ ${filename} == setup-codeserver.sh ]]; then
+                grep -q "^[[:blank:]]*sudo systemctl restart jupyter-server\$" ${path} || ( echo "Auto restart is not match in \"${path}\"." && ( return 1 2>/dev/null || exit 1 ) )
+
+                sed -i -e "s/^\([[:blank:]]*sudo systemctl restart jupyter-server\)\$/#\1/g" ${path}
+            fi
         done
 
         chmod +x ${CODE_SERVER_SAGEMAKER_SETUP_PACKAGE}/install-scripts/notebook-instances/install-codeserver.sh
