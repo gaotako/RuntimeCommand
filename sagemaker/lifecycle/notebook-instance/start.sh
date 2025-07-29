@@ -50,7 +50,7 @@ fi
 if [[ ! -f ${HOME}/.bashrc ]]; then
     touch ${HOME}/.bashrc
 fi
-if [[ ! -L ${RC_TOP}/bashrc.sh || $(readlink -f ${RC_TOP}/bashrc.sh) != ${HOME}/.bashrc ]]; then
+if [[ ! -L ${RC_TOP}/bashrc.sh || $(readlink -f ${RC_TOP}/bashrc.sh) != $(readlink -f ${HOME}/.bashrc) ]]; then
     rm -rf ${RC_TOP}/bashrc.sh
     ln -s ${HOME}/.bashrc ${RC_TOP}/bashrc.sh
 fi

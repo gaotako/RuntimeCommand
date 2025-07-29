@@ -189,6 +189,7 @@ if [[ ! ( -L ${CODE_SERVER} && -f $(readlink -f ${CODE_SERVER}) ) ]]; then
             extension=${filename##*.}
             path=${CODE_SERVER_SAGEMAKER_SETUP_PACKAGE}/install-scripts/notebook-instances/${filename}
             [[ -f ${path} ]] || ( error "Code Server setup file \"${path}\" does not exist." && ( return 1 2>/dev/null || exit 1 ) )
+            rm -rf ${CODE_SERVER_SAGEMAKER_SETUP_PACKAGE}/install-scripts/notebook-instances/${name}.backup.${extension}
             cp ${path} ${CODE_SERVER_SAGEMAKER_SETUP_PACKAGE}/install-scripts/notebook-instances/${name}.backup.${extension}
         done
 

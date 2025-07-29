@@ -126,33 +126,37 @@ fi
 export SSH_HOME=${RC_TOP}/ssh
 export AWS_HOME=${RC_TOP}/aws
 
-mkdir -p ${SSH_HOME}
-if [[ ! -L ${HOME}/.ssh || $(readlink -f ${HOME}/.ssh) != ${SSH_HOME} ]]; then
+if [[ ! -L ${HOME}/.ssh || $(readlink -f ${HOME}/.ssh) != $(readlink -f ${SSH_HOME}) ]]; then
     if [[ ${coldstart} -eq 0 ]]; then
         error "SSH directory \"${SSH_HOME}\" is not properly relinked."
         return 1 2>/dev/null || exit 1
     else
-        if [[ -n $(ls ${HOME}/.ssh/* 2>/dev/null) ]]; then
+        rm -rf ${SSH_HOME}
+        mkdir -p ${SSH_HOME}
+        if [[ -n $(ls ${HOME}/.ssh 2>/dev/null) ]]; then
             cp ${HOME}/.ssh/* ${SSH_HOME}
         fi
         rm -rf ${HOME}/.ssh
         ln -s ${SSH_HOME} ${HOME}/.ssh
     fi
 fi
+mkdir -p ${SSH_HOME}
 
-mkdir -p ${AWS_HOME}
-if [[ ! -L ${HOME}/.aws || $(readlink -f ${HOME}/.aws) != ${AWS_HOME} ]]; then
+if [[ ! -L ${HOME}/.aws || $(readlink -f ${HOME}/.aws) != $(readlink -f ${AWS_HOME}) ]]; then
     if [[ ${coldstart} -eq 0 ]]; then
         error "AWS directory \"${AWS_HOME}\" is not properly relinked."
         return 1 2>/dev/null || exit 1
     else
-        if [[ -n $(ls ${HOME}/.aws/* 2>/dev/null) ]]; then
+        rm -rf ${AWS_HOME}
+        mkdir -p ${AWS_HOME}
+        if [[ -n $(ls ${HOME}/.aws 2>/dev/null) ]]; then
             cp ${HOME}/.aws/* ${AWS_HOME}
         fi
         rm -rf ${HOME}/.aws
         ln -s ${AWS_HOME} ${HOME}/.aws
     fi
 fi
+mkdir -p ${AWS_HOME}
 
 ssh_kgq_ecdsa() {
     ssh-keygen -t ecdsa -q -f "${SSH_HOME}/id_ecdsa" -N ""
@@ -192,7 +196,7 @@ if [[ ! -f ${HOME}/.${rcfile} ]]; then
     error "Runtime command script entrance \"${HOME}/.${rcfile}\" is not ready."
     return 1 2>/dev/null || exit 1
 fi
-if [[ ! -L ${RC_TOP}/${rcfile}.sh || $(readlink -f ${RC_TOP}/${rcfile}.sh) != ${HOME}/.${rcfile} ]]; then
+if [[ ! -L ${RC_TOP}/${rcfile}.sh || $(readlink -f ${RC_TOP}/${rcfile}.sh) != $(readlink -f ${HOME}/.${rcfile}) ]]; then
     if [[ ${coldstart} -eq 0 ]]; then
         error "Runtime command script \"${RC_TOP}/${rcfile}.sh\" is not properly relinked."
         return 1 2>/dev/null || exit 1

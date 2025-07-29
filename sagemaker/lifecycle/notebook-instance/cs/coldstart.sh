@@ -56,7 +56,7 @@ export CODE_SERVER_SOURCE_ROOT=${RC_ROOT}/sagemaker/lifecycle/notebook-instance/
 for profile in User Machine; do
     here=${CODE_SERVER_SOURCE_ROOT}/${profile}/settings.json
     there=${CODE_SERVER_SETTINGS_ROOT}/${profile}/settings.json
-    if [[ ! -L ${there} || $(readlink -f ${there}) != ${here} ]]; then
+    if [[ ! -L ${there} || $(readlink -f ${there}) != $(readlink -f ${here}) ]]; then
         if [[ -f ${there} ]]; then
             mv ${there} ${there}.bak
             rm -f ${here}.bak
@@ -75,13 +75,14 @@ if [[ ! -d ${SYNC_SETTINGS_SETTINGS_ROOT} ]]; then
     ${CODE_SERVER} --install-extension zokugun.sync-settings
 fi
 
+rm -rf ${SYNC_SETTINGS_SOURCE_ROOT}/settings.yml
 cp ${SYNC_SETTINGS_SOURCE_ROOT}/settings-template.yml ${SYNC_SETTINGS_SOURCE_ROOT}/settings.yml
 rc_root_sed="$(echo ${RC_ROOT} | sed -E "s/([\\/\\.])/\\\\\1/g")"
 sed -i -e "s/\${RC_ROOT}/${rc_root_sed}/g" ${SYNC_SETTINGS_SOURCE_ROOT}/settings.yml
 
 here=${SYNC_SETTINGS_SOURCE_ROOT}/settings.yml
 there=${SYNC_SETTINGS_SETTINGS_ROOT}/settings.yml
-if [[ ! -L ${there} || $(readlink -f ${there}) != ${here} ]]; then
+if [[ ! -L ${there} || $(readlink -f ${there}) != $(readlink -f ${here}) ]]; then
     if [[ -f ${there} ]]; then
         mv ${there} ${there}.bak
         rm -f ${here}.bak
