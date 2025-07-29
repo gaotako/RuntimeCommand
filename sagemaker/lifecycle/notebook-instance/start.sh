@@ -60,7 +60,7 @@ if [[ ! -L ${RC_TOP}/bashrc.sh || $(readlink -f ${RC_TOP}/bashrc.sh) != $(readli
 fi
 
 command="source ${HOME}/.bashrc"
-if [[ -n ${command} && -z $(grep "^${command}$" ${RC_TOP}/profile.sh) ]]; then
+if [[ -n ${command} && -z $(grep "^${command}$" ${HOME}/.profile) ]]; then
     echo ${command} >>${HOME}/.profile
 fi
 
