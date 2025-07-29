@@ -245,7 +245,8 @@
         "**/.pytest_cache": true,
         "**/conda": true,
         "**/build": true,
-        "**/env": true
+        "**/env": true,
+        ".venv": true
     },
 
     // Ignore path patterns (glob) in true file action monitoring.
@@ -260,7 +261,8 @@
         "**/.pytest_cache": true,
         "**/conda": true,
         "**/build": true,
-        "**/env": true
+        "**/env": true,
+        ".venv": true
     },
 
     // ---------------------------------------------------------------------------------------------
