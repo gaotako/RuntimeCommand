@@ -127,7 +127,6 @@ if [[ ! -d ${RC_ROOT} ]]; then
             export RC_ROOT=${RC_TOP}/src/RuntimeCommand
             mkdir -p $(dirname ${RC_ROOT})
             git clone https://github.com/gaotako/RuntimeCommand.git ${RC_ROOT}
-            chmod -R a=rX ${RC_ROOT}
         fi
     fi
 fi

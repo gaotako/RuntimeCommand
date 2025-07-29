@@ -237,6 +237,9 @@ if [[ ! ( -L ${CODE_SERVER} && -f $(readlink -f ${CODE_SERVER}) ) ]]; then
         if [[ ${coldstart} -ne 0 ]]; then
             source ${shdir}/cs/coldstart.sh
         fi
+        if [[ $? -ne 0 ]]; then
+            return 1 2>/dev/null || exit 1
+        fi
 
         ${CODE_SERVER_SAGEMAKER_SETUP_PACKAGE}/install-scripts/notebook-instances/setup-codeserver.sh
     fi
