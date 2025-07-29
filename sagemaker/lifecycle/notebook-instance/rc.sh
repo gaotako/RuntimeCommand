@@ -233,12 +233,13 @@ if [[ ! ( -L ${CODE_SERVER} && -f $(readlink -f ${CODE_SERVER}) ) ]]; then
         conda update -n base -c anaconda conda -y
         ${CODE_SERVER_SAGEMAKER_SETUP_PACKAGE}/install-scripts/notebook-instances/install-codeserver.sh
         conda clean --all -y
+
+        if [[ ${coldstart} -ne 0 ]]; then
+            source ${shdir}/cs/coldstart.sh
+        fi
+
         ${CODE_SERVER_SAGEMAKER_SETUP_PACKAGE}/install-scripts/notebook-instances/setup-codeserver.sh
     fi
 fi
 
 source ${shdir}/../../../unix/mise.sh
-
-if [[ ${coldstart} -ne 0 ]]; then
-    source ${shdir}/cs/coldstart.sh
-fi
