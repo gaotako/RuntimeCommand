@@ -47,6 +47,27 @@ if [[ ! -d ${RC_ROOT} ]]; then
     return 1 2>/dev/null || exit 1
 fi
 
+export SSH_HOME=${RC_TOP}/ssh
+export AWS_HOME=${RC_TOP}/aws
+
+mkdir -p ${SSH_HOME}
+if [[ ! -L ${HOME}/.ssh || $(readlink -f ${HOME}/.ssh) != $(readlink -f ${SSH_HOME}) ]]; then
+    if [[ -n $(ls ${HOME}/.ssh 2>/dev/null) ]]; then
+        cp ${HOME}/.ssh/* ${SSH_HOME}
+    fi
+    rm -rf ${HOME}/.ssh
+    ln -s ${SSH_HOME} ${HOME}/.ssh
+fi
+
+mkdir -p ${AWS_HOME}
+if [[ ! -L ${HOME}/.aws || $(readlink -f ${HOME}/.aws) != $(readlink -f ${AWS_HOME}) ]]; then
+    if [[ -n $(ls ${HOME}/.aws 2>/dev/null) ]]; then
+        cp ${HOME}/.aws/* ${AWS_HOME}
+    fi
+    rm -rf ${HOME}/.aws
+    ln -s ${AWS_HOME} ${HOME}/.aws
+fi
+
 if [[ ! -f ${HOME}/.profile ]]; then
     touch ${HOME}/.profile
 fi
