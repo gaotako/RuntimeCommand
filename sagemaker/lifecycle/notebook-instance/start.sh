@@ -64,7 +64,7 @@ if [[ -n ${command} && -z $(grep "^${command}$" ${RC_TOP}/profile.sh) ]]; then
     echo ${command} >>${HOME}/.profile
 fi
 
-command="source ${RC_ROOT}/sagemaker/lifecycle/notebook/notebook-instance/rc.sh"
+command="source ${RC_ROOT}/sagemaker/lifecycle/notebook-instance/rc.sh"
 if [[ -n ${command} && -z $(grep "^${command}$" ${RC_TOP}/bashrc.sh) ]]; then
     echo ${command} >>${HOME}/.bashrc
 fi
