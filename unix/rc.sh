@@ -134,13 +134,12 @@ fi
 export SSH_HOME=${RC_TOP}/ssh
 export AWS_HOME=${RC_TOP}/aws
 
+mkdir -p ${SSH_HOME}
 if [[ ! -L ${HOME}/.ssh || $(readlink -f ${HOME}/.ssh) != $(readlink -f ${SSH_HOME}) ]]; then
     if [[ ${coldstart} -eq 0 ]]; then
         error "SSH directory \"${SSH_HOME}\" is not properly relinked."
         return 1 2>/dev/null || exit 1
     else
-        rm -rf ${SSH_HOME}
-        mkdir -p ${SSH_HOME}
         if [[ -n $(ls ${HOME}/.ssh 2>/dev/null) ]]; then
             cp ${HOME}/.ssh/* ${SSH_HOME}
         fi
@@ -148,15 +147,13 @@ if [[ ! -L ${HOME}/.ssh || $(readlink -f ${HOME}/.ssh) != $(readlink -f ${SSH_HO
         ln -s ${SSH_HOME} ${HOME}/.ssh
     fi
 fi
-mkdir -p ${SSH_HOME}
 
+mkdir -p ${AWS_HOME}
 if [[ ! -L ${HOME}/.aws || $(readlink -f ${HOME}/.aws) != $(readlink -f ${AWS_HOME}) ]]; then
     if [[ ${coldstart} -eq 0 ]]; then
         error "AWS directory \"${AWS_HOME}\" is not properly relinked."
         return 1 2>/dev/null || exit 1
     else
-        rm -rf ${AWS_HOME}
-        mkdir -p ${AWS_HOME}
         if [[ -n $(ls ${HOME}/.aws 2>/dev/null) ]]; then
             cp ${HOME}/.aws/* ${AWS_HOME}
         fi
