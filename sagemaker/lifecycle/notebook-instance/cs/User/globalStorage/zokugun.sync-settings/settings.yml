@@ -1,5 +1,0 @@
-hostname: ""
-profile: main
-repository:
-    type: file
-    path: /home/ec2-user/SageMaker/RuntimeCommand/src/RuntimeCommand/sagemaker/lifecycle/notebook-instance/cs/Data/SyncSettings
