@@ -41,19 +41,20 @@
 # ```
 set -euo pipefail
 
-# Resolve the directory containing this script.
+# Resolve directory paths.
 SCRIPT_DIR="$(cd "$(dirname "${0}")" && pwd)"
+PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
 # Source shared libraries and defaults.
-source "${SCRIPT_DIR}/shutils/argparse.sh"
-source "${SCRIPT_DIR}/shutils/log.sh"
+source "${PROJECT_ROOT}/shutils/argparse.sh"
+source "${PROJECT_ROOT}/shutils/log.sh"
 
 # Parse arguments (may set LOG_DEPTH via --log-depth).
 argparse::parse "$@"
 [[ ${#POSITIONAL_ARGS[@]} -gt 0 ]] && set -- "${POSITIONAL_ARGS[@]}"
 
 # Load shared defaults (respects values already set by argparse).
-source "${SCRIPT_DIR}/config.sh"
+source "${PROJECT_ROOT}/config.sh"
 
 # Build log indent from LOG_DEPTH.
 log::make_indent "${LOG_DEPTH}"
@@ -110,6 +111,7 @@ cp "${EXTENSION_DIR}/style/icons/codeserver.svg" "${ICON_PATH}"
 sudo -u ec2-user -i <<EOF
 source /home/ec2-user/anaconda3/bin/activate JupyterSystemEnv
 
+pip install jupyter-packaging
 pip install "${EXTENSION_DIR}"
 jupyter labextension disable jupyterlab-server-proxy
 

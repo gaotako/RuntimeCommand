@@ -22,13 +22,14 @@
 # #!/bin/bash
 # set -euo pipefail
 # RC_ROOT=/home/ec2-user/SageMaker/RuntimeCommandReadOnly/src/RuntimeCommand
-# bash "${RC_ROOT}/lifecycle/notebook-instance/start.sh"
+# bash "${RC_ROOT}/sagemaker/lifecycle/notebook_instance/start.sh"
 # ```
 set -euo pipefail
 
-# Resolve the project root directory (two levels up from this script).
+# Resolve directory paths.
 SCRIPT_DIR="$(cd "$(dirname "${0}")" && pwd)"
-PROJECT_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
+SAGEMAKER_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
+PROJECT_ROOT="$(cd "${SAGEMAKER_ROOT}/.." && pwd)"
 
 # Source shared libraries and defaults.
 source "${PROJECT_ROOT}/shutils/argparse.sh"
@@ -47,9 +48,12 @@ log::make_indent "${LOG_DEPTH}"
 # Print lifecycle header.
 echo "${LOG_INDENT} Code-Server Docker Lifecycle (start)"
 
+# Set up persistent home directory overrides (.ssh, .aws, .bashrc).
+bash "${PROJECT_ROOT}/home_setup.sh" --log-depth $((LOG_DEPTH + 1))
+
 # Install code-server (loads cached Docker image + places wrapper).
-bash "${PROJECT_ROOT}/install.sh" --log-depth $((LOG_DEPTH + 1))
+bash "${SAGEMAKER_ROOT}/install.sh" --log-depth $((LOG_DEPTH + 1))
 
 # Register code-server with JupyterLab and print completion footer.
-bash "${PROJECT_ROOT}/setup_jupyter.sh" --log-depth $((LOG_DEPTH + 1))
+bash "${SAGEMAKER_ROOT}/setup_jupyter.sh" --log-depth $((LOG_DEPTH + 1))
 echo "${LOG_INDENT} Code-Server Docker Lifecycle (start) complete."

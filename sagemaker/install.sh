@@ -43,19 +43,20 @@
 # ```
 set -euo pipefail
 
-# Resolve the directory containing this script.
+# Resolve directory paths.
 SCRIPT_DIR="$(cd "$(dirname "${0}")" && pwd)"
+PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
 # Source shared libraries and defaults.
-source "${SCRIPT_DIR}/shutils/argparse.sh"
-source "${SCRIPT_DIR}/shutils/log.sh"
+source "${PROJECT_ROOT}/shutils/argparse.sh"
+source "${PROJECT_ROOT}/shutils/log.sh"
 
 # Parse arguments (may set LOG_DEPTH via --log-depth).
 argparse::parse "$@"
 [[ ${#POSITIONAL_ARGS[@]} -gt 0 ]] && set -- "${POSITIONAL_ARGS[@]}"
 
 # Load shared defaults (respects values already set by argparse).
-source "${SCRIPT_DIR}/config.sh"
+source "${PROJECT_ROOT}/config.sh"
 
 # Build log indent from LOG_DEPTH.
 log::make_indent "${LOG_DEPTH}"
@@ -73,7 +74,7 @@ echo "${LOG_INDENT} [1/4] Docker is available: $(docker --version)"
 
 # Build (or load from cache) the Docker image.
 echo "${LOG_INDENT} [2/4] Building Docker image ..."
-bash "${SCRIPT_DIR}/build.sh" --log-depth $((LOG_DEPTH + 1)) "${CODE_SERVER_VERSION}"
+bash "${PROJECT_ROOT}/build.sh" --log-depth $((LOG_DEPTH + 1)) "${CODE_SERVER_VERSION}"
 
 # Back up the existing binary if one is already installed.
 if [ -f "${CODE_SERVER}" ]; then
@@ -84,12 +85,12 @@ else
     echo "${LOG_INDENT} [3/4] No existing binary found, skipping backup."
 fi
 
-# Install the wrapper script and defaults alongside it.
+# Install the wrapper script and config alongside it.
 echo "${LOG_INDENT} [4/4] Installing wrapper script to ${CODE_SERVER}"
 mkdir -p "$(dirname "${CODE_SERVER}")"
 cp "${SCRIPT_DIR}/wrapper.sh" "${CODE_SERVER}"
 chmod +x "${CODE_SERVER}"
-cp "${SCRIPT_DIR}/config.sh" "$(dirname "${CODE_SERVER}")/config.sh"
+cp "${PROJECT_ROOT}/config.sh" "$(dirname "${CODE_SERVER}")/config.sh"
 
 # Verify the image runs correctly; restore backup on failure.
 if docker run --rm "${IMAGE_NAME}:${IMAGE_TAG}" --version; then

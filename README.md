@@ -11,38 +11,59 @@ overcoming the AL2 glibc 2.26 limitation (code-server >= 4.17.0 requires glibc >
 docker/
 ├── Dockerfile                       Ubuntu 22.04 + code-server image
 ├── build.sh                         Build the Docker image
-├── wrapper.sh                       Drop-in replacement for the code-server binary
-├── install.sh                       Install code-server (build + wrapper + verify)
-├── setup_jupyter.sh                 Register code-server into JupyterLab launcher
 ├── config.sh                        Shared configuration and defaults
-├── lifecycle/                       SageMaker lifecycle configuration hooks
-│   └── notebook-instance/
-│       ├── create.sh                First-time setup (build image + install + register)
-│       └── start.sh                 Every-start setup (load image + install + register)
-├── README.md                        This file
+├── home_setup.sh                    Persistent home directory overrides (.ssh, .aws, .bashrc)
+├── bashrc.sh                        Default bashrc sourced by container shells
 ├── shutils/                         Shared shell utility libraries
 │   ├── argparse.sh                  Dynamic argument parser (--key value → VAR)
-│   └── log.sh                       BuildKit-style log indent builder
-└── sagemaker_jproxy_launcher_ext/   JupyterLab extension for server-proxy launcher
-    ├── package.json                 NPM metadata and build scripts
-    ├── pyproject.toml               Python build system config
-    ├── setup.py                     Python package installer
-    ├── setup.cfg                    Package metadata
-    ├── install.json                 Package manager metadata
-    ├── MANIFEST.in                  Distribution file list
-    ├── tsconfig.json                TypeScript compiler config
-    ├── LICENSE                      BSD-3-Clause license
-    ├── src/
-    │   ├── index.ts                 Extension source (launcher integration)
-    │   └── custom.d.ts              TypeScript type declarations
-    ├── style/
-    │   └── icons/
-    │       └── codeserver.svg       Code Server launcher icon
-    └── sagemaker_jproxy_launcher_ext/
-        ├── __init__.py              Python init, registers labextension
-        ├── _version.py              Version from package.json
-        └── labextension/
-            └── package.json         Extension manifest (rebuilt on install)
+│   ├── log.sh                       BuildKit-style log indent builder
+│   └── shell.sh                     Shell handler detection and bash compatibility check
+├── code_server/                     Shared code-server settings (platform-independent)
+│   ├── User/
+│   │   └── settings.json            User-level settings (themes, formatters, etc.)
+│   └── Data/
+│       └── SyncSettings/
+│           └── profiles/main/data/
+│               └── extensions.yml   Extension list managed by sync-settings
+├── sagemaker/                       SageMaker-specific scripts and data
+│   ├── install.sh                   Install code-server (build + wrapper + verify)
+│   ├── setup_jupyter.sh             Register code-server into JupyterLab launcher
+│   ├── wrapper.sh                   Drop-in replacement for the code-server binary
+│   ├── lifecycle/                   SageMaker lifecycle configuration hooks
+│   │   └── notebook_instance/
+│   │       ├── create.sh            First-time setup (build + install + register + coldstart)
+│   │       └── start.sh             Every-start setup (load image + install + register)
+│   ├── code_server/                 SageMaker-specific code-server settings
+│   │   ├── coldstart.sh             Bootstrap settings symlinks and sync-settings extension
+│   │   ├── Machine/
+│   │   │   └── settings.json        Machine-level settings (Python interpreter path)
+│   │   └── User/
+│   │       └── globalStorage/
+│   │           └── zokugun.sync-settings/
+│   │               └── settings-template.yml  Sync-settings config template
+│   └── sagemaker_jproxy_launcher_ext/   JupyterLab extension for server-proxy launcher
+│       ├── package.json             NPM metadata and build scripts
+│       ├── pyproject.toml           Python build system config
+│       ├── setup.py                 Python package installer
+│       ├── setup.cfg                Package metadata
+│       ├── install.json             Package manager metadata
+│       ├── MANIFEST.in              Distribution file list
+│       ├── tsconfig.json            TypeScript compiler config
+│       ├── LICENSE                  BSD-3-Clause license
+│       ├── .yarnrc.yml             Yarn config (disables PnP for jlpm compat)
+│       ├── src/
+│       │   ├── index.ts             Extension source (launcher integration)
+│       │   └── custom.d.ts          TypeScript type declarations
+│       ├── style/
+│       │   ├── index.css            Stylesheet (required by build)
+│       │   └── icons/
+│       │       └── codeserver.svg   Code Server launcher icon
+│       └── sagemaker_jproxy_launcher_ext/
+│           ├── __init__.py          Python init, registers labextension
+│           ├── _version.py          Version from package.json
+│           └── labextension/
+│               └── package.json     Extension manifest (rebuilt on install)
+└── README.md                        This file
 ```
 
 ---
@@ -66,7 +87,7 @@ set -euo pipefail
 RC_ROOT=/home/ec2-user/SageMaker/RuntimeCommandReadOnly/src/RuntimeCommand
 mkdir -p "${RC_ROOT}"
 git clone https://github.com/gaotako/RuntimeCommand "${RC_ROOT}"
-bash "${RC_ROOT}/lifecycle/notebook-instance/create.sh"
+bash "${RC_ROOT}/sagemaker/lifecycle/notebook_instance/create.sh"
 ```
 
 **Start script:**
@@ -75,7 +96,7 @@ bash "${RC_ROOT}/lifecycle/notebook-instance/create.sh"
 #!/bin/bash
 set -euo pipefail
 RC_ROOT=/home/ec2-user/SageMaker/RuntimeCommandReadOnly/src/RuntimeCommand
-bash "${RC_ROOT}/lifecycle/notebook-instance/start.sh"
+bash "${RC_ROOT}/sagemaker/lifecycle/notebook_instance/start.sh"
 ```
 
 The create script runs once to build the Docker image and install everything.
@@ -87,7 +108,7 @@ re-register with Jupyter (since the root volume is ephemeral).
 #### Step 1: Install Code-Server
 
 ```bash
-bash docker/install.sh
+bash sagemaker/install.sh
 ```
 
 This builds the Docker image (`code-server-sagemaker:latest`), **saves it to
@@ -98,13 +119,13 @@ transparently runs code-server inside the container.
 To pin a specific code-server version:
 
 ```bash
-CODE_SERVER_VERSION=4.109.2 bash docker/install.sh
+CODE_SERVER_VERSION=4.109.2 bash sagemaker/install.sh
 ```
 
 #### Step 2: Register with Jupyter
 
 ```bash
-bash docker/setup_jupyter.sh
+bash sagemaker/setup_jupyter.sh
 ```
 
 This adds the `c.ServerProxy.servers` configuration to `jupyter_notebook_config.py`,
@@ -123,7 +144,7 @@ Code Server will appear in the JupyterLab launcher under the "Other" category.
 Rebuild the Docker image with the new version:
 
 ```bash
-FORCE_BUILD=1 bash docker/build.sh <VERSION>
+FORCE_BUILD=1 bash build.sh <VERSION>
 ```
 
 Use `FORCE_BUILD=1` to skip loading the cached image and force a fresh build.
@@ -155,8 +176,9 @@ only need a fast `docker load` (~10s).
 
 ### Docker Wrapper
 
-The wrapper script (`wrapper.sh`) replaces the native code-server binary. When
-jupyter-server-proxy invokes `${CODE_SERVER_APPLICATION}/bin/code-server`, the wrapper:
+The wrapper script (`sagemaker/wrapper.sh`) replaces the native code-server binary.
+When jupyter-server-proxy invokes `${CODE_SERVER_APPLICATION}/bin/code-server`, the
+wrapper:
 
 1. Creates an isolated home directory at `~/SageMaker/CodeServerDockerHome/`
 2. Rewrites `--bind-addr 127.0.0.1:{port}` to `0.0.0.0:{port}` inside the container
@@ -175,10 +197,10 @@ It builds from TypeScript source on every `pip install`.
 
 ## Troubleshooting
 
-| Problem                    | Solution                                                  |
-| -------------------------- | --------------------------------------------------------- |
-| Docker not found           | Ensure Docker is installed and `docker` is in PATH        |
-| Permission denied on mkdir | Expected on first run; wrapper creates dirs automatically |
-| Port conflict              | `docker rm -f code-server-sagemaker`                      |
-| Timeout on open            | Timeout is 120s; container startup takes ~10s             |
-| Broken launcher icon       | Re-run `bash docker/setup_jupyter.sh` and restart Jupyter |
+| Problem                    | Solution                                                     |
+| -------------------------- | ------------------------------------------------------------ |
+| Docker not found           | Ensure Docker is installed and `docker` is in PATH           |
+| Permission denied on mkdir | Expected on first run; wrapper creates dirs automatically    |
+| Port conflict              | `docker rm -f code-server-sagemaker`                         |
+| Timeout on open            | Timeout is 120s; container startup takes ~10s                |
+| Broken launcher icon       | Re-run `bash sagemaker/setup_jupyter.sh` and restart Jupyter |
