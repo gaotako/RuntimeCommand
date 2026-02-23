@@ -7,7 +7,19 @@ from pathlib import Path
 __all__ = ["__version__"]
 
 
-def _fetchVersion():
+def _fetchVersion() -> str:
+    r"""
+    Fetch the version from the package.json file.
+
+    Args
+    ----
+    (No-Args)
+
+    Returns
+    -------
+    - version
+        Version of the package.
+    """
     HERE = Path(__file__).parent.resolve()
 
     for settings in HERE.rglob("package.json"):

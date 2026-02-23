@@ -1,24 +1,43 @@
 #!/bin/bash
 # Drop-in replacement for the code-server binary.
+#
 # Runs code-server inside a Docker container with an isolated home directory.
+# When `jupyter-server-proxy` invokes this script, it rewrites the bind address
+# from `127.0.0.1:{port}` to `0.0.0.0:{port}` so Docker port mapping works,
+# while the host-side `-p` flag restricts exposure to `127.0.0.1`.
+#
+# Args
+# ----
+# - $@
+#     Arguments forwarded to `code-server` inside the container.
+#
+# Returns
+# -------
+# (No-Returns)
+#
+# Notes
+# -----
+# This script is copied to `${CODE_SERVER_APPLICATION}/bin/code-server` by
+# `install.sh`, which also copies `config.sh` alongside it.
+#
+# The following environment variables can override default paths:
+# - `DOCKER_HOME`
+#     Isolated home directory for the container (default:
+#     `/home/ec2-user/SageMaker/CodeServerDockerHome`).
 
-IMAGE_NAME="code-server-sagemaker"
-IMAGE_TAG="latest"
+# Resolve the directory containing this script.
+WRAPPER_DIR="$(cd "$(dirname "${0}")" && pwd)"
 
-# Docker-specific home (isolated from host to avoid permission issues)
-DOCKER_HOME="/home/ec2-user/SageMaker/CodeServerDockerHome"
-XDG_ROOT="${DOCKER_HOME}/CrossDesktopGroup"
-XDG_DATA_HOME="${XDG_ROOT}/local/share"
-XDG_CONFIG_HOME="${XDG_ROOT}/config"
-XDG_CACHE_HOME="${XDG_ROOT}/cache"
-XDG_STATE_HOME="${XDG_ROOT}/local/state"
+# Load shared configuration (copied alongside this script by install.sh).
+source "${WRAPPER_DIR}/config.sh"
 
+# Ensure XDG directories exist on the host before mounting.
 mkdir -p "${XDG_DATA_HOME}" "${XDG_CONFIG_HOME}" "${XDG_CACHE_HOME}" "${XDG_STATE_HOME}"
 
-# Rewrite bind-addr for container networking.
-# jupyter-server-proxy passes --bind-addr 127.0.0.1:{port}, but code-server inside
-# the container must bind to 0.0.0.0 for Docker port mapping to reach it.
-# The host-side -p flag restricts exposure to 127.0.0.1.
+# Rewrite bind-addr arguments for container networking.
+# `jupyter-server-proxy` passes `--bind-addr 127.0.0.1:{port}`, but code-server
+# inside the container must bind to `0.0.0.0` for Docker port mapping to reach
+# it. The extracted port is used for the host-side `-p` flag.
 PORT=""
 REWRITTEN_ARGS=()
 for arg in "${@}"; do
@@ -30,13 +49,19 @@ for arg in "${@}"; do
     fi
 done
 
+# Build the port-mapping flag if a port was detected.
 PORT_FLAGS=""
 if [ -n "${PORT}" ]; then
     PORT_FLAGS="-p 127.0.0.1:${PORT}:${PORT}"
 fi
 
+# Remove any stale container from a previous run.
 docker rm -f code-server-sagemaker >/dev/null 2>&1 || true
 
+# Launch code-server inside the container.
+# `--security-opt label:disable` is set for SELinux compatibility.
+# No `-u` flag because Docker user namespace remapping on SageMaker maps
+# host uid 1000 to container uid 0.
 exec docker run --rm \
     --name code-server-sagemaker \
     --security-opt label:disable \

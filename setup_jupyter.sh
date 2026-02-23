@@ -1,32 +1,82 @@
 #!/bin/bash
+# Register code-server with JupyterLab as a server-proxy entry.
+#
+# Adds `c.ServerProxy.servers` configuration to `jupyter_notebook_config.py`,
+# installs the `sagemaker_jproxy_launcher_ext` JupyterLab extension and the
+# launcher icon, then restarts the Jupyter server if it is already running.
+#
+# Args
+# ----
+# - --log-depth LOG_DEPTH
+#     Logging nesting depth, controls the `"=>"` prefix repetition
+#     (default: `1`).
+#
+# Returns
+# -------
+# (No-Returns)
+#
+# Notes
+# -----
+# The following environment variables can override default paths:
+# - `HOME`
+#     User home directory.
+# - `WORKSPACE`
+#     SageMaker workspace root.
+# - `APP_ROOT`
+#     Application root directory.
+# - `APP_DATA_HOME`
+#     Application data directory.
+# - `CODE_SERVER_APPLICATION`
+#     code-server application directory.
+# - `CODE_SERVER`
+#     Path to the code-server binary / wrapper.
+# - `JUPYTER_CONFIG`
+#     Path to the Jupyter notebook configuration file.
+#
+# Examples
+# --------
+# ```
+# bash setup_jupyter.sh
+# bash setup_jupyter.sh --log-depth 2
+# ```
 set -euo pipefail
 
-# RuntimeCommand paths (defaults match rc.sh)
-HOME="${HOME:-/home/ec2-user}"
-WORKSPACE="${WORKSPACE:-${HOME}/SageMaker}"
-APP_ROOT="${APP_ROOT:-${WORKSPACE}/Application}"
-APP_DATA_HOME="${APP_DATA_HOME:-${APP_ROOT}/data}"
-CODE_SERVER_APPLICATION="${CODE_SERVER_APPLICATION:-${APP_DATA_HOME}/cs}"
-CODE_SERVER="${CODE_SERVER:-${CODE_SERVER_APPLICATION}/bin/code-server}"
+# Resolve the directory containing this script.
+SCRIPT_DIR="$(cd "$(dirname "${0}")" && pwd)"
 
-JUPYTER_CONFIG="${JUPYTER_CONFIG:-${HOME}/.jupyter/jupyter_notebook_config.py}"
+# Source shared libraries and defaults.
+source "${SCRIPT_DIR}/shutils/argparse.sh"
+source "${SCRIPT_DIR}/shutils/log.sh"
+
+# Parse arguments (may set LOG_DEPTH via --log-depth).
+argparse::parse "$@"
+[[ ${#POSITIONAL_ARGS[@]} -gt 0 ]] && set -- "${POSITIONAL_ARGS[@]}"
+
+# Load shared defaults (respects values already set by argparse).
+source "${SCRIPT_DIR}/config.sh"
+
+# Build log indent from LOG_DEPTH.
+log::make_indent "${LOG_DEPTH}"
+
+# Server-proxy registration constants.
 LAUNCHER_ENTRY_TITLE="Code Server"
 PROXY_PATH="codeserver"
 PROXY_TIMEOUT=120
-SCRIPT_DIR="$(cd "$(dirname "${0}")" && pwd)"
 ICON_PATH="${CODE_SERVER_APPLICATION}/icons/codeserver.svg"
 EXTENSION_DIR="${SCRIPT_DIR}/sagemaker_jproxy_launcher_ext"
 
-echo "=== Code-Server Jupyter Registration ==="
-echo "Target: ${CODE_SERVER}"
-echo "Config: ${JUPYTER_CONFIG}"
+# Print registration header.
+echo "${LOG_INDENT} Code-Server Jupyter Registration"
+echo "${LOG_INDENT} Target: ${CODE_SERVER}"
+echo "${LOG_INDENT} Config: ${JUPYTER_CONFIG}"
 
-# 1. Register code-server with jupyter-server-proxy
+# Add or update the `c.ServerProxy.servers` block in the Jupyter config.
+# If the block already exists, only the timeout value is patched.
 if grep -q "${CODE_SERVER_APPLICATION}/bin/code-server" "${JUPYTER_CONFIG}" 2>/dev/null; then
-    echo "[1/3] Server-proxy configuration already exists. Updating timeout to ${PROXY_TIMEOUT}s..."
+    echo "${LOG_INDENT} [1/3] Server-proxy configuration already exists. Updating timeout to ${PROXY_TIMEOUT}s ..."
     sed -i "/'${PROXY_PATH}':/,/^    }/s/'timeout': [0-9]*/'timeout': ${PROXY_TIMEOUT}/" "${JUPYTER_CONFIG}"
 else
-    echo "[1/3] Adding server-proxy configuration to ${JUPYTER_CONFIG}"
+    echo "${LOG_INDENT} [1/3] Adding server-proxy configuration to ${JUPYTER_CONFIG}"
     cat >>"${JUPYTER_CONFIG}" <<EOC
 c.ServerProxy.servers = {
     "${PROXY_PATH}": {
@@ -53,12 +103,10 @@ c.ServerProxy.servers = {
 EOC
 fi
 
-# 2. Install icon and JupyterLab extension
-echo "[2/3] Installing icon and JupyterLab extension..."
-
+# Install the launcher icon and the JupyterLab extension into JupyterSystemEnv.
+echo "${LOG_INDENT} [2/3] Installing icon and JupyterLab extension ..."
 mkdir -p "$(dirname "${ICON_PATH}")"
 cp "${EXTENSION_DIR}/style/icons/codeserver.svg" "${ICON_PATH}"
-
 sudo -u ec2-user -i <<EOF
 source /home/ec2-user/anaconda3/bin/activate JupyterSystemEnv
 
@@ -68,12 +116,14 @@ jupyter labextension disable jupyterlab-server-proxy
 conda deactivate
 EOF
 
-# 3. Restart Jupyter server
-echo "[3/3] Restarting Jupyter server..."
+# Restart Jupyter server so the new proxy entry takes effect.
+# Skipped when Jupyter is not yet running (e.g. during lifecycle config).
+echo "${LOG_INDENT} [3/3] Restarting Jupyter server ..."
 if [[ -f /home/ec2-user/bin/dockerd-rootless.sh ]]; then
-    echo "Running in rootless mode; please restart Jupyter from 'File' > 'Shut Down' and re-open."
-else
+    echo "${LOG_INDENT} Running in rootless mode; please restart Jupyter from 'File' > 'Shut Down' and re-open."
+elif sudo systemctl is-active jupyter-server >/dev/null 2>&1; then
     sudo systemctl restart jupyter-server
+else
+    echo "${LOG_INDENT} Jupyter server is not running; skipping restart."
 fi
-
-echo "=== Jupyter registration complete ==="
+echo "${LOG_INDENT} Jupyter registration complete."

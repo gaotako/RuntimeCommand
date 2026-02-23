@@ -14,7 +14,15 @@ docker/
 ├── wrapper.sh                       Drop-in replacement for the code-server binary
 ├── install.sh                       Install code-server (build + wrapper + verify)
 ├── setup_jupyter.sh                 Register code-server into JupyterLab launcher
+├── config.sh                        Shared configuration and defaults
+├── lifecycle/                       SageMaker lifecycle configuration hooks
+│   └── notebook-instance/
+│       ├── create.sh                First-time setup (build image + install + register)
+│       └── start.sh                 Every-start setup (load image + install + register)
 ├── README.md                        This file
+├── shutils/                         Shared shell utility libraries
+│   ├── argparse.sh                  Dynamic argument parser (--key value → VAR)
+│   └── log.sh                       BuildKit-style log indent builder
 └── sagemaker_jproxy_launcher_ext/   JupyterLab extension for server-proxy launcher
     ├── package.json                 NPM metadata and build scripts
     ├── pyproject.toml               Python build system config
@@ -24,7 +32,6 @@ docker/
     ├── MANIFEST.in                  Distribution file list
     ├── tsconfig.json                TypeScript compiler config
     ├── LICENSE                      BSD-3-Clause license
-    ├── TEST_PLAN.md                 Manual test plan for v0.3.0
     ├── src/
     │   ├── index.ts                 Extension source (launcher integration)
     │   └── custom.d.ts              TypeScript type declarations
@@ -47,15 +54,46 @@ docker/
 - SageMaker Notebook Instance with Docker available
 - Terminal access
 
-### Step 1: Install Code-Server
+### Option A: Lifecycle Configuration (Recommended)
+
+Attach the following lifecycle scripts in the SageMaker Notebook Instance console.
+
+**Create script:**
+
+```bash
+#!/bin/bash
+set -euo pipefail
+RC_ROOT=/home/ec2-user/SageMaker/RuntimeCommandReadOnly/src/RuntimeCommand
+mkdir -p "${RC_ROOT}"
+git clone https://github.com/gaotako/RuntimeCommand "${RC_ROOT}"
+bash "${RC_ROOT}/lifecycle/notebook-instance/create.sh"
+```
+
+**Start script:**
+
+```bash
+#!/bin/bash
+set -euo pipefail
+RC_ROOT=/home/ec2-user/SageMaker/RuntimeCommandReadOnly/src/RuntimeCommand
+bash "${RC_ROOT}/lifecycle/notebook-instance/start.sh"
+```
+
+The create script runs once to build the Docker image and install everything.
+The start script runs on every start to reload the cached image and
+re-register with Jupyter (since the root volume is ephemeral).
+
+### Option B: Manual Steps
+
+#### Step 1: Install Code-Server
 
 ```bash
 bash docker/install.sh
 ```
 
-This builds the Docker image (`code-server-sagemaker:latest`) and places a wrapper
-script at `${CODE_SERVER_APPLICATION}/bin/code-server` that transparently runs
-code-server inside the container.
+This builds the Docker image (`code-server-sagemaker:latest`), **saves it to
+`~/SageMaker/CodeServerDockerImage/`** for persistence across notebook restarts,
+and places a wrapper script at `${CODE_SERVER_APPLICATION}/bin/code-server` that
+transparently runs code-server inside the container.
 
 To pin a specific code-server version:
 
@@ -63,7 +101,7 @@ To pin a specific code-server version:
 CODE_SERVER_VERSION=4.109.2 bash docker/install.sh
 ```
 
-### Step 2: Register with Jupyter
+#### Step 2: Register with Jupyter
 
 ```bash
 bash docker/setup_jupyter.sh
@@ -72,7 +110,7 @@ bash docker/setup_jupyter.sh
 This adds the `c.ServerProxy.servers` configuration to `jupyter_notebook_config.py`,
 installs the JupyterLab launcher extension, and copies the launcher icon.
 
-### Step 3: Restart Jupyter
+#### Step 3: Restart Jupyter
 
 In JupyterLab: **File → Shut Down**, then re-open the notebook URL.
 
@@ -85,11 +123,31 @@ Code Server will appear in the JupyterLab launcher under the "Other" category.
 Rebuild the Docker image with the new version:
 
 ```bash
-bash docker/build.sh <VERSION>
+FORCE_BUILD=1 bash docker/build.sh <VERSION>
 ```
 
+Use `FORCE_BUILD=1` to skip loading the cached image and force a fresh build.
 The wrapper script does not need to change — it always uses the
 `code-server-sagemaker:latest` image tag.
+
+## Image Persistence
+
+Docker images are stored in Docker's data root (`/var/lib/docker/`), which lives
+on the **ephemeral root volume** of SageMaker Notebook Instances. When a notebook
+is stopped and restarted, the root volume is wiped and all Docker images are lost.
+
+To avoid rebuilding on every restart, `build.sh` automatically:
+
+1. **Saves** the built image to `~/SageMaker/CodeServerDockerImage/` (persistent EBS volume)
+2. **Loads** the saved image on subsequent runs instead of rebuilding
+
+This means the first install takes a few minutes to build, but subsequent restarts
+only need a fast `docker load` (~10s).
+
+| Variable           | Default                             | Description                   |
+| ------------------ | ----------------------------------- | ----------------------------- |
+| `DOCKER_IMAGE_DIR` | `~/SageMaker/CodeServerDockerImage` | Persistent image storage path |
+| `FORCE_BUILD`      | *(unset)*                           | Set to `1` to force a rebuild |
 
 ---
 
