@@ -88,9 +88,13 @@ case "${CISH}" in
     ;;
 esac
 
-# Activate mise (polyglot runtime manager) if the binary is present.
-# Uses the detected shell handler (CISH) for proper activation.
-# Delegates runtime checks to mise.sh (prints install instructions if missing).
+# Set up mise (polyglot runtime manager).
+# Delegates to mise.sh which handles migration, activation, settings, and
+# runtime checks. Migration must happen before activation to avoid
+# "untrusted config" errors from stale files in ~/.config/mise/.
+bash "${RC_DIR}/mise.sh"
+
+# Activate mise for the current shell session if the binary is present.
 if [[ -f "${MISE_INSTALL_PATH}" ]]; then
     case "${CISH}" in
     *bash*|*sh*)
@@ -104,6 +108,3 @@ if [[ -f "${MISE_INSTALL_PATH}" ]]; then
         ;;
     esac
 fi
-
-# Check mise and runtime availability (prints install instructions if missing).
-bash "${RC_DIR}/mise.sh"

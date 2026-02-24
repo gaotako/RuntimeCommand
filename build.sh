@@ -55,6 +55,29 @@ log_make_indent "${LOG_DEPTH}"
 # Override CODE_SERVER_VERSION from positional argument if provided.
 CODE_SERVER_VERSION="${1:-${CODE_SERVER_VERSION}}"
 
+# Pre-build checks: verify all required tools and files are available.
+# Docker is needed for image build; pip and python3 are needed by
+# setup_jupyter.sh to install the JupyterLab extension; curl is needed
+# by mise.sh for downloading the mise binary.
+BUILD_CHECK_FAILED=0
+for required_cmd in docker curl pip python3; do
+    if ! command -v "${required_cmd}" &>/dev/null; then
+        echo "${LOG_INDENT} ERROR: Required command '${required_cmd}' is not installed or not in PATH."
+        BUILD_CHECK_FAILED=1
+    fi
+done
+for required_file in Dockerfile entrypoint.sh; do
+    if [[ ! -f "${SCRIPT_DIR}/${required_file}" ]]; then
+        echo "${LOG_INDENT} ERROR: Required file '${required_file}' not found in ${SCRIPT_DIR}."
+        BUILD_CHECK_FAILED=1
+    fi
+done
+if [[ "${BUILD_CHECK_FAILED}" -eq 1 ]]; then
+    echo "${LOG_INDENT} Pre-build checks failed. Please install missing dependencies."
+    exit 1
+fi
+echo "${LOG_INDENT} Pre-build checks passed."
+
 # Persistent image file path.
 DOCKER_IMAGE_FILE="${DOCKER_IMAGE_DIR}/${IMAGE_NAME}-${IMAGE_TAG}.tar"
 

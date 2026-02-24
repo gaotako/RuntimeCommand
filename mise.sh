@@ -93,25 +93,10 @@ fi
 echo "${LOG_INDENT} [2/5] Creating mise directories ..."
 mkdir -p "${XDG_DATA_HOME}/mise" "${XDG_CONFIG_HOME}/mise" "${XDG_CACHE_HOME}/mise"
 
-# Activate mise for the current session using the detected shell handler.
-# CISH is set by shell.sh and indicates the current interactive shell.
-echo "${LOG_INDENT} [3/5] Activating mise (${CISH}) ..."
-case "${CISH}" in
-*bash*|*sh*)
-    eval "$("${MISE_INSTALL_PATH}" activate bash)"
-    ;;
-*zsh*)
-    eval "$("${MISE_INSTALL_PATH}" activate zsh)"
-    ;;
-*)
-    echo "${LOG_INDENT} WARNING: Unknown shell '${CISH}', mise is not activated." >&2
-    ;;
-esac
-
 # Migrate existing mise installs from default locations to XDG paths.
-# If previous installs exist under ~/.config/mise or ~/.local/share/mise,
-# move or symlink them into the XDG-based directories so mise picks them up.
-echo "${LOG_INDENT} [4/5] Migrating existing mise data ..."
+# Must happen BEFORE activation to avoid "untrusted config" errors from
+# stale config files in ~/.config/mise/.
+echo "${LOG_INDENT} [3/5] Migrating existing mise data ..."
 if [[ -f "${HOME}/.config/mise/config.toml" ]]; then
     echo "${LOG_INDENT} Migrating config from ~/.config/mise/ ..."
     mv "${HOME}/.config/mise/config.toml" "${XDG_CONFIG_HOME}/mise/config.toml"
@@ -128,6 +113,21 @@ for module_alt in node python; do
         done
     fi
 done
+
+# Activate mise for the current session using the detected shell handler.
+# CISH is set by shell.sh and indicates the current interactive shell.
+echo "${LOG_INDENT} [4/5] Activating mise (${CISH}) ..."
+case "${CISH}" in
+*bash*|*sh*)
+    eval "$("${MISE_INSTALL_PATH}" activate bash)"
+    ;;
+*zsh*)
+    eval "$("${MISE_INSTALL_PATH}" activate zsh)"
+    ;;
+*)
+    echo "${LOG_INDENT} WARNING: Unknown shell '${CISH}', mise is not activated." >&2
+    ;;
+esac
 
 # Enable experimental features and configure mise settings.
 # Disable Node GPG signature verification because SageMaker AL2 ships with
