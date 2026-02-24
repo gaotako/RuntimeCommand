@@ -2,7 +2,7 @@
 # Bootstrap code-server settings and extensions for Docker code-server.
 #
 # Symlinks User settings from the shared repo directory and templates Machine
-# settings (resolving the mise-managed Python path) to the code-server data
+# settings (with default Python path) to the code-server data
 # directory, installs the `zokugun.sync-settings` extension, and templates
 # the sync-settings configuration with the resolved project root path.
 # Shared settings come from `docker/code_server/`, while SageMaker-specific
@@ -74,14 +74,10 @@ if [[ ! -L "${there}" || "$(readlink -f "${there}")" != "$(readlink -f "${here}"
 fi
 
 # Template and symlink Machine settings (SageMaker-specific).
-# Resolves the mise-managed Python path into settings-template.json.
+# Uses the default Python path since mise runtimes are installed inside the
+# Docker container, not on the host where this script runs.
 echo "${LOG_INDENT} [2/4] Templating Machine settings ..."
-MISE_PYTHON_PATH_DEFAULT="/usr/bin/python3"
-if [[ -f "${MISE_INSTALL_PATH}" ]]; then
-    MISE_PYTHON_PATH="$("${MISE_INSTALL_PATH}" which python3 2>/dev/null || echo "${MISE_PYTHON_PATH_DEFAULT}")"
-else
-    MISE_PYTHON_PATH="${MISE_PYTHON_PATH_DEFAULT}"
-fi
+MISE_PYTHON_PATH="/usr/bin/python3"
 echo "${LOG_INDENT} Python path: ${MISE_PYTHON_PATH}"
 rm -f "${SAGEMAKER_CS_ROOT}/Machine/settings.json"
 cp "${SAGEMAKER_CS_ROOT}/Machine/settings-template.json" "${SAGEMAKER_CS_ROOT}/Machine/settings.json"

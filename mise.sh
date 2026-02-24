@@ -3,8 +3,8 @@
 #
 # Downloads the mise binary to `APP_BIN_HOME` if not already present, sets
 # up XDG-based directories for mise, migrates any existing mise installs
-# from default locations, enables experimental features, and installs the
-# configured runtimes (Node, Python).
+# from default locations, enables experimental features, and checks or
+# installs the configured runtimes (Node, Python).
 #
 # Shell-aware activation supports bash/sh and zsh via the `CISH` variable
 # from `shell.sh`.
@@ -16,7 +16,8 @@
 #     (default: `1`).
 # - --coldstart
 #     When set, installs mise binary and runtimes from scratch. Without
-#     this flag the script only verifies the installation is intact.
+#     this flag the script checks for missing runtimes and prints install
+#     instructions.
 #
 # Returns
 # -------
@@ -68,17 +69,20 @@ log_make_indent "${LOG_DEPTH}"
 COLDSTART_DEFAULT=0
 COLDSTART="${COLDSTART:-${COLDSTART_DEFAULT}}"
 
+# If mise is not installed and not in coldstart mode, print instructions
+# and skip all mise operations to avoid startup delays.
+if [[ ! -f "${MISE_INSTALL_PATH}" && "${COLDSTART}" -eq 0 ]]; then
+    echo "Missing mise, run \`bash ${SCRIPT_DIR}/mise.sh --coldstart\` to install."
+    exit 0
+fi
+
 # Print header.
 echo "${LOG_INDENT} Mise Runtime Manager Setup"
 echo "${LOG_INDENT} Binary: ${MISE_INSTALL_PATH}"
 
-# Install the mise binary if not already present.
+# Install the mise binary if not already present (coldstart mode only).
 echo "${LOG_INDENT} [1/5] Checking mise binary ..."
 if [[ ! -f "${MISE_INSTALL_PATH}" ]]; then
-    if [[ "${COLDSTART}" -eq 0 ]]; then
-        echo "${LOG_INDENT} ERROR: mise is not installed at ${MISE_INSTALL_PATH}."
-        exit 1
-    fi
     echo "${LOG_INDENT} Downloading mise ..."
     curl -fsSL https://mise.run | MISE_INSTALL_PATH="${MISE_INSTALL_PATH}" sh
 else
@@ -129,14 +133,23 @@ done
 # Disable Node GPG signature verification because SageMaker AL2 ships with
 # outdated GPG keys that cannot validate Node.js release signatures. Mise
 # still verifies downloads via SHA256 checksums.
-echo "${LOG_INDENT} [5/5] Installing runtimes ..."
+echo "${LOG_INDENT} [5/5] Checking runtimes ..."
 "${MISE_INSTALL_PATH}" settings experimental=true
 "${MISE_INSTALL_PATH}" settings node.gpg_verify=false
-if [[ "${COLDSTART}" -eq 0 ]]; then
-    "${MISE_INSTALL_PATH}" settings set not_found_auto_install 0
-fi
 
-# Install the configured runtimes globally.
-# shellcheck disable=SC2086
-"${MISE_INSTALL_PATH}" use -g "node@${MISE_NODE_VERSION}" ${MISE_PYTHON_VERSIONS}
+# Check or install runtimes based on coldstart flag.
+# In coldstart mode, install all runtimes. Otherwise, check each runtime
+# and print install instructions for any that are missing.
+if [[ "${COLDSTART}" -eq 1 ]]; then
+    # shellcheck disable=SC2086
+    "${MISE_INSTALL_PATH}" use -g "node@${MISE_NODE_VERSION}" ${MISE_PYTHON_VERSIONS}
+else
+    "${MISE_INSTALL_PATH}" settings set not_found_auto_install 0
+    if ! "${MISE_INSTALL_PATH}" which node &>/dev/null; then
+        echo "Missing node, run \`${MISE_INSTALL_PATH} use -g node@${MISE_NODE_VERSION}\` to install."
+    fi
+    if ! "${MISE_INSTALL_PATH}" which python3 &>/dev/null; then
+        echo "Missing python, run \`${MISE_INSTALL_PATH} use -g ${MISE_PYTHON_VERSIONS}\` to install."
+    fi
+fi
 echo "${LOG_INDENT} Mise setup complete."

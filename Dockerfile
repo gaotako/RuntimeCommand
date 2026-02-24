@@ -31,13 +31,14 @@ FROM ubuntu:22.04
 # code-server version build argument.
 ARG CODE_SERVER_VERSION=latest
 
-# Install system dependencies and development tools.
+# Install system dependencies, development tools, and Python (system fallback).
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         curl \
         git \
         bash \
         zsh \
+        python3 \
         ca-certificates \
         procps \
         openssh-client \

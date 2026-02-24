@@ -62,7 +62,7 @@ echo "${LOG_INDENT} Home Directory Setup"
 
 # Symlink ~/.ssh to persistent storage, preserving existing content.
 # Generate an SSH identity (ecdsa, fallback to rsa) if none exists.
-echo "${LOG_INDENT} [1/5] Setting up .ssh ..."
+echo "${LOG_INDENT} [1/4] Setting up .ssh ..."
 mkdir -p "${SSH_HOME}"
 if [[ ! -L "${DOCKER_HOME}/.ssh" || "$(readlink -f "${DOCKER_HOME}/.ssh")" != "$(readlink -f "${SSH_HOME}")" ]]; then
     if [[ -n "$(ls "${DOCKER_HOME}/.ssh" 2>/dev/null)" ]]; then
@@ -82,7 +82,7 @@ for encrypt in ecdsa rsa; do
 done
 
 # Symlink ~/.aws to persistent storage, preserving existing content.
-echo "${LOG_INDENT} [2/5] Setting up .aws ..."
+echo "${LOG_INDENT} [2/4] Setting up .aws ..."
 mkdir -p "${AWS_HOME}"
 if [[ ! -L "${DOCKER_HOME}/.aws" || "$(readlink -f "${DOCKER_HOME}/.aws")" != "$(readlink -f "${AWS_HOME}")" ]]; then
     if [[ -n "$(ls "${DOCKER_HOME}/.aws" 2>/dev/null)" ]]; then
@@ -97,7 +97,7 @@ fi
 # profile for the detected shell. DOCKER_HOME gets fresh rc files sourcing
 # rc.sh. HOST HOME gets lines injected between RuntimeCommand markers
 # (replaced on each run).
-echo "${LOG_INDENT} [3/5] Setting up shell rc files (${CISH}) ..."
+echo "${LOG_INDENT} [3/4] Setting up shell rc files (${CISH}) ..."
 case "${CISH}" in
 *bash*|*sh*)
     RC_FILE=".bashrc"
@@ -147,11 +147,7 @@ if [[ ! -L "${RC_LINK}" || "$(readlink -f "${RC_LINK}")" != "$(readlink -f "${HO
 fi
 
 # Ensure XDG and application directories exist on the host.
-echo "${LOG_INDENT} [4/5] Creating XDG and application directories ..."
+echo "${LOG_INDENT} [4/4] Creating XDG and application directories ..."
 mkdir -p "${XDG_DATA_HOME}" "${XDG_CONFIG_HOME}" "${XDG_CACHE_HOME}" "${XDG_STATE_HOME}"
 mkdir -p "${APP_ROOT}" "${APP_DATA_HOME}" "${APP_BIN_HOME}"
-
-# Install mise (polyglot runtime manager) with runtimes.
-echo "${LOG_INDENT} [5/5] Setting up mise ..."
-bash "${SCRIPT_DIR}/mise.sh" --coldstart --log-depth $((LOG_DEPTH + 1))
 echo "${LOG_INDENT} Home directory setup complete."
