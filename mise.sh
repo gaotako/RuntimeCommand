@@ -125,18 +125,15 @@ for module_alt in node python; do
     fi
 done
 
-# Enable experimental features and install the configured runtimes.
+# Enable experimental features and configure mise settings.
+# Disable Node GPG signature verification because SageMaker AL2 ships with
+# outdated GPG keys that cannot validate Node.js release signatures. Mise
+# still verifies downloads via SHA256 checksums.
 echo "${LOG_INDENT} [5/5] Installing runtimes ..."
 "${MISE_INSTALL_PATH}" settings experimental=true
+"${MISE_INSTALL_PATH}" settings node.gpg_verify=false
 if [[ "${COLDSTART}" -eq 0 ]]; then
     "${MISE_INSTALL_PATH}" settings set not_found_auto_install 0
-fi
-
-# Detect SageMaker environment to choose Node version.
-# SageMaker notebook instances have /opt/ml/metadata/resource-metadata.json
-# and ship with an older Node; use 20 for compatibility.
-if [[ -f /opt/ml/metadata/resource-metadata.json ]]; then
-    MISE_NODE_VERSION="${MISE_NODE_VERSION:-20}"
 fi
 
 # Install the configured runtimes globally.
