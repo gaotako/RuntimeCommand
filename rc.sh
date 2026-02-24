@@ -14,14 +14,24 @@
 # -------
 # (No-Returns)
 
+# Guard: only run inside the Docker container launched by wrapper.sh.
+# wrapper.sh sets RC_DOCKER=1 as a container env var (and unsets it on the
+# host before launching). On the SageMaker host or any other environment,
+# rc.sh exits early without modifying the shell.
+if [[ "${RC_DOCKER:-0}" != "1" ]]; then
+    return 0 2>/dev/null || true
+fi
+
 # Bootstrap: locate this file to find shutils/shell.sh.
 # After sourcing shell.sh, RC_DIR and CISH are available globally.
+# In zsh, ${0:a:h} gives the caller's directory when sourced from .zshrc,
+# so we use ${(%):-%x} which reliably returns the sourced file's path.
 case "$(ps -o comm -p $$ | tail -1 | cut -d " " -f 1)" in
 *bash*|*sh*)
     _rc_self="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
     ;;
 *zsh*)
-    _rc_self="${0:a:h}"
+    _rc_self="${${(%):-%x}:a:h}"
     ;;
 *)
     _rc_self="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
@@ -31,14 +41,6 @@ esac
 # Source shell handler detection (provides CISH and RC_DIR).
 source "${_rc_self}/shutils/shell.sh"
 shell_check_ext_compat
-
-# Guard: only run inside the Docker container launched by wrapper.sh.
-# wrapper.sh sets RC_DOCKER=1 as a container env var (and unsets it on the
-# host before launching). On the SageMaker host or any other environment,
-# rc.sh exits early without modifying the shell.
-if [[ "${RC_DOCKER:-0}" != "1" ]]; then
-    return 0 2>/dev/null || true
-fi
 
 # Export all shared environment variables (HOME, WORKSPACE, XDG paths, etc.).
 set -a

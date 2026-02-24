@@ -22,12 +22,14 @@ CISH="$(ps -o comm -p $$ | tail -1 | cut -d " " -f 1)"
 
 # Resolve the project root directory from this file's location.
 # shell.sh lives at docker/shutils/shell.sh, so RC_DIR = docker/.
+# In zsh, ${0:a:h} gives the caller's path when sourced; ${(%):-%x}
+# reliably returns the actual sourced file's path.
 case "${CISH}" in
 *bash*|*sh*)
     RC_DIR="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/.." && pwd)"
     ;;
 *zsh*)
-    RC_DIR="${0:a:h:h}"
+    RC_DIR="${${(%):-%x}:a:h:h}"
     ;;
 *)
     RC_DIR="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/.." && pwd)"
