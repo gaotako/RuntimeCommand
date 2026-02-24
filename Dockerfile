@@ -60,6 +60,11 @@ RUN if [ "${CODE_SERVER_VERSION}" = "latest" ]; then \
 # Verify code-server installation.
 RUN code-server --version
 
+# Install mise (polyglot runtime manager).
+RUN curl -fsSL https://mise.run | sh
+RUN /root/.local/bin/mise --version
+RUN cp /root/.local/bin/mise /usr/local/bin/mise
+
 # Copy and set the entrypoint script.
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
