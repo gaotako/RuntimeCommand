@@ -53,11 +53,15 @@ SSH_HOME="${PERSISTENT_ROOT}/ssh"
 AWS_HOME="${PERSISTENT_ROOT}/aws"
 BASHRC_LINK="${PERSISTENT_ROOT}/bashrc.sh"
 
+# Ensure DOCKER_HOME exists (normally created by wrapper.sh at runtime).
+mkdir -p "${DOCKER_HOME}"
+
 # Print header.
 echo "${LOG_INDENT} Home Directory Setup"
 
 # Symlink ~/.ssh to persistent storage, preserving existing content.
-echo "${LOG_INDENT} [1/3] Setting up .ssh ..."
+# Generate an SSH identity (ecdsa, fallback to rsa) if none exists.
+echo "${LOG_INDENT} [1/4] Setting up .ssh ..."
 mkdir -p "${SSH_HOME}"
 if [[ ! -L "${DOCKER_HOME}/.ssh" || "$(readlink -f "${DOCKER_HOME}/.ssh")" != "$(readlink -f "${SSH_HOME}")" ]]; then
     if [[ -n "$(ls "${DOCKER_HOME}/.ssh" 2>/dev/null)" ]]; then
@@ -66,9 +70,18 @@ if [[ ! -L "${DOCKER_HOME}/.ssh" || "$(readlink -f "${DOCKER_HOME}/.ssh")" != "$
     rm -rf "${DOCKER_HOME}/.ssh"
     ln -s "${SSH_HOME}" "${DOCKER_HOME}/.ssh"
 fi
+for encrypt in ecdsa rsa; do
+    if [[ ! -f "${SSH_HOME}/id_${encrypt}" ]]; then
+        if ssh-keygen -t "${encrypt}" -q -f "${SSH_HOME}/id_${encrypt}" -N ""; then
+            break
+        fi
+    else
+        break
+    fi
+done
 
 # Symlink ~/.aws to persistent storage, preserving existing content.
-echo "${LOG_INDENT} [2/3] Setting up .aws ..."
+echo "${LOG_INDENT} [2/4] Setting up .aws ..."
 mkdir -p "${AWS_HOME}"
 if [[ ! -L "${DOCKER_HOME}/.aws" || "$(readlink -f "${DOCKER_HOME}/.aws")" != "$(readlink -f "${AWS_HOME}")" ]]; then
     if [[ -n "$(ls "${DOCKER_HOME}/.aws" 2>/dev/null)" ]]; then
@@ -80,7 +93,7 @@ fi
 
 # Set up .profile and .bashrc with persistent symlink.
 # .bashrc sources docker/bashrc.sh (not copied, so path resolution works).
-echo "${LOG_INDENT} [3/3] Setting up .profile and .bashrc ..."
+echo "${LOG_INDENT} [3/4] Setting up .profile and .bashrc ..."
 [[ ! -f "${DOCKER_HOME}/.profile" ]] && touch "${DOCKER_HOME}/.profile"
 [[ ! -f "${DOCKER_HOME}/.bashrc" ]] && touch "${DOCKER_HOME}/.bashrc"
 : > "${DOCKER_HOME}/.profile"
@@ -90,4 +103,8 @@ if [[ ! -L "${BASHRC_LINK}" || "$(readlink -f "${BASHRC_LINK}")" != "$(readlink 
     rm -rf "${BASHRC_LINK}"
     ln -s "${DOCKER_HOME}/.bashrc" "${BASHRC_LINK}"
 fi
+# Ensure XDG and application directories exist on the host.
+echo "${LOG_INDENT} [4/4] Creating XDG and application directories ..."
+mkdir -p "${XDG_DATA_HOME}" "${XDG_CONFIG_HOME}" "${XDG_CACHE_HOME}" "${XDG_STATE_HOME}"
+mkdir -p "${APP_ROOT}" "${APP_DATA_HOME}" "${APP_BIN_HOME}"
 echo "${LOG_INDENT} Home directory setup complete."
