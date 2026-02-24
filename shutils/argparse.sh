@@ -1,7 +1,7 @@
 #!/bin/bash
 # Shared argument parsing library for docker scripts.
 #
-# Provides `argparse::parse` which dynamically translates `--key value`
+# Provides `argparse_parse` which dynamically translates `--key value`
 # arguments into shell variables and collects positional arguments.
 #
 # Args
@@ -16,7 +16,7 @@
 # --------
 # ```
 # source shutils/argparse.sh
-# argparse::parse "$@"
+# argparse_parse "$@"
 # # --my-key value becomes MY_KEY=value
 # # --my-key=value becomes MY_KEY=value
 # # --my-flag (no value) becomes MY_FLAG=1
@@ -47,7 +47,7 @@ _SHUTILS_ARGPARSE_SH_LOADED=1
 #     Array of positional (non-keyword) arguments. To restore `$1`, `$2`,
 #     etc., run `set -- "${POSITIONAL_ARGS[@]}"` after calling this function.
 #     Otherwise, use `POSITIONAL_ARGS[0]`, `POSITIONAL_ARGS[1]`, etc.
-argparse::parse() {
+argparse_parse() {
     POSITIONAL_ARGS=()
     while [[ $# -gt 0 ]]; do
         case "${1}" in

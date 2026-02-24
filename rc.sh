@@ -1,9 +1,10 @@
 #!/bin/bash
-# Default bashrc for Docker code-server.
+# Shell-agnostic runtime command initialization for Docker code-server.
 #
 # Sourced on every interactive shell session inside the container.
 # Exports all environment variables from config.sh, sets up ANSI color
-# codes, persistent path variables, and the shell prompt.
+# codes, persistent path variables, the shell prompt, and mise activation.
+# Supports bash and zsh via `CISH` detection from `shell.sh`.
 #
 # Args
 # ----
@@ -13,35 +14,34 @@
 # -------
 # (No-Returns)
 
-# Detect shell and resolve the project root from this file's location.
-_bashrc_cish="$(ps -o comm -p $$ | tail -1 | cut -d " " -f 1)"
-case "${_bashrc_cish}" in
+# Bootstrap: locate this file to find shutils/shell.sh.
+# After sourcing shell.sh, RC_DIR and CISH are available globally.
+case "$(ps -o comm -p $$ | tail -1 | cut -d " " -f 1)" in
 *bash*|*sh*)
-    BASHRC_DIR="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
+    _rc_self="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
     ;;
 *zsh*)
-    BASHRC_DIR="${0:a:h}"
+    _rc_self="${0:a:h}"
     ;;
 *)
-    echo "WARNING: Unknown shell '${_bashrc_cish}', assuming bash-compatible." >&2
-    BASHRC_DIR="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
+    _rc_self="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
     ;;
 esac
 
-# Source shell handler detection and warn if not bash-compatible.
-source "${BASHRC_DIR}/shutils/shell.sh"
-shell::check_bash_compat
+# Source shell handler detection (provides CISH and RC_DIR).
+source "${_rc_self}/shutils/shell.sh"
+shell_check_ext_compat
 
 # Export all shared environment variables (HOME, WORKSPACE, XDG paths, etc.).
 set -a
-source "${BASHRC_DIR}/config.sh"
+source "${RC_DIR}/config.sh"
 set +a
 
 # Export RC_ROOT (equivalent to RuntimeCommand's RC_ROOT).
-export RC_ROOT="${BASHRC_DIR}"
+export RC_ROOT="${RC_DIR}"
 
 # Export persistent storage paths for SSH and AWS.
-PERSISTENT_ROOT="$(cd "${BASHRC_DIR}/../.." && pwd)"
+PERSISTENT_ROOT="$(cd "${RC_DIR}/../.." && pwd)"
 export SSH_HOME="${PERSISTENT_ROOT}/ssh"
 export AWS_HOME="${PERSISTENT_ROOT}/aws"
 
@@ -87,3 +87,19 @@ case "${CISH}" in
     export PS1="${PSC_ASCII_NEWLINE}${CLI_HEADER}${PSC_ASCII_NEWLINE}$ "
     ;;
 esac
+
+# Activate mise (polyglot runtime manager) if the binary is present.
+# Uses the detected shell handler (CISH) for proper activation.
+if [[ -f "${MISE_INSTALL_PATH}" ]]; then
+    case "${CISH}" in
+    *bash*|*sh*)
+        eval "$("${MISE_INSTALL_PATH}" activate bash)"
+        ;;
+    *zsh*)
+        eval "$("${MISE_INSTALL_PATH}" activate zsh)"
+        ;;
+    *)
+        echo "WARNING: Unknown shell '${CISH}', mise is not activated." >&2
+        ;;
+    esac
+fi

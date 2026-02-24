@@ -1,7 +1,7 @@
 #!/bin/bash
 # Shared logging library for docker scripts.
 #
-# Provides `log::make_indent` to build a BuildKit-style log indent prefix
+# Provides `log_make_indent` to build a BuildKit-style log indent prefix
 # from a numeric depth value.
 #
 # Args
@@ -16,9 +16,9 @@
 # --------
 # ```
 # source shutils/log.sh
-# log::make_indent 1  # LOG_INDENT="=>"
-# log::make_indent 2  # LOG_INDENT="=> =>"
-# log::make_indent 3  # LOG_INDENT="=> => =>"
+# log_make_indent 1  # LOG_INDENT="=>"
+# log_make_indent 2  # LOG_INDENT="=> =>"
+# log_make_indent 3  # LOG_INDENT="=> => =>"
 # ```
 
 # Prevent redundant sourcing.
@@ -43,7 +43,7 @@ LOG_DEPTH="${LOG_DEPTH:-${LOG_DEPTH_DEFAULT}}"
 # -------
 # - LOG_INDENT
 #     The constructed indent string (e.g., `"=> =>"` for depth 2).
-log::make_indent() {
+log_make_indent() {
     local depth="${1}"
     LOG_INDENT=""
     local i

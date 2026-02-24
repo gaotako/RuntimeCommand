@@ -1,0 +1,3 @@
+{
+    "python.defaultInterpreterPath": "${MISE_PYTHON_PATH}"
+}

@@ -1,8 +1,9 @@
 #!/bin/bash
-# Shell handler detection utility.
+# Shell handler detection and project root resolution.
 #
-# Detects the current interactive shell and provides the result in `CISH`.
-# Scripts can use this to check bash compatibility or adapt behaviour.
+# Detects the current interactive shell (`CISH`) and resolves the project
+# root directory (`RC_DIR`) from this file's location. Scripts can use
+# `CISH` to adapt behaviour per shell and `RC_DIR` to locate project files.
 #
 # Args
 # ----
@@ -19,10 +20,25 @@ _SHUTILS_SHELL_SH_LOADED=1
 # Detect the current interactive shell handler.
 CISH="$(ps -o comm -p $$ | tail -1 | cut -d " " -f 1)"
 
-# Check whether the detected shell is bash-compatible.
+# Resolve the project root directory from this file's location.
+# shell.sh lives at docker/shutils/shell.sh, so RC_DIR = docker/.
+case "${CISH}" in
+*bash*|*sh*)
+    RC_DIR="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/.." && pwd)"
+    ;;
+*zsh*)
+    RC_DIR="${0:a:h:h}"
+    ;;
+*)
+    RC_DIR="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/.." && pwd)"
+    ;;
+esac
+
+# Check whether the detected shell supports extended features.
 #
-# Prints a warning to stderr if the shell is not bash or a bash-compatible
-# variant. Returns 0 for bash-compatible, 1 otherwise.
+# Bash and zsh support extended features required by the codebase: arrays,
+# `declare -g`, `${var^^}` parameter expansion, C-style arithmetic, etc.
+# Plain sh (e.g., dash on Ubuntu) is POSIX-only and lacks these features.
 #
 # Args
 # ----
@@ -31,18 +47,21 @@ CISH="$(ps -o comm -p $$ | tail -1 | cut -d " " -f 1)"
 # Returns
 # -------
 # - exit code
-#     `0` if bash-compatible, `1` otherwise.
-shell::check_bash_compat() {
+#     `0` if the shell supports extended features (bash or zsh), `1` otherwise.
+shell_check_ext_compat() {
     case "${CISH}" in
     *bash*)
         return 0
         ;;
-    *sh*)
-        echo "WARNING: Current shell '${CISH}' may not be fully bash-compatible. Some features may not work." >&2
+    *zsh*)
         return 0
         ;;
+    *sh*)
+        echo "WARNING: Current shell '${CISH}' is POSIX-only and lacks extended features. Scripts require bash or zsh." >&2
+        return 1
+        ;;
     *)
-        echo "WARNING: Detected non-bash shell '${CISH}'. Scripts require bash to function correctly." >&2
+        echo "WARNING: Detected unsupported shell '${CISH}'. Scripts require bash or zsh." >&2
         return 1
         ;;
     esac
