@@ -22,24 +22,16 @@ if [[ "${RC_DOCKER:-0}" != "1" ]]; then
     return 0 2>/dev/null || true
 fi
 
-# Bootstrap: locate this file to find shutils/shell.sh.
-# After sourcing shell.sh, RC_DIR and CISH are available globally.
-# In zsh, ${0:a:h} gives the caller's directory when sourced from .zshrc,
-# so we use ${(%):-%x} which reliably returns the sourced file's path.
-case "$(ps -o comm -p $$ | tail -1 | cut -d " " -f 1)" in
-*bash*|*sh*)
-    _rc_self="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
-    ;;
-*zsh*)
-    _rc_self="${${(%):-%x}:a:h}"
-    ;;
-*)
-    _rc_self="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
-    ;;
-esac
+# RC_DIR is set by the rc file (.zshrc/.bashrc) that sources this script.
+# home_setup.sh writes `export RC_DIR="..."` before the `source rc.sh` line,
+# avoiding unreliable shell-specific path detection.
+if [[ -z "${RC_DIR:-}" ]]; then
+    echo "ERROR: RC_DIR is not set. rc.sh must be sourced from a file that sets RC_DIR." >&2
+    return 1 2>/dev/null || true
+fi
 
-# Source shell handler detection (provides CISH and RC_DIR).
-source "${_rc_self}/shutils/shell.sh"
+# Source shell handler detection (provides CISH).
+source "${RC_DIR}/shutils/shell.sh"
 shell_check_ext_compat
 
 # Export all shared environment variables (HOME, WORKSPACE, XDG paths, etc.).

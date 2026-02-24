@@ -115,14 +115,21 @@ _rc_files_for_shell() {
 }
 
 # Set up DOCKER_HOME rc files (based on DOCKER_SHELL from config.sh).
+# Writes RC_DIR directly before sourcing rc.sh so it doesn't need to
+# auto-detect its own location (zsh source path detection is unreliable).
 read -r DOCKER_RC_FILE DOCKER_LOGIN_FILE <<< "$(_rc_files_for_shell "${DOCKER_SHELL}")"
-echo "${RC_SOURCE_LINE}" > "${DOCKER_HOME}/${DOCKER_RC_FILE}"
+{
+    echo "export RC_DIR=\"${SCRIPT_DIR}\""
+    echo "${RC_SOURCE_LINE}"
+} > "${DOCKER_HOME}/${DOCKER_RC_FILE}"
 echo "source ${DOCKER_HOME}/${DOCKER_RC_FILE}" > "${DOCKER_HOME}/${DOCKER_LOGIN_FILE}"
 
 # Set up HOST HOME rc files (based on CISH from shell.sh).
+RC_BLOCK="export RC_DIR=\"${SCRIPT_DIR}\"
+${RC_SOURCE_LINE}"
 read -r HOST_RC_FILE HOST_LOGIN_FILE <<< "$(_rc_files_for_shell "${CISH}")"
 for target_home in "${HOME}"; do
-    for rc_pair in "${HOST_RC_FILE}:${RC_SOURCE_LINE}" "${HOST_LOGIN_FILE}:source ${target_home}/${HOST_RC_FILE}"; do
+    for rc_pair in "${HOST_RC_FILE}:${RC_BLOCK}" "${HOST_LOGIN_FILE}:source ${target_home}/${HOST_RC_FILE}"; do
         rc_file="${target_home}/${rc_pair%%:*}"
         rc_content="${rc_pair#*:}"
         [[ ! -f "${rc_file}" ]] && touch "${rc_file}"

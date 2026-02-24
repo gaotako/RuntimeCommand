@@ -79,10 +79,14 @@ fi
 echo "${LOG_INDENT} [2/4] Templating Machine settings ..."
 MISE_PYTHON_PATH="/usr/bin/python3"
 echo "${LOG_INDENT} Python path: ${MISE_PYTHON_PATH}"
+echo "${LOG_INDENT} Docker shell: ${DOCKER_SHELL}"
 rm -f "${SAGEMAKER_CS_ROOT}/Machine/settings.json"
 cp "${SAGEMAKER_CS_ROOT}/Machine/settings-template.json" "${SAGEMAKER_CS_ROOT}/Machine/settings.json"
 mise_python_path_sed="$(echo "${MISE_PYTHON_PATH}" | sed -E "s/([\\/\\.])/\\\\\1/g")"
-sed -i -e "s/\${MISE_PYTHON_PATH}/${mise_python_path_sed}/g" "${SAGEMAKER_CS_ROOT}/Machine/settings.json"
+docker_shell_sed="$(echo "${DOCKER_SHELL}" | sed -E "s/([\\/\\.])/\\\\\1/g")"
+sed -i -e "s/\${MISE_PYTHON_PATH}/${mise_python_path_sed}/g" \
+    -e "s/\${DOCKER_SHELL}/${docker_shell_sed}/g" \
+    "${SAGEMAKER_CS_ROOT}/Machine/settings.json"
 here="${SAGEMAKER_CS_ROOT}/Machine/settings.json"
 there="${CODE_SERVER_SETTINGS_ROOT}/Machine/settings.json"
 if [[ ! -L "${there}" || "$(readlink -f "${there}")" != "$(readlink -f "${here}")" ]]; then
