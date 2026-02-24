@@ -7,6 +7,8 @@
 # ----
 # - CODE_SERVER_VERSION
 #     Version of code-server to install (default: `latest`).
+# - DOCKER_SHELL
+#     Default shell for the container (default: `/bin/zsh`).
 #
 # Returns
 # -------
@@ -28,8 +30,9 @@
 # Base image.
 FROM ubuntu:22.04
 
-# code-server version build argument.
+# Build arguments.
 ARG CODE_SERVER_VERSION=latest
+ARG DOCKER_SHELL=/bin/zsh
 
 # Install system dependencies, development tools, and Python (system fallback).
 RUN apt-get update \
@@ -44,8 +47,8 @@ RUN apt-get update \
         openssh-client \
     && rm -rf /var/lib/apt/lists/*
 
-# Set zsh as the default shell.
-RUN chsh -s /bin/zsh
+# Set the default shell.
+RUN chsh -s ${DOCKER_SHELL}
 
 # Install code-server (version determined by CODE_SERVER_VERSION build arg).
 RUN if [ "${CODE_SERVER_VERSION}" = "latest" ]; then \

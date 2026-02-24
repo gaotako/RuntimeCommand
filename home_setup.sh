@@ -93,39 +93,36 @@ if [[ ! -L "${DOCKER_HOME}/.aws" || "$(readlink -f "${DOCKER_HOME}/.aws")" != "$
 fi
 
 # Set up shell rc files for DOCKER_HOME and HOST HOME.
-# Uses CISH (from shell.sh) to determine the appropriate rc file and login
-# profile for the detected shell. DOCKER_HOME gets fresh rc files sourcing
-# rc.sh. HOST HOME gets lines injected between RuntimeCommand markers
-# (replaced on each run).
-echo "${LOG_INDENT} [3/4] Setting up shell rc files (${CISH}) ..."
-case "${CISH}" in
-*bash*|*sh*)
-    RC_FILE=".bashrc"
-    LOGIN_FILE=".profile"
-    ;;
-*zsh*)
-    RC_FILE=".zshrc"
-    LOGIN_FILE=".zprofile"
-    ;;
-*)
-    echo "${LOG_INDENT} WARNING: Unknown shell '${CISH}', defaulting to bash rc files." >&2
-    RC_FILE=".bashrc"
-    LOGIN_FILE=".profile"
-    ;;
-esac
+# DOCKER_HOME uses DOCKER_SHELL (from config.sh) to determine the rc file.
+# HOST HOME uses CISH (from shell.sh) to detect the host's current shell.
+# Both source rc.sh for environment setup.
+echo "${LOG_INDENT} [3/4] Setting up shell rc files ..."
 RC_MARKER_BEGIN="# >>> RuntimeCommand >>>"
 RC_MARKER_END="# <<< RuntimeCommand <<<"
 RC_SOURCE_LINE="source ${SCRIPT_DIR}/rc.sh"
 
-# Set up DOCKER_HOME rc files for the detected shell.
-[[ ! -f "${DOCKER_HOME}/${RC_FILE}" ]] && touch "${DOCKER_HOME}/${RC_FILE}"
-echo "${RC_SOURCE_LINE}" > "${DOCKER_HOME}/${RC_FILE}"
-[[ ! -f "${DOCKER_HOME}/${LOGIN_FILE}" ]] && touch "${DOCKER_HOME}/${LOGIN_FILE}"
-echo "source ${DOCKER_HOME}/${RC_FILE}" > "${DOCKER_HOME}/${LOGIN_FILE}"
+# Derive rc file names from a shell path (/bin/zsh → .zshrc/.zprofile,
+# /bin/bash or others → .bashrc/.profile).
+_rc_files_for_shell() {
+    case "${1}" in
+    *zsh*)
+        echo ".zshrc .zprofile"
+        ;;
+    *)
+        echo ".bashrc .profile"
+        ;;
+    esac
+}
 
-# Inject RuntimeCommand markers into HOST HOME rc files.
+# Set up DOCKER_HOME rc files (based on DOCKER_SHELL from config.sh).
+read -r DOCKER_RC_FILE DOCKER_LOGIN_FILE <<< "$(_rc_files_for_shell "${DOCKER_SHELL}")"
+echo "${RC_SOURCE_LINE}" > "${DOCKER_HOME}/${DOCKER_RC_FILE}"
+echo "source ${DOCKER_HOME}/${DOCKER_RC_FILE}" > "${DOCKER_HOME}/${DOCKER_LOGIN_FILE}"
+
+# Set up HOST HOME rc files (based on CISH from shell.sh).
+read -r HOST_RC_FILE HOST_LOGIN_FILE <<< "$(_rc_files_for_shell "${CISH}")"
 for target_home in "${HOME}"; do
-    for rc_pair in "${RC_FILE}:${RC_SOURCE_LINE}" "${LOGIN_FILE}:source ${target_home}/${RC_FILE}"; do
+    for rc_pair in "${HOST_RC_FILE}:${RC_SOURCE_LINE}" "${HOST_LOGIN_FILE}:source ${target_home}/${HOST_RC_FILE}"; do
         rc_file="${target_home}/${rc_pair%%:*}"
         rc_content="${rc_pair#*:}"
         [[ ! -f "${rc_file}" ]] && touch "${rc_file}"
@@ -140,10 +137,10 @@ for target_home in "${HOME}"; do
 done
 
 # Symlink persistent rc file to HOST HOME's rc file.
-RC_LINK="${PERSISTENT_ROOT}/${RC_FILE##.}.sh"
-if [[ ! -L "${RC_LINK}" || "$(readlink -f "${RC_LINK}")" != "$(readlink -f "${HOME}/${RC_FILE}")" ]]; then
+RC_LINK="${PERSISTENT_ROOT}/${HOST_RC_FILE##.}.sh"
+if [[ ! -L "${RC_LINK}" || "$(readlink -f "${RC_LINK}")" != "$(readlink -f "${HOME}/${HOST_RC_FILE}")" ]]; then
     rm -rf "${RC_LINK}"
-    ln -s "${HOME}/${RC_FILE}" "${RC_LINK}"
+    ln -s "${HOME}/${HOST_RC_FILE}" "${RC_LINK}"
 fi
 
 # Ensure XDG and application directories exist on the host.

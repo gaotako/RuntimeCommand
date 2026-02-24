@@ -32,6 +32,14 @@ esac
 source "${_rc_self}/shutils/shell.sh"
 shell_check_ext_compat
 
+# Guard: only run inside the Docker container launched by wrapper.sh.
+# wrapper.sh sets RC_DOCKER=1 as a container env var (and unsets it on the
+# host before launching). On the SageMaker host or any other environment,
+# rc.sh exits early without modifying the shell.
+if [[ "${RC_DOCKER:-0}" != "1" ]]; then
+    return 0 2>/dev/null || true
+fi
+
 # Export all shared environment variables (HOME, WORKSPACE, XDG paths, etc.).
 set -a
 source "${RC_DIR}/config.sh"

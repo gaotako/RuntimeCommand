@@ -1,7 +1,7 @@
-#!/bin/zsh
+#!/bin/sh
 # Docker container entrypoint for interactive shells and code-server.
 #
-# Defaults to an interactive zsh shell. When code-server flags (`--*`) are
+# Defaults to the configured Docker shell. When code-server flags (`--*`) are
 # passed, runs code-server instead. When an explicit command is given
 # (e.g., `bash`, `python3`), runs that command directly.
 #
@@ -35,9 +35,9 @@
 # docker run -it image python3
 # ```
 
-# No arguments: start an interactive shell.
-if [[ $# -eq 0 ]]; then
-    exec /bin/zsh
+# No arguments: start an interactive shell (uses SHELL env var).
+if [ $# -eq 0 ]; then
+    exec "${SHELL:-/bin/zsh}"
 fi
 
 # First argument starts with "--": treat all arguments as code-server flags.

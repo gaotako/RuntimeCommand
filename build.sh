@@ -98,6 +98,7 @@ fi
 echo "${LOG_INDENT} Building ${IMAGE_NAME}:${IMAGE_TAG} (code-server ${CODE_SERVER_VERSION}) ..."
 docker build \
     --build-arg "CODE_SERVER_VERSION=${CODE_SERVER_VERSION}" \
+    --build-arg "DOCKER_SHELL=${DOCKER_SHELL}" \
     -t "${IMAGE_NAME}:${IMAGE_TAG}" \
     "${SCRIPT_DIR}"
 

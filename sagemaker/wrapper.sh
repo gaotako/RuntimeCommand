@@ -31,6 +31,10 @@ WRAPPER_DIR="$(cd "$(dirname "${0}")" && pwd)"
 # Load shared configuration (copied alongside this script by install.sh).
 source "${WRAPPER_DIR}/config.sh"
 
+# Clear RC_DOCKER to prevent accidental inheritance from the host environment.
+# Only the explicit -e "RC_DOCKER=1" in docker run below should set it.
+unset RC_DOCKER
+
 # Ensure XDG directories exist on the host before mounting.
 mkdir -p "${XDG_DATA_HOME}" "${XDG_CONFIG_HOME}" "${XDG_CACHE_HOME}" "${XDG_STATE_HOME}"
 
@@ -68,12 +72,13 @@ exec docker run --rm \
     ${PORT_FLAGS} \
     -e "HOME=${DOCKER_HOME}" \
     -e "WORKSPACE=${DOCKER_HOME}" \
+    -e "RC_DOCKER=1" \
     -e "XDG_DATA_HOME=${XDG_DATA_HOME}" \
     -e "XDG_CONFIG_HOME=${XDG_CONFIG_HOME}" \
     -e "XDG_CACHE_HOME=${XDG_CACHE_HOME}" \
     -e "XDG_STATE_HOME=${XDG_STATE_HOME}" \
-    -e "SHELL=/bin/zsh" \
-    -v "${DOCKER_HOME}:${DOCKER_HOME}" \
+    -e "SHELL=${DOCKER_SHELL}" \
+    -v "${WORKSPACE}:${WORKSPACE}" \
     -v /opt/ml:/opt/ml:ro \
     -v /tmp:/tmp \
     -v /etc/passwd:/etc/passwd:ro \

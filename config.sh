@@ -50,6 +50,10 @@ DOCKER_IMAGE_DIR="${DOCKER_IMAGE_DIR:-${DOCKER_IMAGE_DIR_DEFAULT}}"
 DOCKER_HOME_DEFAULT="/home/ec2-user/SageMaker/CodeServerDockerHome"
 DOCKER_HOME="${DOCKER_HOME:-${DOCKER_HOME_DEFAULT}}"
 
+# Docker container shell defaults.
+DOCKER_SHELL_DEFAULT="/bin/zsh"
+DOCKER_SHELL="${DOCKER_SHELL:-${DOCKER_SHELL_DEFAULT}}"
+
 # XDG base directories under the Docker-specific home.
 XDG_ROOT="${DOCKER_HOME}/CrossDesktopGroup"
 XDG_DATA_HOME="${XDG_ROOT}/local/share"
