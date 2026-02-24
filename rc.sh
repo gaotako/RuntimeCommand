@@ -40,7 +40,6 @@ _rc_shell="${CISH}"
 if [[ "${_rc_shell}" != *bash* && "${_rc_shell}" != *zsh* && "${_rc_shell}" != *sh* ]]; then
     _rc_shell="${SHELL:-/bin/bash}"
 fi
-echo "rc.sh: CISH=${CISH}, SHELL=${SHELL:-unset}, _rc_shell=${_rc_shell}" >&2
 
 # Export all shared environment variables (HOME, WORKSPACE, XDG paths, etc.).
 set -a
@@ -55,7 +54,7 @@ PERSISTENT_ROOT="$(cd "${RC_DIR}/../.." && pwd)"
 export SSH_HOME="${PERSISTENT_ROOT}/ssh"
 export AWS_HOME="${PERSISTENT_ROOT}/aws"
 
-# ANSI color codes for terminal output.
+# ANSI color codes for terminal output (raw, for echo/printf).
 export PSC_ASCII_RESET=$'\e[0m'
 export PSC_ASCII_RED=$'\e[31m'
 export PSC_ASCII_GREEN=$'\e[32m'
@@ -71,26 +70,58 @@ export PSC_ASCII_BRIGHT_CYAN=$'\e[95m'
 export PSC_ASCII_BRIGHT_MAGENTA=$'\e[96m'
 export PSC_ASCII_NEWLINE=$'\n'
 
-# Set the shell prompt based on the effective shell.
+# Prompt-safe color codes (wrapped for the detected shell).
+# bash uses \[...\] to mark non-printing characters in PS1.
+# zsh uses %{...%} to mark non-printing characters in PS1.
+# zsh case must come before *sh* because "zsh" contains "sh".
 case "${_rc_shell}" in
+*zsh*)
+    _PS_RESET="%{${PSC_ASCII_RESET}%}"
+    _PS_CYAN="%{${PSC_ASCII_CYAN}%}"
+    _PS_GREEN="%{${PSC_ASCII_BRIGHT_GREEN}%}"
+    _PS_BLUE="%{${PSC_ASCII_BRIGHT_BLUE}%}"
+    _PS_YELLOW="%{${PSC_ASCII_YELLOW}%}"
+    _PS_BYELLOW="%{${PSC_ASCII_BRIGHT_YELLOW}%}"
+    ;;
+*bash*|*sh*)
+    _PS_RESET="\[${PSC_ASCII_RESET}\]"
+    _PS_CYAN="\[${PSC_ASCII_CYAN}\]"
+    _PS_GREEN="\[${PSC_ASCII_BRIGHT_GREEN}\]"
+    _PS_BLUE="\[${PSC_ASCII_BRIGHT_BLUE}\]"
+    _PS_YELLOW="\[${PSC_ASCII_YELLOW}\]"
+    _PS_BYELLOW="\[${PSC_ASCII_BRIGHT_YELLOW}\]"
+    ;;
+*)
+    _PS_RESET=""
+    _PS_CYAN=""
+    _PS_GREEN=""
+    _PS_BLUE=""
+    _PS_YELLOW=""
+    _PS_BYELLOW=""
+    ;;
+esac
+
+# Set the shell prompt based on the effective shell.
+# zsh case must come before *sh* because "zsh" contains "sh".
+case "${_rc_shell}" in
+*zsh*)
+    CLI_HEADER=
+    CLI_HEADER="${CLI_HEADER}#${_PS_CYAN}%h${_PS_RESET}"
+    CLI_HEADER="${CLI_HEADER} ${_PS_GREEN}%n${_PS_RESET}"
+    CLI_HEADER="${CLI_HEADER}@${_PS_BLUE}%m${_PS_RESET}"
+    CLI_HEADER="${CLI_HEADER}:${_PS_YELLOW}%~${_PS_RESET}"
+    CLI_HEADER="${CLI_HEADER}|${_PS_BYELLOW}%c${_PS_RESET}"
+    export PS1="${PSC_ASCII_NEWLINE}${_PS_RESET}${CLI_HEADER}${_PS_RESET}${PSC_ASCII_NEWLINE}$ "
+    ;;
 *bash*|*sh*)
     shopt -s promptvars 2>/dev/null
     CLI_HEADER=
-    CLI_HEADER="${CLI_HEADER}#${PSC_ASCII_CYAN}\#${PSC_ASCII_RESET}"
-    CLI_HEADER="${CLI_HEADER} ${PSC_ASCII_BRIGHT_GREEN}\u${PSC_ASCII_RESET}"
-    CLI_HEADER="${CLI_HEADER}@${PSC_ASCII_BRIGHT_BLUE}\h${PSC_ASCII_RESET}"
-    CLI_HEADER="${CLI_HEADER}:${PSC_ASCII_YELLOW}\w${PSC_ASCII_RESET}"
-    CLI_HEADER="${CLI_HEADER}|${PSC_ASCII_BRIGHT_YELLOW}\W${PSC_ASCII_RESET}"
-    export PS1="${PSC_ASCII_NEWLINE}${PSC_ASCII_RESET}${CLI_HEADER}${PSC_ASCII_RESET}${PSC_ASCII_NEWLINE}$ "
-    ;;
-*zsh*)
-    CLI_HEADER=
-    CLI_HEADER="${CLI_HEADER}#${PSC_ASCII_CYAN}%h${PSC_ASCII_RESET}"
-    CLI_HEADER="${CLI_HEADER} ${PSC_ASCII_BRIGHT_GREEN}%n${PSC_ASCII_RESET}"
-    CLI_HEADER="${CLI_HEADER}@${PSC_ASCII_BRIGHT_BLUE}%m${PSC_ASCII_RESET}"
-    CLI_HEADER="${CLI_HEADER}:${PSC_ASCII_YELLOW}%~${PSC_ASCII_RESET}"
-    CLI_HEADER="${CLI_HEADER}|${PSC_ASCII_BRIGHT_YELLOW}%c${PSC_ASCII_RESET}"
-    export PS1="${PSC_ASCII_NEWLINE}${PSC_ASCII_RESET}${CLI_HEADER}${PSC_ASCII_RESET}${PSC_ASCII_NEWLINE}$ "
+    CLI_HEADER="${CLI_HEADER}#${_PS_CYAN}\#${_PS_RESET}"
+    CLI_HEADER="${CLI_HEADER} ${_PS_GREEN}\u${_PS_RESET}"
+    CLI_HEADER="${CLI_HEADER}@${_PS_BLUE}\h${_PS_RESET}"
+    CLI_HEADER="${CLI_HEADER}:${_PS_YELLOW}\w${_PS_RESET}"
+    CLI_HEADER="${CLI_HEADER}|${_PS_BYELLOW}\W${_PS_RESET}"
+    export PS1="${PSC_ASCII_NEWLINE}${_PS_RESET}${CLI_HEADER}${_PS_RESET}${PSC_ASCII_NEWLINE}$ "
     ;;
 *)
     CLI_HEADER="#\# \u@\h:\w|\W"
@@ -106,11 +137,11 @@ bash "${RC_DIR}/mise.sh" --quiet
 # Activate mise for the current shell session if the binary is present.
 if [[ -f "${MISE_INSTALL_PATH}" ]]; then
     case "${_rc_shell}" in
-    *bash*|*sh*)
-        eval "$("${MISE_INSTALL_PATH}" activate bash)"
-        ;;
     *zsh*)
         eval "$("${MISE_INSTALL_PATH}" activate zsh)"
+        ;;
+    *bash*|*sh*)
+        eval "$("${MISE_INSTALL_PATH}" activate bash)"
         ;;
     *)
         echo "WARNING: Unknown shell '${_rc_shell}', mise is not activated." >&2

@@ -124,11 +124,11 @@ done
 # CISH is set by shell.sh and indicates the current interactive shell.
 log_log "${QUIET}" "[4/5] Activating mise (${CISH}) ..."
 case "${CISH}" in
-*bash*|*sh*)
-    eval "$("${MISE_INSTALL_PATH}" activate bash)"
-    ;;
 *zsh*)
     eval "$("${MISE_INSTALL_PATH}" activate zsh)"
+    ;;
+*bash*|*sh*)
+    eval "$("${MISE_INSTALL_PATH}" activate bash)"
     ;;
 *)
     log_log "${QUIET}" "WARNING: Unknown shell '${CISH}', mise is not activated."
