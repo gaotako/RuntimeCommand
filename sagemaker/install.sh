@@ -11,6 +11,8 @@
 # - --log-depth LOG_DEPTH
 #     Logging nesting depth, controls the `"=>"` prefix repetition
 #     (default: `1`).
+# - --quiet
+#     When set, suppresses step-by-step log output.
 #
 # Returns
 # -------
@@ -40,6 +42,7 @@
 # bash install.sh
 # CODE_SERVER_VERSION=4.109.2 bash install.sh
 # bash install.sh --log-depth 2
+# bash install.sh --quiet
 # ```
 set -euo pipefail
 
@@ -51,7 +54,7 @@ PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 source "${PROJECT_ROOT}/shutils/argparse.sh"
 source "${PROJECT_ROOT}/shutils/log.sh"
 
-# Parse arguments (may set LOG_DEPTH via --log-depth).
+# Parse arguments (may set LOG_DEPTH, QUIET via --log-depth, --quiet).
 argparse_parse "$@"
 [[ ${#POSITIONAL_ARGS[@]} -gt 0 ]] && set -- "${POSITIONAL_ARGS[@]}"
 
@@ -61,32 +64,40 @@ source "${PROJECT_ROOT}/config.sh"
 # Build log indent from LOG_DEPTH.
 log_make_indent "${LOG_DEPTH}"
 
+# Resolve quiet flag from argparse (--quiet sets QUIET=1).
+QUIET_DEFAULT=0
+QUIET="${QUIET:-${QUIET_DEFAULT}}"
+
+# Build quiet flag for sub-scripts.
+QUIET_FLAG=""
+[[ "${QUIET}" -eq 1 ]] && QUIET_FLAG="--quiet"
+
 # Print installation header.
-echo "${LOG_INDENT} Code-Server Docker Installer"
-echo "${LOG_INDENT} Target: ${CODE_SERVER}"
+log_log "${QUIET}" "Code-Server Docker Installer"
+log_log "${QUIET}" "Target: ${CODE_SERVER}"
 
 # Verify Docker is installed and available on PATH.
 if ! command -v docker &>/dev/null; then
     echo "${LOG_INDENT} ERROR: Docker is not installed or not in PATH."
     exit 1
 fi
-echo "${LOG_INDENT} [1/4] Docker is available: $(docker --version)"
+log_log "${QUIET}" "[1/4] Docker is available: $(docker --version)"
 
 # Build (or load from cache) the Docker image.
-echo "${LOG_INDENT} [2/4] Building Docker image ..."
-bash "${PROJECT_ROOT}/build.sh" --log-depth $((LOG_DEPTH + 1)) "${CODE_SERVER_VERSION}"
+log_log "${QUIET}" "[2/4] Building Docker image ..."
+bash "${PROJECT_ROOT}/build.sh" --log-depth $((LOG_DEPTH + 1)) ${QUIET_FLAG} "${CODE_SERVER_VERSION}"
 
 # Back up the existing binary if one is already installed.
 if [ -f "${CODE_SERVER}" ]; then
     BACKUP="${CODE_SERVER}.bak.$(date +%Y%m%d%H%M%S)"
-    echo "${LOG_INDENT} [3/4] Backing up existing binary to ${BACKUP}"
+    log_log "${QUIET}" "[3/4] Backing up existing binary to ${BACKUP}"
     cp "${CODE_SERVER}" "${BACKUP}"
 else
-    echo "${LOG_INDENT} [3/4] No existing binary found, skipping backup."
+    log_log "${QUIET}" "[3/4] No existing binary found, skipping backup."
 fi
 
 # Install the wrapper script and config alongside it.
-echo "${LOG_INDENT} [4/4] Installing wrapper script to ${CODE_SERVER}"
+log_log "${QUIET}" "[4/4] Installing wrapper script to ${CODE_SERVER}"
 mkdir -p "$(dirname "${CODE_SERVER}")"
 cp "${SCRIPT_DIR}/wrapper.sh" "${CODE_SERVER}"
 chmod +x "${CODE_SERVER}"
@@ -95,10 +106,10 @@ cp "${PROJECT_ROOT}/config.sh" "$(dirname "${CODE_SERVER}")/config.sh"
 # Verify the image runs correctly; restore backup on failure.
 if docker run --rm "${IMAGE_NAME}:${IMAGE_TAG}" --version; then
     if [ -n "${BACKUP:-}" ] && [ -f "${BACKUP}" ]; then
-        echo "${LOG_INDENT} Verification passed, removing backup: ${BACKUP}"
+        log_log "${QUIET}" "Verification passed, removing backup: ${BACKUP}"
         rm -f "${BACKUP}"
     fi
-    echo "${LOG_INDENT} Installation complete."
+    log_log "${QUIET}" "Installation complete."
 else
     echo "${LOG_INDENT} ERROR: Verification failed."
     if [ -n "${BACKUP:-}" ] && [ -f "${BACKUP}" ]; then

@@ -12,6 +12,8 @@
 # - --log-depth LOG_DEPTH
 #     Logging nesting depth, controls the `"=>"` prefix repetition
 #     (default: `1`).
+# - --quiet
+#     When set, suppresses step-by-step log output.
 #
 # Returns
 # -------
@@ -32,6 +34,7 @@
 # bash build.sh 4.109.2
 # FORCE_BUILD=1 bash build.sh 4.109.2
 # bash build.sh --log-depth 2 4.109.2
+# bash build.sh --quiet
 # ```
 set -euo pipefail
 
@@ -42,7 +45,7 @@ SCRIPT_DIR="$(cd "$(dirname "${0}")" && pwd)"
 source "${SCRIPT_DIR}/shutils/argparse.sh"
 source "${SCRIPT_DIR}/shutils/log.sh"
 
-# Parse arguments (may set LOG_DEPTH via --log-depth).
+# Parse arguments (may set LOG_DEPTH, QUIET via --log-depth, --quiet).
 argparse_parse "$@"
 [[ ${#POSITIONAL_ARGS[@]} -gt 0 ]] && set -- "${POSITIONAL_ARGS[@]}"
 
@@ -51,6 +54,10 @@ source "${SCRIPT_DIR}/config.sh"
 
 # Build log indent from LOG_DEPTH.
 log_make_indent "${LOG_DEPTH}"
+
+# Resolve quiet flag from argparse (--quiet sets QUIET=1).
+QUIET_DEFAULT=0
+QUIET="${QUIET:-${QUIET_DEFAULT}}"
 
 # Override CODE_SERVER_VERSION from positional argument if provided.
 CODE_SERVER_VERSION="${1:-${CODE_SERVER_VERSION}}"
@@ -76,7 +83,7 @@ if [[ "${BUILD_CHECK_FAILED}" -eq 1 ]]; then
     echo "${LOG_INDENT} Pre-build checks failed. Please install missing dependencies."
     exit 1
 fi
-echo "${LOG_INDENT} Pre-build checks passed."
+log_log "${QUIET}" "Pre-build checks passed."
 
 # Persistent image file path.
 DOCKER_IMAGE_FILE="${DOCKER_IMAGE_DIR}/${IMAGE_NAME}-${IMAGE_TAG}.tar"
@@ -84,18 +91,18 @@ DOCKER_IMAGE_FILE="${DOCKER_IMAGE_DIR}/${IMAGE_NAME}-${IMAGE_TAG}.tar"
 # Attempt to load a previously saved image from persistent storage.
 # Skipped when `FORCE_BUILD=1` or when no cached file exists.
 if [ -f "${DOCKER_IMAGE_FILE}" ] && [ "${FORCE_BUILD:-}" != "1" ]; then
-    echo "${LOG_INDENT} Found saved image at ${DOCKER_IMAGE_FILE}, loading ..."
+    log_log "${QUIET}" "Found saved image at ${DOCKER_IMAGE_FILE}, loading ..."
     if docker load -i "${DOCKER_IMAGE_FILE}"; then
-        echo "${LOG_INDENT} Image loaded from persistent storage."
+        log_log "${QUIET}" "Image loaded from persistent storage."
         docker run --rm "${IMAGE_NAME}:${IMAGE_TAG}" --version
         exit 0
     else
-        echo "${LOG_INDENT} WARNING: Failed to load saved image, will rebuild."
+        log_log "${QUIET}" "WARNING: Failed to load saved image, will rebuild."
     fi
 fi
 
 # Build the Docker image from the Dockerfile in this directory.
-echo "${LOG_INDENT} Building ${IMAGE_NAME}:${IMAGE_TAG} (code-server ${CODE_SERVER_VERSION}) ..."
+log_log "${QUIET}" "Building ${IMAGE_NAME}:${IMAGE_TAG} (code-server ${CODE_SERVER_VERSION}) ..."
 docker build \
     --build-arg "CODE_SERVER_VERSION=${CODE_SERVER_VERSION}" \
     --build-arg "DOCKER_SHELL=${DOCKER_SHELL}" \
@@ -103,11 +110,11 @@ docker build \
     "${SCRIPT_DIR}"
 
 # Verify the newly built image starts correctly.
-echo "${LOG_INDENT} Build complete: ${IMAGE_NAME}:${IMAGE_TAG}"
+log_log "${QUIET}" "Build complete: ${IMAGE_NAME}:${IMAGE_TAG}"
 docker run --rm "${IMAGE_NAME}:${IMAGE_TAG}" --version
 
 # Save the image to persistent storage so it survives SageMaker restarts.
-echo "${LOG_INDENT} Saving image to ${DOCKER_IMAGE_FILE} ..."
+log_log "${QUIET}" "Saving image to ${DOCKER_IMAGE_FILE} ..."
 mkdir -p "${DOCKER_IMAGE_DIR}"
 docker save -o "${DOCKER_IMAGE_FILE}" "${IMAGE_NAME}:${IMAGE_TAG}"
-echo "${LOG_INDENT} Image saved to persistent storage."
+log_log "${QUIET}" "Image saved to persistent storage."

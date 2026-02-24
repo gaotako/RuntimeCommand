@@ -12,6 +12,8 @@
 # - --log-depth LOG_DEPTH
 #     Logging nesting depth, controls the `"=>"` prefix repetition
 #     (default: `1`).
+# - --quiet
+#     When set, suppresses step-by-step log output.
 #
 # Returns
 # -------
@@ -28,6 +30,7 @@
 # ```
 # bash home_setup.sh
 # bash home_setup.sh --log-depth 2
+# bash home_setup.sh --quiet
 # ```
 set -euo pipefail
 
@@ -39,7 +42,7 @@ source "${SCRIPT_DIR}/shutils/argparse.sh"
 source "${SCRIPT_DIR}/shutils/log.sh"
 source "${SCRIPT_DIR}/shutils/shell.sh"
 
-# Parse arguments (may set LOG_DEPTH via --log-depth).
+# Parse arguments (may set LOG_DEPTH, QUIET via --log-depth, --quiet).
 argparse_parse "$@"
 [[ ${#POSITIONAL_ARGS[@]} -gt 0 ]] && set -- "${POSITIONAL_ARGS[@]}"
 
@@ -48,6 +51,10 @@ source "${SCRIPT_DIR}/config.sh"
 
 # Build log indent from LOG_DEPTH.
 log_make_indent "${LOG_DEPTH}"
+
+# Resolve quiet flag from argparse (--quiet sets QUIET=1).
+QUIET_DEFAULT=0
+QUIET="${QUIET:-${QUIET_DEFAULT}}"
 
 # Persistent storage root (sibling of src/RuntimeCommand in the repo tree).
 PERSISTENT_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
@@ -58,11 +65,11 @@ AWS_HOME="${PERSISTENT_ROOT}/aws"
 mkdir -p "${DOCKER_HOME}"
 
 # Print header.
-echo "${LOG_INDENT} Home Directory Setup"
+log_log "${QUIET}" "Home Directory Setup"
 
 # Symlink ~/.ssh to persistent storage, preserving existing content.
 # Generate an SSH identity (ecdsa, fallback to rsa) if none exists.
-echo "${LOG_INDENT} [1/4] Setting up .ssh ..."
+log_log "${QUIET}" "[1/4] Setting up .ssh ..."
 mkdir -p "${SSH_HOME}"
 if [[ ! -L "${DOCKER_HOME}/.ssh" || "$(readlink -f "${DOCKER_HOME}/.ssh")" != "$(readlink -f "${SSH_HOME}")" ]]; then
     if [[ -n "$(ls "${DOCKER_HOME}/.ssh" 2>/dev/null)" ]]; then
@@ -82,7 +89,7 @@ for encrypt in ecdsa rsa; do
 done
 
 # Symlink ~/.aws to persistent storage, preserving existing content.
-echo "${LOG_INDENT} [2/4] Setting up .aws ..."
+log_log "${QUIET}" "[2/4] Setting up .aws ..."
 mkdir -p "${AWS_HOME}"
 if [[ ! -L "${DOCKER_HOME}/.aws" || "$(readlink -f "${DOCKER_HOME}/.aws")" != "$(readlink -f "${AWS_HOME}")" ]]; then
     if [[ -n "$(ls "${DOCKER_HOME}/.aws" 2>/dev/null)" ]]; then
@@ -96,7 +103,7 @@ fi
 # DOCKER_HOME uses DOCKER_SHELL (from config.sh) to determine the rc file.
 # HOST HOME uses CISH (from shell.sh) to detect the host's current shell.
 # Both source rc.sh for environment setup.
-echo "${LOG_INDENT} [3/4] Setting up shell rc files ..."
+log_log "${QUIET}" "[3/4] Setting up shell rc files ..."
 RC_MARKER_BEGIN="# >>> RuntimeCommand >>>"
 RC_MARKER_END="# <<< RuntimeCommand <<<"
 RC_SOURCE_LINE="source ${SCRIPT_DIR}/rc.sh"
@@ -151,7 +158,7 @@ if [[ ! -L "${RC_LINK}" || "$(readlink -f "${RC_LINK}")" != "$(readlink -f "${HO
 fi
 
 # Ensure XDG and application directories exist on the host.
-echo "${LOG_INDENT} [4/4] Creating XDG and application directories ..."
+log_log "${QUIET}" "[4/4] Creating XDG and application directories ..."
 mkdir -p "${XDG_DATA_HOME}" "${XDG_CONFIG_HOME}" "${XDG_CACHE_HOME}" "${XDG_STATE_HOME}"
 mkdir -p "${APP_ROOT}" "${APP_DATA_HOME}" "${APP_BIN_HOME}"
-echo "${LOG_INDENT} Home directory setup complete."
+log_log "${QUIET}" "Home directory setup complete."

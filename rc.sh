@@ -34,6 +34,14 @@ fi
 source "${RC_DIR}/shutils/shell.sh"
 shell_check_ext_compat
 
+# Resolve the effective shell for prompt and activation.
+# Falls back to SHELL env var if CISH detection gave unexpected results.
+_rc_shell="${CISH}"
+if [[ "${_rc_shell}" != *bash* && "${_rc_shell}" != *zsh* && "${_rc_shell}" != *sh* ]]; then
+    _rc_shell="${SHELL:-/bin/bash}"
+fi
+echo "rc.sh: CISH=${CISH}, SHELL=${SHELL:-unset}, _rc_shell=${_rc_shell}" >&2
+
 # Export all shared environment variables (HOME, WORKSPACE, XDG paths, etc.).
 set -a
 source "${RC_DIR}/config.sh"
@@ -63,8 +71,8 @@ export PSC_ASCII_BRIGHT_CYAN=$'\e[95m'
 export PSC_ASCII_BRIGHT_MAGENTA=$'\e[96m'
 export PSC_ASCII_NEWLINE=$'\n'
 
-# Set the shell prompt based on the detected shell handler.
-case "${CISH}" in
+# Set the shell prompt based on the effective shell.
+case "${_rc_shell}" in
 *bash*|*sh*)
     shopt -s promptvars 2>/dev/null
     CLI_HEADER=
@@ -91,14 +99,13 @@ case "${CISH}" in
 esac
 
 # Set up mise (polyglot runtime manager).
-# Delegates to mise.sh which handles migration, activation, settings, and
-# runtime checks. Migration must happen before activation to avoid
-# "untrusted config" errors from stale files in ~/.config/mise/.
-bash "${RC_DIR}/mise.sh"
+# Uses --quiet to suppress step logs during shell startup; only "Missing ..."
+# messages are printed.
+bash "${RC_DIR}/mise.sh" --quiet
 
 # Activate mise for the current shell session if the binary is present.
 if [[ -f "${MISE_INSTALL_PATH}" ]]; then
-    case "${CISH}" in
+    case "${_rc_shell}" in
     *bash*|*sh*)
         eval "$("${MISE_INSTALL_PATH}" activate bash)"
         ;;
@@ -106,7 +113,7 @@ if [[ -f "${MISE_INSTALL_PATH}" ]]; then
         eval "$("${MISE_INSTALL_PATH}" activate zsh)"
         ;;
     *)
-        echo "WARNING: Unknown shell '${CISH}', mise is not activated." >&2
+        echo "WARNING: Unknown shell '${_rc_shell}', mise is not activated." >&2
         ;;
     esac
 fi

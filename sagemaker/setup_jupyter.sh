@@ -10,6 +10,8 @@
 # - --log-depth LOG_DEPTH
 #     Logging nesting depth, controls the `"=>"` prefix repetition
 #     (default: `1`).
+# - --quiet
+#     When set, suppresses step-by-step log output.
 #
 # Returns
 # -------
@@ -38,6 +40,7 @@
 # ```
 # bash setup_jupyter.sh
 # bash setup_jupyter.sh --log-depth 2
+# bash setup_jupyter.sh --quiet
 # ```
 set -euo pipefail
 
@@ -49,7 +52,7 @@ PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 source "${PROJECT_ROOT}/shutils/argparse.sh"
 source "${PROJECT_ROOT}/shutils/log.sh"
 
-# Parse arguments (may set LOG_DEPTH via --log-depth).
+# Parse arguments (may set LOG_DEPTH, QUIET via --log-depth, --quiet).
 argparse_parse "$@"
 [[ ${#POSITIONAL_ARGS[@]} -gt 0 ]] && set -- "${POSITIONAL_ARGS[@]}"
 
@@ -59,6 +62,10 @@ source "${PROJECT_ROOT}/config.sh"
 # Build log indent from LOG_DEPTH.
 log_make_indent "${LOG_DEPTH}"
 
+# Resolve quiet flag from argparse (--quiet sets QUIET=1).
+QUIET_DEFAULT=0
+QUIET="${QUIET:-${QUIET_DEFAULT}}"
+
 # Server-proxy registration constants.
 LAUNCHER_ENTRY_TITLE="Code Server"
 PROXY_PATH="codeserver"
@@ -67,17 +74,17 @@ ICON_PATH="${CODE_SERVER_APPLICATION}/icons/codeserver.svg"
 EXTENSION_DIR="${SCRIPT_DIR}/sagemaker_jproxy_launcher_ext"
 
 # Print registration header.
-echo "${LOG_INDENT} Code-Server Jupyter Registration"
-echo "${LOG_INDENT} Target: ${CODE_SERVER}"
-echo "${LOG_INDENT} Config: ${JUPYTER_CONFIG}"
+log_log "${QUIET}" "Code-Server Jupyter Registration"
+log_log "${QUIET}" "Target: ${CODE_SERVER}"
+log_log "${QUIET}" "Config: ${JUPYTER_CONFIG}"
 
 # Add or update the `c.ServerProxy.servers` block in the Jupyter config.
 # If the block already exists, only the timeout value is patched.
 if grep -q "${CODE_SERVER_APPLICATION}/bin/code-server" "${JUPYTER_CONFIG}" 2>/dev/null; then
-    echo "${LOG_INDENT} [1/3] Server-proxy configuration already exists. Updating timeout to ${PROXY_TIMEOUT}s ..."
+    log_log "${QUIET}" "[1/3] Server-proxy configuration already exists. Updating timeout to ${PROXY_TIMEOUT}s ..."
     sed -i "/'${PROXY_PATH}':/,/^    }/s/'timeout': [0-9]*/'timeout': ${PROXY_TIMEOUT}/" "${JUPYTER_CONFIG}"
 else
-    echo "${LOG_INDENT} [1/3] Adding server-proxy configuration to ${JUPYTER_CONFIG}"
+    log_log "${QUIET}" "[1/3] Adding server-proxy configuration to ${JUPYTER_CONFIG}"
     cat >>"${JUPYTER_CONFIG}" <<EOC
 c.ServerProxy.servers = {
     "${PROXY_PATH}": {
@@ -105,7 +112,7 @@ EOC
 fi
 
 # Install the launcher icon and the JupyterLab extension into JupyterSystemEnv.
-echo "${LOG_INDENT} [2/3] Installing icon and JupyterLab extension ..."
+log_log "${QUIET}" "[2/3] Installing icon and JupyterLab extension ..."
 mkdir -p "$(dirname "${ICON_PATH}")"
 cp "${EXTENSION_DIR}/style/icons/codeserver.svg" "${ICON_PATH}"
 sudo -u ec2-user -i <<EOF
@@ -120,12 +127,12 @@ EOF
 
 # Restart Jupyter server so the new proxy entry takes effect.
 # Skipped when Jupyter is not yet running (e.g. during lifecycle config).
-echo "${LOG_INDENT} [3/3] Restarting Jupyter server ..."
+log_log "${QUIET}" "[3/3] Restarting Jupyter server ..."
 if [[ -f /home/ec2-user/bin/dockerd-rootless.sh ]]; then
-    echo "${LOG_INDENT} Running in rootless mode; please restart Jupyter from 'File' > 'Shut Down' and re-open."
+    log_log "${QUIET}" "Running in rootless mode; please restart Jupyter from 'File' > 'Shut Down' and re-open."
 elif sudo systemctl is-active jupyter-server >/dev/null 2>&1; then
     sudo systemctl restart jupyter-server
 else
-    echo "${LOG_INDENT} Jupyter server is not running; skipping restart."
+    log_log "${QUIET}" "Jupyter server is not running; skipping restart."
 fi
-echo "${LOG_INDENT} Jupyter registration complete."
+log_log "${QUIET}" "Jupyter registration complete."

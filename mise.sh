@@ -18,6 +18,9 @@
 #     When set, installs mise binary and runtimes from scratch. Without
 #     this flag the script checks for missing runtimes and prints install
 #     instructions.
+# - --quiet
+#     When set, suppresses step-by-step log output. Only "Missing ..."
+#     messages are printed.
 #
 # Returns
 # -------
@@ -27,7 +30,7 @@
 # -----
 # The following environment variables can override default paths:
 # - `MISE_INSTALL_PATH`
-#     Path to the mise binary (default: `APP_BIN_HOME/mise`).
+#     Path to the mise binary (default: `/usr/local/bin/mise`).
 # - `MISE_NODE_VERSION`
 #     Node.js version to install (default: `22`).
 # - `MISE_PYTHON_VERSIONS`
@@ -43,6 +46,7 @@
 # ```
 # bash mise.sh --coldstart
 # bash mise.sh --coldstart --log-depth 2
+# bash mise.sh --quiet
 # bash mise.sh
 # ```
 set -euo pipefail
@@ -55,7 +59,7 @@ source "${SCRIPT_DIR}/shutils/argparse.sh"
 source "${SCRIPT_DIR}/shutils/log.sh"
 source "${SCRIPT_DIR}/shutils/shell.sh"
 
-# Parse arguments (may set LOG_DEPTH, COLDSTART via argparse).
+# Parse arguments (may set LOG_DEPTH, COLDSTART, QUIET via argparse).
 argparse_parse "$@"
 [[ ${#POSITIONAL_ARGS[@]} -gt 0 ]] && set -- "${POSITIONAL_ARGS[@]}"
 
@@ -65,9 +69,11 @@ source "${SCRIPT_DIR}/config.sh"
 # Build log indent from LOG_DEPTH.
 log_make_indent "${LOG_DEPTH}"
 
-# Resolve coldstart flag from argparse (--coldstart sets COLDSTART=1).
+# Resolve flags from argparse (--coldstart sets COLDSTART=1, --quiet sets QUIET=1).
 COLDSTART_DEFAULT=0
 COLDSTART="${COLDSTART:-${COLDSTART_DEFAULT}}"
+QUIET_DEFAULT=0
+QUIET="${QUIET:-${QUIET_DEFAULT}}"
 
 # If mise is not installed and not in coldstart mode, print instructions
 # and skip all mise operations to avoid startup delays.
@@ -77,34 +83,34 @@ if [[ ! -f "${MISE_INSTALL_PATH}" && "${COLDSTART}" -eq 0 ]]; then
 fi
 
 # Print header.
-echo "${LOG_INDENT} Mise Runtime Manager Setup"
-echo "${LOG_INDENT} Binary: ${MISE_INSTALL_PATH}"
+log_log "${QUIET}" "Mise Runtime Manager Setup"
+log_log "${QUIET}" "Binary: ${MISE_INSTALL_PATH}"
 
 # Install the mise binary if not already present (coldstart mode only).
-echo "${LOG_INDENT} [1/5] Checking mise binary ..."
+log_log "${QUIET}" "[1/5] Checking mise binary ..."
 if [[ ! -f "${MISE_INSTALL_PATH}" ]]; then
-    echo "${LOG_INDENT} Downloading mise ..."
+    log_log "${QUIET}" "Downloading mise ..."
     curl -fsSL https://mise.run | MISE_INSTALL_PATH="${MISE_INSTALL_PATH}" sh
 else
-    echo "${LOG_INDENT} mise binary already present."
+    log_log "${QUIET}" "mise binary already present."
 fi
 
 # Ensure mise XDG directories exist.
-echo "${LOG_INDENT} [2/5] Creating mise directories ..."
+log_log "${QUIET}" "[2/5] Creating mise directories ..."
 mkdir -p "${XDG_DATA_HOME}/mise" "${XDG_CONFIG_HOME}/mise" "${XDG_CACHE_HOME}/mise"
 
 # Migrate existing mise installs from default locations to XDG paths.
 # Must happen BEFORE activation to avoid "untrusted config" errors from
 # stale config files in ~/.config/mise/.
-echo "${LOG_INDENT} [3/5] Migrating existing mise data ..."
+log_log "${QUIET}" "[3/5] Migrating existing mise data ..."
 if [[ -f "${HOME}/.config/mise/config.toml" ]]; then
-    echo "${LOG_INDENT} Migrating config from ~/.config/mise/ ..."
+    log_log "${QUIET}" "Migrating config from ~/.config/mise/ ..."
     mv "${HOME}/.config/mise/config.toml" "${XDG_CONFIG_HOME}/mise/config.toml"
 fi
 for module_alt in node python; do
     DEFAULT_MISE_INSTALLS="${HOME}/.local/share/mise/installs/${module_alt}"
     if [[ -d "${DEFAULT_MISE_INSTALLS}" ]]; then
-        echo "${LOG_INDENT} Adopting existing ${module_alt} installs ..."
+        log_log "${QUIET}" "Adopting existing ${module_alt} installs ..."
         rm -rf "${XDG_DATA_HOME}/mise/installs/${module_alt}"
         mkdir -p "${XDG_DATA_HOME}/mise/installs/${module_alt}"
         for version in $(ls "${DEFAULT_MISE_INSTALLS}"); do
@@ -116,7 +122,7 @@ done
 
 # Activate mise for the current session using the detected shell handler.
 # CISH is set by shell.sh and indicates the current interactive shell.
-echo "${LOG_INDENT} [4/5] Activating mise (${CISH}) ..."
+log_log "${QUIET}" "[4/5] Activating mise (${CISH}) ..."
 case "${CISH}" in
 *bash*|*sh*)
     eval "$("${MISE_INSTALL_PATH}" activate bash)"
@@ -125,7 +131,7 @@ case "${CISH}" in
     eval "$("${MISE_INSTALL_PATH}" activate zsh)"
     ;;
 *)
-    echo "${LOG_INDENT} WARNING: Unknown shell '${CISH}', mise is not activated." >&2
+    log_log "${QUIET}" "WARNING: Unknown shell '${CISH}', mise is not activated."
     ;;
 esac
 
@@ -133,9 +139,9 @@ esac
 # Disable Node GPG signature verification because SageMaker AL2 ships with
 # outdated GPG keys that cannot validate Node.js release signatures. Mise
 # still verifies downloads via SHA256 checksums.
-echo "${LOG_INDENT} [5/5] Checking runtimes ..."
-"${MISE_INSTALL_PATH}" settings experimental=true
-"${MISE_INSTALL_PATH}" settings node.gpg_verify=false
+log_log "${QUIET}" "[5/5] Checking runtimes ..."
+"${MISE_INSTALL_PATH}" settings experimental=true 2>/dev/null
+"${MISE_INSTALL_PATH}" settings node.gpg_verify=false 2>/dev/null
 
 # Check or install runtimes based on coldstart flag.
 # In coldstart mode, install all runtimes. Otherwise, check each runtime
@@ -144,7 +150,7 @@ if [[ "${COLDSTART}" -eq 1 ]]; then
     # shellcheck disable=SC2086
     "${MISE_INSTALL_PATH}" use -g "node@${MISE_NODE_VERSION}" ${MISE_PYTHON_VERSIONS}
 else
-    "${MISE_INSTALL_PATH}" settings set not_found_auto_install 0
+    "${MISE_INSTALL_PATH}" settings set not_found_auto_install 0 2>/dev/null
     if ! "${MISE_INSTALL_PATH}" which node &>/dev/null; then
         echo "Missing node, run \`${MISE_INSTALL_PATH} use -g node@${MISE_NODE_VERSION}\` to install."
     fi
@@ -152,4 +158,4 @@ else
         echo "Missing python, run \`${MISE_INSTALL_PATH} use -g ${MISE_PYTHON_VERSIONS}\` to install."
     fi
 fi
-echo "${LOG_INDENT} Mise setup complete."
+log_log "${QUIET}" "Mise setup complete."

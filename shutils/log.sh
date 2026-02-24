@@ -2,7 +2,8 @@
 # Shared logging library for docker scripts.
 #
 # Provides `log_make_indent` to build a BuildKit-style log indent prefix
-# from a numeric depth value.
+# from a numeric depth value, and `log_log` to print indented messages
+# with optional quiet suppression.
 #
 # Args
 # ----
@@ -18,7 +19,8 @@
 # source shutils/log.sh
 # log_make_indent 1  # LOG_INDENT="=>"
 # log_make_indent 2  # LOG_INDENT="=> =>"
-# log_make_indent 3  # LOG_INDENT="=> => =>"
+# log_log 0 "Hello"  # prints "=> Hello"
+# log_log 1 "Hello"  # prints nothing (quiet=1)
 # ```
 
 # Prevent redundant sourcing.
@@ -53,4 +55,26 @@ log_make_indent() {
             LOG_INDENT="${LOG_INDENT} "
         fi
     done
+}
+
+# Print a log message with the current indent prefix.
+#
+# When `quiet` is `1`, the message is suppressed. Otherwise, the message
+# is printed prefixed with `LOG_INDENT`.
+#
+# Args
+# ----
+# - quiet
+#     `0` to print, `1` to suppress.
+# - message
+#     The message to print.
+#
+# Returns
+# -------
+# (No-Returns)
+log_log() {
+    local quiet="${1}"
+    local message="${2}"
+    [[ "${quiet}" -eq 1 ]] && return
+    echo "${LOG_INDENT} ${message}"
 }
