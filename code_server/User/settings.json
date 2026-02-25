@@ -34,6 +34,7 @@
     // + Workspace Management
     // + AI Agent
     //   - Claude Code
+    //   - Cline
     // + Unclassified
     // * Must End-With
     // ---------------------------------------------------------------------------------------------
@@ -550,6 +551,19 @@
         { "name": "AWS_PROFILE", "value": "default" },
         { "name": "AWS_REGION", "value": "us-east-1" }
     ],
+
+    // ---------------------------------------------------------------------------------------------
+    // ### Cline
+    // ---------------------------------------------------------------------------------------------
+
+    // Cline uses Bedrock via the SageMaker IAM role. AWS credentials are
+    // provided automatically by the instance metadata service — no access
+    // keys are needed. The `aws sts get-caller-identity` command confirms
+    // credential availability at runtime.
+    "cline.apiProvider": "bedrock",
+    "cline.awsRegion": "us-east-1",
+    "cline.awsUseCrossRegionInference": true,
+    "cline.customCwd": "~/Workspace",
 
     // ---------------------------------------------------------------------------------------------
     // ## Unclassified

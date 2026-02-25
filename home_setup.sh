@@ -61,8 +61,8 @@ PERSISTENT_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 SSH_HOME="${PERSISTENT_ROOT}/ssh"
 AWS_HOME="${PERSISTENT_ROOT}/aws"
 
-# Ensure DOCKER_HOME exists (normally created by wrapper.sh at runtime).
-mkdir -p "${DOCKER_HOME}"
+# Ensure DOCKER_HOME and common subdirectories exist.
+mkdir -p "${DOCKER_HOME}" "${DOCKER_HOME}/Workspace"
 
 # Print header.
 log_log "${QUIET}" "Home Directory Setup"

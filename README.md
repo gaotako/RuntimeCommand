@@ -156,6 +156,17 @@ Use `FORCE_BUILD=1` to skip loading the cached image and force a fresh build.
 The wrapper script does not need to change — it always uses the
 `code-server-sagemaker:latest` image tag.
 
+After rebuilding, the running container still uses the **old** image. To apply
+the new image:
+
+```bash
+docker rm -f code-server-sagemaker
+```
+
+Then restart Jupyter: **File → Shut Down**, re-open the notebook URL, and open
+Code Server from the launcher. The wrapper will create a new container from the
+updated image.
+
 ## Image Persistence
 
 Docker images are stored in Docker's data root (`/var/lib/docker/`), which lives
