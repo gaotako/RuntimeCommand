@@ -16,7 +16,7 @@
 #
 # Notes
 # -----
-# The image includes: zsh, git, vim, tmux, less, curl, openssh-client,
+# The image includes: zsh, git, vim, tmux, less, curl, unzip, openssh-client,
 # python3, AWS CLI v2, code-server, and mise (polyglot runtime manager).
 #
 # The image is built by `build.sh` and persisted to `DOCKER_IMAGE_DIR` via
@@ -51,6 +51,7 @@ RUN apt-get update \
         less \
         vim \
         tmux \
+        unzip \
     && rm -rf /var/lib/apt/lists/*
 
 # Set the default shell.
@@ -68,14 +69,9 @@ RUN code-server --version
 
 # Install AWS CLI v2.
 RUN curl -fsSL "https://awscli.amazonaws.com/awscli-exe-linux-$(uname -m).zip" -o /tmp/awscliv2.zip \
-    && apt-get update \
-    && apt-get install -y --no-install-recommends unzip \
     && unzip -q /tmp/awscliv2.zip -d /tmp \
     && /tmp/aws/install \
-    && rm -rf /tmp/awscliv2.zip /tmp/aws \
-    && apt-get purge -y unzip \
-    && apt-get autoremove -y \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /tmp/awscliv2.zip /tmp/aws
 
 # Verify AWS CLI installation.
 RUN aws --version

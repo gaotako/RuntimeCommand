@@ -71,11 +71,28 @@ log_log "${QUIET}" "Claude Code CLI Setup"
 # Step 1: Install or check Claude Code CLI.
 log_log "${QUIET}" "[1/2] Checking Claude Code CLI ..."
 if [[ "${COLDSTART}" -eq 1 ]]; then
-    if [[ -f "${CLAUDE_BIN}" ]]; then
-        log_log "${QUIET}" "Claude Code CLI already installed at \`${CLAUDE_BIN}\`."
+    if [[ -f "${CLAUDE_BIN}" ]] || command -v claude &>/dev/null; then
+        log_log "${QUIET}" "Claude Code CLI already installed."
     else
-        log_log "${QUIET}" "Installing Claude Code CLI via native installer ..."
-        curl -fsSL https://cli.anthropic.com/install.sh | sh
+        # Try native installer first, fall back to npm if DNS/network fails.
+        # The npm-then-switch approach is necessary because SageMaker's Docker
+        # network cannot resolve `cli.anthropic.com` (native installer host).
+        # After npm install, `claude install` migrates to the native binary
+        # and silences the npm deprecation warning.
+        log_log "${QUIET}" "Installing Claude Code CLI ..."
+        if curl -fsSL https://cli.anthropic.com/install.sh | sh 2>/dev/null; then
+            log_log "${QUIET}" "Installed via native installer."
+        elif command -v npm &>/dev/null; then
+            log_log "${QUIET}" "Native installer failed. Installing via npm ..."
+            npm install -g @anthropic-ai/claude-code
+            # Migrate from npm to native installer to silence deprecation warning.
+            if command -v claude &>/dev/null; then
+                log_log "${QUIET}" "Migrating to native installer via \`claude install\` ..."
+                claude install 2>/dev/null || true
+            fi
+        else
+            echo "WARNING: Claude Code CLI installation failed. Neither native installer nor \`npm\` available." >&2
+        fi
     fi
     # Hint to the user how to use `claude` immediately or on next session.
     CLAUDE_BIN_DIR="$(dirname "${CLAUDE_BIN}")"
