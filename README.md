@@ -86,7 +86,7 @@ Attach the following lifecycle scripts in the SageMaker Notebook Instance consol
 ```bash
 #!/bin/bash
 set -euo pipefail
-RC_ROOT=/home/ec2-user/SageMaker/RuntimeCommandReadOnly/src/RuntimeCommand
+RC_ROOT=/home/ec2-user/SageMaker/RuntimeCommandDev/src/RuntimeCommand
 mkdir -p "${RC_ROOT}"
 git clone https://github.com/gaotako/RuntimeCommand "${RC_ROOT}"
 bash "${RC_ROOT}/sagemaker/lifecycle/notebook_instance/create.sh"
@@ -97,7 +97,7 @@ bash "${RC_ROOT}/sagemaker/lifecycle/notebook_instance/create.sh"
 ```bash
 #!/bin/bash
 set -euo pipefail
-RC_ROOT=/home/ec2-user/SageMaker/RuntimeCommandReadOnly/src/RuntimeCommand
+RC_ROOT=/home/ec2-user/SageMaker/RuntimeCommandDev/src/RuntimeCommand
 bash "${RC_ROOT}/sagemaker/lifecycle/notebook_instance/start.sh"
 ```
 

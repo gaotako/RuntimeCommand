@@ -17,8 +17,13 @@
 # Guard: only run inside the Docker container launched by wrapper.sh.
 # wrapper.sh sets RC_DOCKER=1 as a container env var (and unsets it on the
 # host before launching). On the SageMaker host or any other environment,
-# rc.sh exits early without modifying the shell.
+# rc.sh shows docker entry instructions (once) and exits early.
 if [[ "${RC_DOCKER:-0}" != "1" ]]; then
+    if [[ "${_RC_DOCKER_HINT_SHOWN:-0}" != "1" ]]; then
+        export _RC_DOCKER_HINT_SHOWN=1
+        echo "To enter Docker environment, run:"
+        echo "  docker exec -it code-server-sagemaker /bin/zsh"
+    fi
     return 0 2>/dev/null || true
 fi
 
