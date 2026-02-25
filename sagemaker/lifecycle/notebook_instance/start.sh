@@ -7,10 +7,10 @@
 #
 # Args
 # ----
-# - --log-depth LOG_DEPTH
+# - `--log-depth LOG_DEPTH`
 #     Logging nesting depth, controls the `"=>"` prefix repetition
 #     (default: `1`).
-# - --quiet
+# - `--quiet`
 #     When set, suppresses step-by-step log output. Inherited by all
 #     sub-scripts.
 #

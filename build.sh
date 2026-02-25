@@ -7,12 +7,12 @@
 #
 # Args
 # ----
-# - CODE_SERVER_VERSION
+# - `CODE_SERVER_VERSION`
 #     code-server version to install (default: `"latest"`).
-# - --log-depth LOG_DEPTH
+# - `--log-depth LOG_DEPTH`
 #     Logging nesting depth, controls the `"=>"` prefix repetition
 #     (default: `1`).
-# - --quiet
+# - `--quiet`
 #     When set, suppresses step-by-step log output.
 #
 # Returns
@@ -60,27 +60,27 @@ QUIET_DEFAULT=0
 QUIET="${QUIET:-${QUIET_DEFAULT}}"
 
 # Override CODE_SERVER_VERSION from positional argument if provided.
-CODE_SERVER_VERSION="${1:-${CODE_SERVER_VERSION}}"
+if [[ ${#POSITIONAL_ARGS[@]} -gt 0 ]]; then
+    CODE_SERVER_VERSION="${POSITIONAL_ARGS[0]}"
+fi
 
 # Pre-build checks: verify all required tools and files are available.
-# Docker is needed for image build; pip and python3 are needed by
-# setup_jupyter.sh to install the JupyterLab extension; curl is needed
-# by mise.sh for downloading the mise binary.
+# Docker is needed for image build.
 BUILD_CHECK_FAILED=0
-for required_cmd in docker curl pip python3; do
-    if ! command -v "${required_cmd}" &>/dev/null; then
-        echo "${LOG_INDENT} ERROR: Required command '${required_cmd}' is not installed or not in PATH."
+for REQUIRED_CMD in docker; do
+    if ! command -v "${REQUIRED_CMD}" &>/dev/null; then
+        echo "${LOG_INDENT} ERROR: Required command \`${REQUIRED_CMD}\` is not installed or not in PATH." >&2
         BUILD_CHECK_FAILED=1
     fi
 done
-for required_file in Dockerfile entrypoint.sh; do
-    if [[ ! -f "${SCRIPT_DIR}/${required_file}" ]]; then
-        echo "${LOG_INDENT} ERROR: Required file '${required_file}' not found in ${SCRIPT_DIR}."
+for REQUIRED_FILE in Dockerfile entrypoint.sh; do
+    if [[ ! -f "${SCRIPT_DIR}/${REQUIRED_FILE}" ]]; then
+        echo "${LOG_INDENT} ERROR: Required file \`${REQUIRED_FILE}\` not found in \`${SCRIPT_DIR}\`." >&2
         BUILD_CHECK_FAILED=1
     fi
 done
 if [[ "${BUILD_CHECK_FAILED}" -eq 1 ]]; then
-    echo "${LOG_INDENT} Pre-build checks failed. Please install missing dependencies."
+    echo "${LOG_INDENT} Pre-build checks failed. Please install missing dependencies." >&2
     exit 1
 fi
 log_log "${QUIET}" "Pre-build checks passed."
@@ -90,7 +90,7 @@ DOCKER_IMAGE_FILE="${DOCKER_IMAGE_DIR}/${IMAGE_NAME}-${IMAGE_TAG}.tar"
 
 # Attempt to load a previously saved image from persistent storage.
 # Skipped when `FORCE_BUILD=1` or when no cached file exists.
-if [ -f "${DOCKER_IMAGE_FILE}" ] && [ "${FORCE_BUILD:-}" != "1" ]; then
+if [[ -f "${DOCKER_IMAGE_FILE}" ]] && [[ "${FORCE_BUILD:-}" != "1" ]]; then
     log_log "${QUIET}" "Found saved image at ${DOCKER_IMAGE_FILE}, loading ..."
     if docker load -i "${DOCKER_IMAGE_FILE}"; then
         log_log "${QUIET}" "Image loaded from persistent storage."

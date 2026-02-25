@@ -38,12 +38,12 @@ LOG_DEPTH="${LOG_DEPTH:-${LOG_DEPTH_DEFAULT}}"
 #
 # Args
 # ----
-# - depth
+# - `depth`
 #     Nesting depth (must be >= 1).
 #
 # Returns
 # -------
-# - LOG_INDENT
+# - `LOG_INDENT`
 #     The constructed indent string (e.g., `"=> =>"` for depth 2).
 log_make_indent() {
     local depth="${1}"
@@ -64,9 +64,9 @@ log_make_indent() {
 #
 # Args
 # ----
-# - quiet
+# - `quiet`
 #     `0` to print, `1` to suppress.
-# - message
+# - `message`
 #     The message to print.
 #
 # Returns

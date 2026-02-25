@@ -22,7 +22,7 @@ if [[ "${RC_DOCKER:-0}" != "1" ]]; then
     if [[ "${_RC_DOCKER_HINT_SHOWN:-0}" != "1" ]]; then
         export _RC_DOCKER_HINT_SHOWN=1
         echo "To enter Docker environment, run:"
-        echo "  docker exec -it code-server-sagemaker /bin/zsh"
+        echo "  \`docker exec -it code-server-sagemaker /bin/zsh\`"
     fi
     return 0 2>/dev/null || true
 fi
@@ -31,19 +31,19 @@ fi
 # home_setup.sh writes `export RC_DIR="..."` before the `source rc.sh` line,
 # avoiding unreliable shell-specific path detection.
 if [[ -z "${RC_DIR:-}" ]]; then
-    echo "ERROR: RC_DIR is not set. rc.sh must be sourced from a file that sets RC_DIR." >&2
+    echo "ERROR: \`RC_DIR\` is not set. \`rc.sh\` must be sourced from a file that sets \`RC_DIR\`." >&2
     return 1 2>/dev/null || true
 fi
 
 # Source shell handler detection (provides CISH).
 source "${RC_DIR}/shutils/shell.sh"
-shell_check_ext_compat
+shell_check_ext_compat || true
 
 # Resolve the effective shell for prompt and activation.
 # Falls back to SHELL env var if CISH detection gave unexpected results.
-_rc_shell="${CISH}"
-if [[ "${_rc_shell}" != *bash* && "${_rc_shell}" != *zsh* && "${_rc_shell}" != *sh* ]]; then
-    _rc_shell="${SHELL:-/bin/bash}"
+_RC_SHELL="${CISH}"
+if [[ "${_RC_SHELL}" != *bash* && "${_RC_SHELL}" != *zsh* && "${_RC_SHELL}" != *sh* ]]; then
+    _RC_SHELL="${SHELL:-/bin/bash}"
 fi
 
 # Export all shared environment variables (HOME, WORKSPACE, XDG paths, etc.).
@@ -65,21 +65,21 @@ export PSC_ASCII_RED=$'\e[31m'
 export PSC_ASCII_GREEN=$'\e[32m'
 export PSC_ASCII_YELLOW=$'\e[33m'
 export PSC_ASCII_BLUE=$'\e[34m'
-export PSC_ASCII_CYAN=$'\e[35m'
-export PSC_ASCII_MAGENTA=$'\e[36m'
+export PSC_ASCII_CYAN=$'\e[36m'
+export PSC_ASCII_MAGENTA=$'\e[35m'
 export PSC_ASCII_BRIGHT_RED=$'\e[91m'
 export PSC_ASCII_BRIGHT_GREEN=$'\e[92m'
 export PSC_ASCII_BRIGHT_YELLOW=$'\e[93m'
 export PSC_ASCII_BRIGHT_BLUE=$'\e[94m'
-export PSC_ASCII_BRIGHT_CYAN=$'\e[95m'
-export PSC_ASCII_BRIGHT_MAGENTA=$'\e[96m'
+export PSC_ASCII_BRIGHT_CYAN=$'\e[96m'
+export PSC_ASCII_BRIGHT_MAGENTA=$'\e[95m'
 export PSC_ASCII_NEWLINE=$'\n'
 
 # Prompt-safe color codes (wrapped for the detected shell).
 # bash uses \[...\] to mark non-printing characters in PS1.
 # zsh uses %{...%} to mark non-printing characters in PS1.
 # zsh case must come before *sh* because "zsh" contains "sh".
-case "${_rc_shell}" in
+case "${_RC_SHELL}" in
 *zsh*)
     _PS_RESET="%{${PSC_ASCII_RESET}%}"
     _PS_CYAN="%{${PSC_ASCII_CYAN}%}"
@@ -108,7 +108,7 @@ esac
 
 # Set the shell prompt based on the effective shell.
 # zsh case must come before *sh* because "zsh" contains "sh".
-case "${_rc_shell}" in
+case "${_RC_SHELL}" in
 *zsh*)
     CLI_HEADER=
     CLI_HEADER="${CLI_HEADER}#${_PS_CYAN}%h${_PS_RESET}"
@@ -141,7 +141,7 @@ bash "${RC_DIR}/mise.sh" --quiet
 
 # Activate mise for the current shell session if the binary is present.
 if [[ -f "${MISE_INSTALL_PATH}" ]]; then
-    case "${_rc_shell}" in
+    case "${_RC_SHELL}" in
     *zsh*)
         eval "$("${MISE_INSTALL_PATH}" activate zsh)"
         ;;
@@ -149,7 +149,7 @@ if [[ -f "${MISE_INSTALL_PATH}" ]]; then
         eval "$("${MISE_INSTALL_PATH}" activate bash)"
         ;;
     *)
-        echo "WARNING: Unknown shell '${_rc_shell}', mise is not activated." >&2
+        echo "WARNING: Unknown shell \`${_RC_SHELL}\`, \`mise\` is not activated." >&2
         ;;
     esac
 fi

@@ -1,7 +1,7 @@
 #!/bin/bash
 # Install and configure mise (polyglot runtime manager).
 #
-# Downloads the mise binary to `APP_BIN_HOME` if not already present, sets
+# Downloads the mise binary to `MISE_INSTALL_PATH` if not already present, sets
 # up XDG-based directories for mise, migrates any existing mise installs
 # from default locations, enables experimental features, and checks or
 # installs the configured runtimes (Node, Python).
@@ -11,14 +11,14 @@
 #
 # Args
 # ----
-# - --log-depth LOG_DEPTH
+# - `--log-depth LOG_DEPTH`
 #     Logging nesting depth, controls the `"=>"` prefix repetition
 #     (default: `1`).
-# - --coldstart
+# - `--coldstart`
 #     When set, installs mise binary and runtimes from scratch. Without
 #     this flag the script checks for missing runtimes and prints install
 #     instructions.
-# - --quiet
+# - `--quiet`
 #     When set, suppresses step-by-step log output. Only "Missing ..."
 #     messages are printed.
 #
@@ -107,15 +107,16 @@ if [[ -f "${HOME}/.config/mise/config.toml" ]]; then
     log_log "${QUIET}" "Migrating config from ~/.config/mise/ ..."
     mv "${HOME}/.config/mise/config.toml" "${XDG_CONFIG_HOME}/mise/config.toml"
 fi
-for module_alt in node python; do
-    DEFAULT_MISE_INSTALLS="${HOME}/.local/share/mise/installs/${module_alt}"
+for RUNTIME in node python; do
+    DEFAULT_MISE_INSTALLS="${HOME}/.local/share/mise/installs/${RUNTIME}"
     if [[ -d "${DEFAULT_MISE_INSTALLS}" ]]; then
-        log_log "${QUIET}" "Adopting existing ${module_alt} installs ..."
-        rm -rf "${XDG_DATA_HOME}/mise/installs/${module_alt}"
-        mkdir -p "${XDG_DATA_HOME}/mise/installs/${module_alt}"
-        for version in $(ls "${DEFAULT_MISE_INSTALLS}"); do
-            ln -s "${DEFAULT_MISE_INSTALLS}/${version}" \
-                "${XDG_DATA_HOME}/mise/installs/${module_alt}/${version}"
+        log_log "${QUIET}" "Adopting existing ${RUNTIME} installs ..."
+        rm -rf "${XDG_DATA_HOME}/mise/installs/${RUNTIME}"
+        mkdir -p "${XDG_DATA_HOME}/mise/installs/${RUNTIME}"
+        for VERSION_DIR in "${DEFAULT_MISE_INSTALLS}"/*/; do
+            VERSION="$(basename "${VERSION_DIR}")"
+            ln -s "${DEFAULT_MISE_INSTALLS}/${VERSION}" \
+                "${XDG_DATA_HOME}/mise/installs/${RUNTIME}/${VERSION}"
         done
     fi
 done
@@ -131,7 +132,7 @@ case "${CISH}" in
     eval "$("${MISE_INSTALL_PATH}" activate bash)"
     ;;
 *)
-    log_log "${QUIET}" "WARNING: Unknown shell '${CISH}', mise is not activated."
+    log_log "${QUIET}" "WARNING: Unknown shell \`${CISH}\`, \`mise\` is not activated."
     ;;
 esac
 

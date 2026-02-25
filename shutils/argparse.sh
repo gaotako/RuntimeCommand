@@ -38,12 +38,12 @@ _SHUTILS_ARGPARSE_SH_LOADED=1
 #
 # Args
 # ----
-# - $@
+# - `$@`
 #     Raw command-line arguments to parse.
 #
 # Returns
 # -------
-# - POSITIONAL_ARGS
+# - `POSITIONAL_ARGS`
 #     Array of positional (non-keyword) arguments. To restore `$1`, `$2`,
 #     etc., run `set -- "${POSITIONAL_ARGS[@]}"` after calling this function.
 #     Otherwise, use `POSITIONAL_ARGS[0]`, `POSITIONAL_ARGS[1]`, etc.

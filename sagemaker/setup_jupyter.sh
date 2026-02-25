@@ -7,10 +7,10 @@
 #
 # Args
 # ----
-# - --log-depth LOG_DEPTH
+# - `--log-depth LOG_DEPTH`
 #     Logging nesting depth, controls the `"=>"` prefix repetition
 #     (default: `1`).
-# - --quiet
+# - `--quiet`
 #     When set, suppresses step-by-step log output.
 #
 # Returns
@@ -82,7 +82,7 @@ log_log "${QUIET}" "Config: ${JUPYTER_CONFIG}"
 # If the block already exists, only the timeout value is patched.
 if grep -q "${CODE_SERVER_APPLICATION}/bin/code-server" "${JUPYTER_CONFIG}" 2>/dev/null; then
     log_log "${QUIET}" "[1/3] Server-proxy configuration already exists. Updating timeout to ${PROXY_TIMEOUT}s ..."
-    sed -i "/'${PROXY_PATH}':/,/^    }/s/'timeout': [0-9]*/'timeout': ${PROXY_TIMEOUT}/" "${JUPYTER_CONFIG}"
+    sed -i "/\"${PROXY_PATH}\":/,/^    }/s/\"timeout\": [0-9][0-9]*/\"timeout\": ${PROXY_TIMEOUT}/" "${JUPYTER_CONFIG}"
 else
     log_log "${QUIET}" "[1/3] Adding server-proxy configuration to ${JUPYTER_CONFIG}"
     cat >>"${JUPYTER_CONFIG}" <<EOC
@@ -129,7 +129,7 @@ EOF
 # Skipped when Jupyter is not yet running (e.g. during lifecycle config).
 log_log "${QUIET}" "[3/3] Restarting Jupyter server ..."
 if [[ -f /home/ec2-user/bin/dockerd-rootless.sh ]]; then
-    log_log "${QUIET}" "Running in rootless mode; please restart Jupyter from 'File' > 'Shut Down' and re-open."
+    log_log "${QUIET}" "Running in rootless mode; please restart Jupyter from \`File\` > \`Shut Down\` and re-open."
 elif sudo systemctl is-active jupyter-server >/dev/null 2>&1; then
     sudo systemctl restart jupyter-server
 else

@@ -5,10 +5,10 @@
 #
 # Args
 # ----
-# - CODE_SERVER_VERSION
-#     Version of code-server to install (default: `latest`).
-# - DOCKER_SHELL
-#     Default shell for the container (default: `/bin/zsh`).
+# - `CODE_SERVER_VERSION`
+#     Version of code-server to install (default: `"latest"`).
+# - `DOCKER_SHELL`
+#     Default shell for the container (default: `"/bin/zsh"`).
 #
 # Returns
 # -------

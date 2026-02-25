@@ -10,10 +10,10 @@
 #
 # Args
 # ----
-# - --log-depth LOG_DEPTH
+# - `--log-depth LOG_DEPTH`
 #     Logging nesting depth, controls the `"=>"` prefix repetition
 #     (default: `1`).
-# - --quiet
+# - `--quiet`
 #     When set, suppresses step-by-step log output.
 #
 # Returns
@@ -66,18 +66,18 @@ log_log "${QUIET}" "Code-Server Coldstart"
 
 # Symlink User settings (shared) to code-server data directory.
 log_log "${QUIET}" "[1/4] Linking User settings ..."
-here="${SHARED_CS_ROOT}/User/settings.json"
-there="${CODE_SERVER_SETTINGS_ROOT}/User/settings.json"
-if [[ ! -L "${there}" || "$(readlink -f "${there}")" != "$(readlink -f "${here}")" ]]; then
-    if [[ -f "${there}" ]]; then
-        mv "${there}" "${there}.bak"
-        rm -f "${here}.bak"
-        ln -s "${there}.bak" "${here}.bak"
+HERE="${SHARED_CS_ROOT}/User/settings.json"
+THERE="${CODE_SERVER_SETTINGS_ROOT}/User/settings.json"
+if [[ ! -L "${THERE}" || "$(readlink -f "${THERE}")" != "$(readlink -f "${HERE}")" ]]; then
+    if [[ -f "${THERE}" ]]; then
+        mv "${THERE}" "${THERE}.bak"
+        rm -f "${HERE}.bak"
+        ln -s "${THERE}.bak" "${HERE}.bak"
     else
-        rm -f "${there}"
+        rm -f "${THERE}"
     fi
-    mkdir -p "$(dirname "${there}")"
-    ln -s "${here}" "${there}"
+    mkdir -p "$(dirname "${THERE}")"
+    ln -s "${HERE}" "${THERE}"
 fi
 
 # Template and symlink Machine settings (SageMaker-specific).
@@ -89,23 +89,23 @@ log_log "${QUIET}" "Python path: ${MISE_PYTHON_PATH}"
 log_log "${QUIET}" "Docker shell: ${DOCKER_SHELL}"
 rm -f "${SAGEMAKER_CS_ROOT}/Machine/settings.json"
 cp "${SAGEMAKER_CS_ROOT}/Machine/settings-template.json" "${SAGEMAKER_CS_ROOT}/Machine/settings.json"
-mise_python_path_sed="$(echo "${MISE_PYTHON_PATH}" | sed -E "s/([\\/\\.])/\\\\\1/g")"
-docker_shell_sed="$(echo "${DOCKER_SHELL}" | sed -E "s/([\\/\\.])/\\\\\1/g")"
-sed -i -e "s/\${MISE_PYTHON_PATH}/${mise_python_path_sed}/g" \
-    -e "s/\${DOCKER_SHELL}/${docker_shell_sed}/g" \
+MISE_PYTHON_PATH_SED="$(echo "${MISE_PYTHON_PATH}" | sed -E "s/([\\/\\.&])/\\\\\1/g")"
+DOCKER_SHELL_SED="$(echo "${DOCKER_SHELL}" | sed -E "s/([\\/\\.&])/\\\\\1/g")"
+sed -i -e "s/\${MISE_PYTHON_PATH}/${MISE_PYTHON_PATH_SED}/g" \
+    -e "s/\${DOCKER_SHELL}/${DOCKER_SHELL_SED}/g" \
     "${SAGEMAKER_CS_ROOT}/Machine/settings.json"
-here="${SAGEMAKER_CS_ROOT}/Machine/settings.json"
-there="${CODE_SERVER_SETTINGS_ROOT}/Machine/settings.json"
-if [[ ! -L "${there}" || "$(readlink -f "${there}")" != "$(readlink -f "${here}")" ]]; then
-    if [[ -f "${there}" ]]; then
-        mv "${there}" "${there}.bak"
-        rm -f "${here}.bak"
-        ln -s "${there}.bak" "${here}.bak"
+HERE="${SAGEMAKER_CS_ROOT}/Machine/settings.json"
+THERE="${CODE_SERVER_SETTINGS_ROOT}/Machine/settings.json"
+if [[ ! -L "${THERE}" || "$(readlink -f "${THERE}")" != "$(readlink -f "${HERE}")" ]]; then
+    if [[ -f "${THERE}" ]]; then
+        mv "${THERE}" "${THERE}.bak"
+        rm -f "${HERE}.bak"
+        ln -s "${THERE}.bak" "${HERE}.bak"
     else
-        rm -f "${there}"
+        rm -f "${THERE}"
     fi
-    mkdir -p "$(dirname "${there}")"
-    ln -s "${here}" "${there}"
+    mkdir -p "$(dirname "${THERE}")"
+    ln -s "${HERE}" "${THERE}"
 fi
 
 # Install sync-settings extension if not already present.
@@ -114,6 +114,8 @@ SYNC_SETTINGS_SOURCE_ROOT="${SAGEMAKER_CS_ROOT}/User/globalStorage/zokugun.sync-
 SYNC_SETTINGS_SETTINGS_ROOT="${CODE_SERVER_SETTINGS_ROOT}/User/globalStorage/zokugun.sync-settings"
 if [[ ! -d "${SYNC_SETTINGS_SETTINGS_ROOT}" ]]; then
     docker run --rm \
+        --security-opt label:disable \
+        -e "HOME=${DOCKER_HOME}" \
         -e "XDG_DATA_HOME=${XDG_DATA_HOME}" \
         -v "${DOCKER_HOME}:${DOCKER_HOME}" \
         "${IMAGE_NAME}:${IMAGE_TAG}" \
@@ -122,21 +124,21 @@ fi
 
 # Template and symlink sync-settings configuration.
 log_log "${QUIET}" "[4/4] Configuring sync-settings ..."
-rm -rf "${SYNC_SETTINGS_SOURCE_ROOT}/settings.yml"
+rm -f "${SYNC_SETTINGS_SOURCE_ROOT}/settings.yml"
 cp "${SYNC_SETTINGS_SOURCE_ROOT}/settings-template.yml" "${SYNC_SETTINGS_SOURCE_ROOT}/settings.yml"
-project_root_sed="$(echo "${PROJECT_ROOT}" | sed -E "s/([\\/\\.])/\\\\\1/g")"
-sed -i -e "s/\${PROJECT_ROOT}/${project_root_sed}/g" "${SYNC_SETTINGS_SOURCE_ROOT}/settings.yml"
-here="${SYNC_SETTINGS_SOURCE_ROOT}/settings.yml"
-there="${SYNC_SETTINGS_SETTINGS_ROOT}/settings.yml"
-if [[ ! -L "${there}" || "$(readlink -f "${there}")" != "$(readlink -f "${here}")" ]]; then
-    if [[ -f "${there}" ]]; then
-        mv "${there}" "${there}.bak"
-        rm -f "${here}.bak"
-        ln -s "${there}.bak" "${here}.bak"
+PROJECT_ROOT_SED="$(echo "${PROJECT_ROOT}" | sed -E "s/([\\/\\.&])/\\\\\1/g")"
+sed -i -e "s/\${PROJECT_ROOT}/${PROJECT_ROOT_SED}/g" "${SYNC_SETTINGS_SOURCE_ROOT}/settings.yml"
+HERE="${SYNC_SETTINGS_SOURCE_ROOT}/settings.yml"
+THERE="${SYNC_SETTINGS_SETTINGS_ROOT}/settings.yml"
+if [[ ! -L "${THERE}" || "$(readlink -f "${THERE}")" != "$(readlink -f "${HERE}")" ]]; then
+    if [[ -f "${THERE}" ]]; then
+        mv "${THERE}" "${THERE}.bak"
+        rm -f "${HERE}.bak"
+        ln -s "${THERE}.bak" "${HERE}.bak"
     else
-        rm -f "${there}"
+        rm -f "${THERE}"
     fi
-    mkdir -p "$(dirname "${there}")"
-    ln -s "${here}" "${there}"
+    mkdir -p "$(dirname "${THERE}")"
+    ln -s "${HERE}" "${THERE}"
 fi
-log_log "${QUIET}" "Coldstart complete. Run 'Sync Settings: Download (repository -> user)' in code-server."
+log_log "${QUIET}" "Coldstart complete. Run \`Sync Settings: Download (repository -> user)\` in code-server."

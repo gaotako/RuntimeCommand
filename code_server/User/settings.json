@@ -2,11 +2,11 @@
     // ---------------------------------------------------------------------------------------------
     // ## Table of Contents
     //
-    // * Must-Start-With
+    // * Must Start-With
     // + Graphic User Interface
     //   - Icon Theme and Customization
     //   - Color Theme and Customization
-    //   - Explorer Themem and Customization
+    //   - Explorer Theme and Customization
     //   - Font
     //   - White Space
     //   - Escape Character
@@ -30,8 +30,9 @@
     //   - Prettier
     // + Interpreter Notebook
     //   - Jupyter
+    // + Workspace Management
     // + Unclassified
-    // * Must-End-With
+    // * Must End-With
     // ---------------------------------------------------------------------------------------------
 
     // ---------------------------------------------------------------------------------------------

@@ -9,7 +9,7 @@ import { IFrame, MainAreaWidget, WidgetTracker } from "@jupyterlab/apputils";
 import CODESERVER_ICON from "../style/icons/codeserver.svg";
 
 
-export const codeserverIcon = new LabIcon({
+const codeserverIcon = new LabIcon({
     name: "codeserver:icon",
     svgstr: CODESERVER_ICON,
 });
@@ -20,16 +20,16 @@ export const codeserverIcon = new LabIcon({
  *
  * Args
  * ----
- * - id
+ * - `id`
  *     Unique widget identifier.
- * - url
+ * - `url`
  *     URL to load inside the IFrame.
- * - text
+ * - `text`
  *     Label shown on the widget tab.
  *
  * Returns
  * -------
- * - widget
+ * - `widget`
  *     A `MainAreaWidget` wrapping the IFrame.
  */
 function newServerProxyWidget(id: string, url: string, text: string): MainAreaWidget<IFrame> {
@@ -63,17 +63,17 @@ function newServerProxyWidget(id: string, url: string, text: string): MainAreaWi
  *
  * Returns
  * -------
- * - data
+ * - `data`
  *     Server process metadata, or `null` if the fetch fails.
  */
 async function fetchServersInfo(): Promise<IServersInfo | null> {
     const response = await fetch(PageConfig.getBaseUrl() + "server-proxy/servers-info");
     if (!response.ok) {
-        console.log(
+        console.error(
             "Could not fetch metadata about registered servers."
             + " Make sure jupyter-server-proxy is installed.",
         );
-        console.log(response);
+        console.error(response);
         return null;
     }
     return response.json();
@@ -85,18 +85,18 @@ async function fetchServersInfo(): Promise<IServersInfo | null> {
  *
  * Args
  * ----
- * - app
+ * - `app`
  *     The JupyterLab application instance.
- * - restorer
+ * - `restorer`
  *     Layout restorer for persisting widget state across reloads.
- * - namespace
+ * - `namespace`
  *     Namespace prefix for the widget tracker and command.
- * - tracker
+ * - `tracker`
  *     Widget tracker for IFrame proxy widgets.
  *
  * Returns
  * -------
- * - command
+ * - `command`
  *     The registered command identifier string.
  */
 function registerProxyCommand(
@@ -159,13 +159,13 @@ function registerProxyCommand(
  *
  * Args
  * ----
- * - launcher
+ * - `launcher`
  *     The JupyterLab launcher to add items to.
- * - data
+ * - `data`
  *     Server process metadata from `jupyter-server-proxy`.
- * - namespace
+ * - `namespace`
  *     Namespace prefix used for widget identifiers.
- * - command
+ * - `command`
  *     The registered command to invoke when a launcher item is clicked.
  *
  * Returns
@@ -212,11 +212,11 @@ function addLauncherItems(
  *
  * Args
  * ----
- * - app
+ * - `app`
  *     The JupyterLab application instance.
- * - launcher
+ * - `launcher`
  *     The JupyterLab launcher service.
- * - restorer
+ * - `restorer`
  *     Layout restorer for persisting widget state across reloads.
  *
  * Returns

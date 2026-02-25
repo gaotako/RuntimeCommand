@@ -7,7 +7,7 @@
 #
 # Args
 # ----
-# - $@
+# - `$@`
 #     Arguments forwarded to code-server (if flags) or the specified command.
 #
 # Returns

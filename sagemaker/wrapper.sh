@@ -8,7 +8,7 @@
 #
 # Args
 # ----
-# - $@
+# - `$@`
 #     Arguments forwarded to `code-server` inside the container.
 #
 # Returns
@@ -24,6 +24,8 @@
 # - `DOCKER_HOME`
 #     Isolated home directory for the container (default:
 #     `/home/ec2-user/SageMaker/CodeServerDockerHome`).
+
+set -euo pipefail
 
 # Resolve the directory containing this script.
 WRAPPER_DIR="$(cd "$(dirname "${0}")" && pwd)"
@@ -55,7 +57,7 @@ done
 
 # Build the port-mapping flag if a port was detected.
 PORT_FLAGS=""
-if [ -n "${PORT}" ]; then
+if [[ -n "${PORT}" ]]; then
     PORT_FLAGS="-p 127.0.0.1:${PORT}:${PORT}"
 fi
 

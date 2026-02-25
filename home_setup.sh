@@ -9,10 +9,10 @@
 #
 # Args
 # ----
-# - --log-depth LOG_DEPTH
+# - `--log-depth LOG_DEPTH`
 #     Logging nesting depth, controls the `"=>"` prefix repetition
 #     (default: `1`).
-# - --quiet
+# - `--quiet`
 #     When set, suppresses step-by-step log output.
 #
 # Returns
@@ -73,14 +73,14 @@ log_log "${QUIET}" "[1/4] Setting up .ssh ..."
 mkdir -p "${SSH_HOME}"
 if [[ ! -L "${DOCKER_HOME}/.ssh" || "$(readlink -f "${DOCKER_HOME}/.ssh")" != "$(readlink -f "${SSH_HOME}")" ]]; then
     if [[ -n "$(ls "${DOCKER_HOME}/.ssh" 2>/dev/null)" ]]; then
-        cp "${DOCKER_HOME}/.ssh/"* "${SSH_HOME}/"
+        cp -r "${DOCKER_HOME}/.ssh/"* "${SSH_HOME}/"
     fi
     rm -rf "${DOCKER_HOME}/.ssh"
     ln -s "${SSH_HOME}" "${DOCKER_HOME}/.ssh"
 fi
-for encrypt in ecdsa rsa; do
-    if [[ ! -f "${SSH_HOME}/id_${encrypt}" ]]; then
-        if ssh-keygen -t "${encrypt}" -q -f "${SSH_HOME}/id_${encrypt}" -N ""; then
+for KEY_TYPE in ecdsa rsa; do
+    if [[ ! -f "${SSH_HOME}/id_${KEY_TYPE}" ]]; then
+        if ssh-keygen -t "${KEY_TYPE}" -q -f "${SSH_HOME}/id_${KEY_TYPE}" -N ""; then
             break
         fi
     else
@@ -93,7 +93,7 @@ log_log "${QUIET}" "[2/4] Setting up .aws ..."
 mkdir -p "${AWS_HOME}"
 if [[ ! -L "${DOCKER_HOME}/.aws" || "$(readlink -f "${DOCKER_HOME}/.aws")" != "$(readlink -f "${AWS_HOME}")" ]]; then
     if [[ -n "$(ls "${DOCKER_HOME}/.aws" 2>/dev/null)" ]]; then
-        cp "${DOCKER_HOME}/.aws/"* "${AWS_HOME}/"
+        cp -r "${DOCKER_HOME}/.aws/"* "${AWS_HOME}/"
     fi
     rm -rf "${DOCKER_HOME}/.aws"
     ln -s "${AWS_HOME}" "${DOCKER_HOME}/.aws"
@@ -135,19 +135,18 @@ echo "source ${DOCKER_HOME}/${DOCKER_RC_FILE}" > "${DOCKER_HOME}/${DOCKER_LOGIN_
 RC_BLOCK="export RC_DIR=\"${SCRIPT_DIR}\"
 ${RC_SOURCE_LINE}"
 read -r HOST_RC_FILE HOST_LOGIN_FILE <<< "$(_rc_files_for_shell "${CISH}")"
-for target_home in "${HOME}"; do
-    for rc_pair in "${HOST_RC_FILE}:${RC_BLOCK}" "${HOST_LOGIN_FILE}:source ${target_home}/${HOST_RC_FILE}"; do
-        rc_file="${target_home}/${rc_pair%%:*}"
-        rc_content="${rc_pair#*:}"
-        [[ ! -f "${rc_file}" ]] && touch "${rc_file}"
-        sed -i "/${RC_MARKER_BEGIN}/,/${RC_MARKER_END}/d" "${rc_file}"
-        if [[ -s "${rc_file}" ]]; then
-            echo "" >> "${rc_file}"
-        fi
-        echo "${RC_MARKER_BEGIN}" >> "${rc_file}"
-        echo "${rc_content}" >> "${rc_file}"
-        echo "${RC_MARKER_END}" >> "${rc_file}"
-    done
+TARGET_HOME="${HOME}"
+for RC_PAIR in "${HOST_RC_FILE}:${RC_BLOCK}" "${HOST_LOGIN_FILE}:source ${TARGET_HOME}/${HOST_RC_FILE}"; do
+    RC_FILE_TARGET="${TARGET_HOME}/${RC_PAIR%%:*}"
+    RC_CONTENT="${RC_PAIR#*:}"
+    [[ ! -f "${RC_FILE_TARGET}" ]] && touch "${RC_FILE_TARGET}"
+    sed -i "/${RC_MARKER_BEGIN}/,/${RC_MARKER_END}/d" "${RC_FILE_TARGET}"
+    if [[ -s "${RC_FILE_TARGET}" ]]; then
+        echo "" >> "${RC_FILE_TARGET}"
+    fi
+    echo "${RC_MARKER_BEGIN}" >> "${RC_FILE_TARGET}"
+    echo "${RC_CONTENT}" >> "${RC_FILE_TARGET}"
+    echo "${RC_MARKER_END}" >> "${RC_FILE_TARGET}"
 done
 
 # Symlink persistent rc file to HOST HOME's rc file.

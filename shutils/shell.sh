@@ -25,14 +25,7 @@ CISH="$(ps -o comm -p $$ | tail -1 | cut -d " " -f 1)"
 # Skipped if RC_DIR is already set (e.g., by home_setup.sh writing it
 # directly into .zshrc/.bashrc for reliable cross-shell path resolution).
 if [[ -z "${RC_DIR:-}" ]]; then
-    case "${CISH}" in
-    *bash*|*sh*)
-        RC_DIR="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/.." && pwd)"
-        ;;
-    *)
-        RC_DIR="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/.." && pwd)"
-        ;;
-    esac
+    RC_DIR="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/.." && pwd)"
 fi
 
 # Check whether the detected shell supports extended features.
@@ -47,7 +40,7 @@ fi
 #
 # Returns
 # -------
-# - exit code
+# - `exit code`
 #     `0` if the shell supports extended features (bash or zsh), `1` otherwise.
 shell_check_ext_compat() {
     case "${CISH}" in
@@ -58,11 +51,11 @@ shell_check_ext_compat() {
         return 0
         ;;
     *sh*)
-        echo "WARNING: Current shell '${CISH}' is POSIX-only and lacks extended features. Scripts require bash or zsh." >&2
+        echo "WARNING: Current shell \`${CISH}\` is POSIX-only and lacks extended features. Scripts require \`bash\` or \`zsh\`." >&2
         return 1
         ;;
     *)
-        echo "WARNING: Detected unsupported shell '${CISH}'. Scripts require bash or zsh." >&2
+        echo "WARNING: Detected unsupported shell \`${CISH}\`. Scripts require \`bash\` or \`zsh\`." >&2
         return 1
         ;;
     esac

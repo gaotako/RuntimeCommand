@@ -8,7 +8,7 @@ __all__ = ["__version__"]
 
 
 def _fetchVersion() -> str:
-    r"""
+    """
     Fetch the version from the package.json file.
 
     Args
@@ -17,7 +17,7 @@ def _fetchVersion() -> str:
 
     Returns
     -------
-    - version
+    - `version`
         Version of the package.
     """
     HERE = Path(__file__).parent.resolve()

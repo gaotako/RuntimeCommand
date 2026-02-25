@@ -8,10 +8,10 @@
 #
 # Args
 # ----
-# - --log-depth LOG_DEPTH
+# - `--log-depth LOG_DEPTH`
 #     Logging nesting depth, controls the `"=>"` prefix repetition
 #     (default: `1`).
-# - --quiet
+# - `--quiet`
 #     When set, suppresses step-by-step log output.
 #
 # Returns
@@ -78,7 +78,7 @@ log_log "${QUIET}" "Target: ${CODE_SERVER}"
 
 # Verify Docker is installed and available on PATH.
 if ! command -v docker &>/dev/null; then
-    echo "${LOG_INDENT} ERROR: Docker is not installed or not in PATH."
+    echo "${LOG_INDENT} ERROR: \`docker\` is not installed or not in PATH." >&2
     exit 1
 fi
 log_log "${QUIET}" "[1/4] Docker is available: $(docker --version)"
@@ -88,7 +88,7 @@ log_log "${QUIET}" "[2/4] Building Docker image ..."
 bash "${PROJECT_ROOT}/build.sh" --log-depth $((LOG_DEPTH + 1)) ${QUIET_FLAG} "${CODE_SERVER_VERSION}"
 
 # Back up the existing binary if one is already installed.
-if [ -f "${CODE_SERVER}" ]; then
+if [[ -f "${CODE_SERVER}" ]]; then
     BACKUP="${CODE_SERVER}.bak.$(date +%Y%m%d%H%M%S)"
     log_log "${QUIET}" "[3/4] Backing up existing binary to ${BACKUP}"
     cp "${CODE_SERVER}" "${BACKUP}"
@@ -105,15 +105,15 @@ cp "${PROJECT_ROOT}/config.sh" "$(dirname "${CODE_SERVER}")/config.sh"
 
 # Verify the image runs correctly; restore backup on failure.
 if docker run --rm "${IMAGE_NAME}:${IMAGE_TAG}" --version; then
-    if [ -n "${BACKUP:-}" ] && [ -f "${BACKUP}" ]; then
+    if [[ -n "${BACKUP:-}" ]] && [[ -f "${BACKUP}" ]]; then
         log_log "${QUIET}" "Verification passed, removing backup: ${BACKUP}"
         rm -f "${BACKUP}"
     fi
     log_log "${QUIET}" "Installation complete."
 else
-    echo "${LOG_INDENT} ERROR: Verification failed."
-    if [ -n "${BACKUP:-}" ] && [ -f "${BACKUP}" ]; then
-        echo "${LOG_INDENT} Restoring backup from ${BACKUP}"
+    echo "${LOG_INDENT} ERROR: Verification failed." >&2
+    if [[ -n "${BACKUP:-}" ]] && [[ -f "${BACKUP}" ]]; then
+        echo "${LOG_INDENT} Restoring backup from \`${BACKUP}\`" >&2
         cp "${BACKUP}" "${CODE_SERVER}"
         chmod +x "${CODE_SERVER}"
     fi
