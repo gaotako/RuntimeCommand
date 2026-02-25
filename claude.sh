@@ -84,7 +84,10 @@ if [[ "${COLDSTART}" -eq 1 ]]; then
         echo "To use \`claude\` in this session, run: \`export PATH=\"${CLAUDE_BIN_DIR}:\${PATH}\"\`."
     fi
 else
-    if [[ ! -f "${CLAUDE_BIN}" ]] && ! command -v claude &>/dev/null; then
+    # Check both the native installer path and mise's node bin path.
+    if [[ ! -f "${CLAUDE_BIN}" ]] \
+        && ! command -v claude &>/dev/null \
+        && ! "${MISE_INSTALL_PATH}" which claude &>/dev/null 2>&1; then
         echo "Missing \`claude\`. Run \`bash ${SCRIPT_DIR}/claude.sh --coldstart\` to install."
     else
         log_log "${QUIET}" "Claude Code CLI already installed."

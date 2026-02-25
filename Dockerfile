@@ -45,6 +45,7 @@ RUN apt-get update \
         ca-certificates \
         procps \
         openssh-client \
+        less \
     && rm -rf /var/lib/apt/lists/*
 
 # Set the default shell.
