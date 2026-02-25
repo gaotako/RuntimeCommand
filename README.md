@@ -16,6 +16,9 @@ docker/
 ├── rc.sh                            Shell-agnostic runtime command initialization
 ├── home_setup.sh                    Persistent home directory overrides (.ssh, .aws, rc files)
 ├── mise.sh                          Mise runtime manager installation and setup
+├── claude.sh                        Claude Code CLI installation and setup
+├── claude/                          Claude Code CLI configuration
+│   └── settings.json                Claude Code CLI settings (model, auth, env)
 ├── shutils/                         Shared shell utility libraries
 │   ├── argparse.sh                  Dynamic argument parser (--key value → VAR)
 │   ├── log.sh                       BuildKit-style log indent builder

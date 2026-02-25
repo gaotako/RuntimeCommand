@@ -24,6 +24,7 @@
     //   - Shell
     //   - Text
     //   - Lark
+    //   - TypeScript
     // + Programming Language Formatter
     //   - Automatic Formatting Trigger
     //   - Black
@@ -31,6 +32,8 @@
     // + Interpreter Notebook
     //   - Jupyter
     // + Workspace Management
+    // + AI Agent
+    //   - Claude Code
     // + Unclassified
     // * Must End-With
     // ---------------------------------------------------------------------------------------------
@@ -463,6 +466,27 @@
     },
 
     // ---------------------------------------------------------------------------------------------
+    // ### TypeScript
+    // ---------------------------------------------------------------------------------------------
+
+    // Language basic settings.
+    "[typescript]": {
+        "editor.rulers": [
+            {
+                "column": 100,
+                "color": "#ffffff88"
+            },
+            {
+                "column": 120,
+                "color": "#ffffff88"
+            }
+        ],
+        "editor.defaultFormatter": "vscode.typescript-language-features",
+        "editor.formatOnType": true,
+        "editor.formatOnSave": true
+    },
+
+    // ---------------------------------------------------------------------------------------------
     // ## Programming Language Formatter
     // ---------------------------------------------------------------------------------------------
 
@@ -509,6 +533,23 @@
     // ---------------------------------------------------------------------------------------------
     // ## Workspace Management
     // ---------------------------------------------------------------------------------------------
+
+    // ---------------------------------------------------------------------------------------------
+    // ## AI Agent
+    // ---------------------------------------------------------------------------------------------
+
+    // ---------------------------------------------------------------------------------------------
+    // ### Claude Code
+    // ---------------------------------------------------------------------------------------------
+
+    "claudeCode.preferredLocation": "sidebar",
+    "claudeCode.disableLoginPrompt": true,
+    "claudeCode.selectedModel": "us.anthropic.claude-opus-4-6-v1",
+    "claudeCode.environmentVariables": [
+        { "name": "CLAUDE_CODE_USE_BEDROCK", "value": "1" },
+        { "name": "AWS_PROFILE", "value": "default" },
+        { "name": "AWS_REGION", "value": "us-east-1" }
+    ],
 
     // ---------------------------------------------------------------------------------------------
     // ## Unclassified
