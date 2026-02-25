@@ -19,6 +19,9 @@ docker/
 ├── claude.sh                        Claude Code CLI installation and setup
 ├── claude/                          Claude Code CLI configuration
 │   └── settings.json                Claude Code CLI settings (model, auth, env)
+├── cline.sh                         Cline CLI installation and setup
+├── cline/                           Cline configuration
+│   └── globalState.json             Cline global state (Bedrock API config)
 ├── shutils/                         Shared shell utility libraries
 │   ├── argparse.sh                  Dynamic argument parser (--key value → VAR)
 │   ├── log.sh                       BuildKit-style log indent builder

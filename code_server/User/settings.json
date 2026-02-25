@@ -556,14 +556,14 @@
     // ### Cline
     // ---------------------------------------------------------------------------------------------
 
-    // Cline uses Bedrock via the SageMaker IAM role. AWS credentials are
-    // provided automatically by the instance metadata service — no access
-    // keys are needed. The `aws sts get-caller-identity` command confirms
-    // credential availability at runtime.
-    "cline.apiProvider": "bedrock",
-    "cline.awsRegion": "us-east-1",
-    "cline.awsUseCrossRegionInference": true,
-    "cline.customCwd": "~/Workspace",
+    // Cline (saoudrizwan.claude-dev) stores its API configuration in the
+    // extension's internal webview state, not in settings.json. Configure
+    // Bedrock manually via the Cline sidebar:
+    //   1. Open Cline sidebar → Settings (gear icon).
+    //   2. Select "Amazon Bedrock" as the API provider.
+    //   3. Set region to "us-east-1".
+    //   4. Enable "Use cross-region inference".
+    //   5. AWS credentials are provided automatically by the SageMaker IAM role.
 
     // ---------------------------------------------------------------------------------------------
     // ## Unclassified

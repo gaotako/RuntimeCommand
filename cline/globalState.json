@@ -1,0 +1,53 @@
+{
+    "welcomeViewCompleted": true,
+    "__vscodeMigrationVersion": 1,
+    "remoteRulesToggles": {},
+    "remoteWorkflowToggles": {},
+    "openAiHeaders": {},
+    "sapAiCoreUseOrchestrationMode": true,
+    "ocaMode": "internal",
+    "planModeApiProvider": "bedrock",
+    "actModeApiProvider": "bedrock",
+    "awsAuthentication": "profile",
+    "awsProfile": "",
+    "awsRegion": "us-east-1",
+    "awsUseCrossRegionInference": true,
+    "planModeApiModelId": "anthropic.claude-opus-4-6-v1:1m",
+    "planModeAwsBedrockCustomSelected": false,
+    "planModeAwsBedrockCustomModelBaseId": "anthropic.claude-sonnet-4-5-20250929-v1:0",
+    "actModeApiModelId": "anthropic.claude-opus-4-6-v1:1m",
+    "actModeAwsBedrockCustomSelected": false,
+    "actModeAwsBedrockCustomModelBaseId": "anthropic.claude-sonnet-4-5-20250929-v1:0",
+    "autoApprovalSettings": {
+        "version": 7,
+        "enabled": true,
+        "favorites": [],
+        "maxRequests": 20,
+        "actions": {
+            "readFiles": true,
+            "readFilesExternally": false,
+            "editFiles": false,
+            "editFilesExternally": false,
+            "executeSafeCommands": true,
+            "executeAllCommands": false,
+            "useBrowser": false,
+            "useMcp": true
+        },
+        "enableNotifications": false
+    },
+    "globalWorkflowToggles": {},
+    "globalClineRulesToggles": {},
+    "browserSettings": {
+        "viewport": {
+            "width": 900,
+            "height": 600
+        },
+        "remoteBrowserEnabled": false,
+        "remoteBrowserHost": "http://localhost:9222",
+        "chromeExecutablePath": "",
+        "disableToolUse": true,
+        "customArgs": ""
+    },
+    "vscodeTerminalExecutionMode": "vscodeTerminal",
+    "defaultTerminalProfile": "default"
+}
