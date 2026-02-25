@@ -97,7 +97,7 @@ if [[ -f "${DOCKER_IMAGE_FILE}" ]] && [[ "${FORCE_BUILD:-}" != "1" ]]; then
         docker run --rm "${IMAGE_NAME}:${IMAGE_TAG}" --version
         exit 0
     else
-        log_log "${QUIET}" "WARNING: Failed to load saved image, will rebuild."
+        echo "${LOG_INDENT} WARNING: Failed to load saved image, will rebuild." >&2
     fi
 fi
 

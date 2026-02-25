@@ -67,9 +67,17 @@ mkdir -p "${DOCKER_HOME}" "${DOCKER_HOME}/Workspace"
 # Print header.
 log_log "${QUIET}" "Home Directory Setup"
 
+# Write DOCKER_HOME .vimrc that sources the project vimrc.
+log_log "${QUIET}" "[1/5] Setting up .vimrc ..."
+VIMRC_SOURCE="${SCRIPT_DIR}/vimrc"
+VIMRC_TARGET="${DOCKER_HOME}/.vimrc"
+if [[ -f "${VIMRC_SOURCE}" ]]; then
+    echo "source ${VIMRC_SOURCE}" > "${VIMRC_TARGET}"
+fi
+
 # Symlink ~/.ssh to persistent storage, preserving existing content.
-# Generate an SSH identity (ecdsa, fallback to rsa) if none exists.
-log_log "${QUIET}" "[1/4] Setting up .ssh ..."
+# Generate an SSH identity (ed25519, fallback to ecdsa, then rsa) if none exists.
+log_log "${QUIET}" "[2/5] Setting up .ssh ..."
 mkdir -p "${SSH_HOME}"
 if [[ ! -L "${DOCKER_HOME}/.ssh" || "$(readlink -f "${DOCKER_HOME}/.ssh")" != "$(readlink -f "${SSH_HOME}")" ]]; then
     if [[ -n "$(ls "${DOCKER_HOME}/.ssh" 2>/dev/null)" ]]; then
@@ -78,7 +86,7 @@ if [[ ! -L "${DOCKER_HOME}/.ssh" || "$(readlink -f "${DOCKER_HOME}/.ssh")" != "$
     rm -rf "${DOCKER_HOME}/.ssh"
     ln -s "${SSH_HOME}" "${DOCKER_HOME}/.ssh"
 fi
-for KEY_TYPE in ecdsa rsa; do
+for KEY_TYPE in ed25519 ecdsa rsa; do
     if [[ ! -f "${SSH_HOME}/id_${KEY_TYPE}" ]]; then
         if ssh-keygen -t "${KEY_TYPE}" -q -f "${SSH_HOME}/id_${KEY_TYPE}" -N ""; then
             break
@@ -89,7 +97,7 @@ for KEY_TYPE in ecdsa rsa; do
 done
 
 # Symlink ~/.aws to persistent storage, preserving existing content.
-log_log "${QUIET}" "[2/4] Setting up .aws ..."
+log_log "${QUIET}" "[3/5] Setting up .aws ..."
 mkdir -p "${AWS_HOME}"
 if [[ ! -L "${DOCKER_HOME}/.aws" || "$(readlink -f "${DOCKER_HOME}/.aws")" != "$(readlink -f "${AWS_HOME}")" ]]; then
     if [[ -n "$(ls "${DOCKER_HOME}/.aws" 2>/dev/null)" ]]; then
@@ -103,7 +111,7 @@ fi
 # DOCKER_HOME uses DOCKER_SHELL (from config.sh) to determine the rc file.
 # HOST HOME uses CISH (from shell.sh) to detect the host's current shell.
 # Both source rc.sh for environment setup.
-log_log "${QUIET}" "[3/4] Setting up shell rc files ..."
+log_log "${QUIET}" "[4/5] Setting up shell rc files ..."
 RC_MARKER_BEGIN="# >>> RuntimeCommand >>>"
 RC_MARKER_END="# <<< RuntimeCommand <<<"
 RC_SOURCE_LINE="source ${SCRIPT_DIR}/rc.sh"
@@ -157,7 +165,7 @@ if [[ ! -L "${RC_LINK}" || "$(readlink -f "${RC_LINK}")" != "$(readlink -f "${HO
 fi
 
 # Ensure XDG and application directories exist on the host.
-log_log "${QUIET}" "[4/4] Creating XDG and application directories ..."
+log_log "${QUIET}" "[5/5] Creating XDG and application directories ..."
 mkdir -p "${XDG_DATA_HOME}" "${XDG_CONFIG_HOME}" "${XDG_CACHE_HOME}" "${XDG_STATE_HOME}"
 mkdir -p "${APP_ROOT}" "${APP_DATA_HOME}" "${APP_BIN_HOME}"
 log_log "${QUIET}" "Home directory setup complete."

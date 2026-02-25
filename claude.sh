@@ -87,23 +87,26 @@ else
     # Check both the native installer path and mise's node bin path.
     if [[ ! -f "${CLAUDE_BIN}" ]] \
         && ! command -v claude &>/dev/null \
-        && ! "${MISE_INSTALL_PATH}" which claude &>/dev/null 2>&1; then
+        && ! "${MISE_INSTALL_PATH}" which claude &>/dev/null; then
         echo "Missing \`claude\`. Run \`bash ${SCRIPT_DIR}/claude.sh --coldstart\` to install."
     else
         log_log "${QUIET}" "Claude Code CLI already installed."
     fi
 fi
 
-# Step 2: Copy Claude settings to DOCKER_HOME.
-log_log "${QUIET}" "[2/2] Setting up Claude settings ..."
-CLAUDE_SETTINGS_SOURCE="${SCRIPT_DIR}/claude/settings.json"
-CLAUDE_SETTINGS_TARGET="${DOCKER_HOME}/.claude/settings.json"
-if [[ -f "${CLAUDE_SETTINGS_SOURCE}" ]]; then
-    mkdir -p "$(dirname "${CLAUDE_SETTINGS_TARGET}")"
-    cp "${CLAUDE_SETTINGS_SOURCE}" "${CLAUDE_SETTINGS_TARGET}"
-    log_log "${QUIET}" "Copied Claude settings to \`${CLAUDE_SETTINGS_TARGET}\`."
-else
-    log_log "${QUIET}" "WARNING: Claude settings source not found at \`${CLAUDE_SETTINGS_SOURCE}\`."
+# Step 2: Copy Claude settings to DOCKER_HOME (coldstart only).
+# Always overwrites — repo settings are canonical.
+if [[ "${COLDSTART}" -eq 1 ]]; then
+    log_log "${QUIET}" "[2/2] Setting up Claude settings ..."
+    CLAUDE_SETTINGS_SOURCE="${SCRIPT_DIR}/claude/settings.json"
+    CLAUDE_SETTINGS_TARGET="${DOCKER_HOME}/.claude/settings.json"
+    if [[ -f "${CLAUDE_SETTINGS_SOURCE}" ]]; then
+        mkdir -p "$(dirname "${CLAUDE_SETTINGS_TARGET}")"
+        cp "${CLAUDE_SETTINGS_SOURCE}" "${CLAUDE_SETTINGS_TARGET}"
+        log_log "${QUIET}" "Copied Claude settings to \`${CLAUDE_SETTINGS_TARGET}\`."
+    else
+        echo "WARNING: Claude settings source not found at \`${CLAUDE_SETTINGS_SOURCE}\`." >&2
+    fi
 fi
 
 log_log "${QUIET}" "Claude Code CLI setup complete."

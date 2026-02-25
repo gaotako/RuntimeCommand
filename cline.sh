@@ -78,33 +78,35 @@ if [[ "${COLDSTART}" -eq 1 ]]; then
         log_log "${QUIET}" "Installing Cline CLI via npm ..."
         npm install -g cline
     else
-        log_log "${QUIET}" "WARNING: \`npm\` is not available. Install Node.js first (via \`mise\`), then re-run."
+        echo "WARNING: \`npm\` is not available. Install Node.js first (via \`mise\`), then re-run." >&2
     fi
 else
     if ! command -v cline &>/dev/null \
-        && ! "${MISE_INSTALL_PATH}" which cline &>/dev/null 2>&1; then
+        && ! "${MISE_INSTALL_PATH}" which cline &>/dev/null; then
         echo "Missing \`cline\`. Run \`bash ${SCRIPT_DIR}/cline.sh --coldstart\` to install."
     else
         log_log "${QUIET}" "Cline CLI already installed."
     fi
 fi
 
-# Step 2: Copy Cline global state to DOCKER_HOME.
+# Step 2: Copy Cline global state to DOCKER_HOME (coldstart only).
 # Only globalState.json is maintained — workspace states are ephemeral defaults.
-# The file is only copied if it does not already exist to preserve user changes.
-log_log "${QUIET}" "[2/2] Setting up Cline settings ..."
-CLINE_STATE_SOURCE="${SCRIPT_DIR}/cline/globalState.json"
-CLINE_STATE_TARGET="${DOCKER_HOME}/.cline/data/globalState.json"
-if [[ -f "${CLINE_STATE_SOURCE}" ]]; then
-    mkdir -p "$(dirname "${CLINE_STATE_TARGET}")"
-    if [[ ! -f "${CLINE_STATE_TARGET}" ]]; then
-        cp "${CLINE_STATE_SOURCE}" "${CLINE_STATE_TARGET}"
-        log_log "${QUIET}" "Copied Cline global state to \`${CLINE_STATE_TARGET}\`."
+# Preserves existing user changes (only copies if target does not exist).
+if [[ "${COLDSTART}" -eq 1 ]]; then
+    log_log "${QUIET}" "[2/2] Setting up Cline settings ..."
+    CLINE_STATE_SOURCE="${SCRIPT_DIR}/cline/globalState.json"
+    CLINE_STATE_TARGET="${DOCKER_HOME}/.cline/data/globalState.json"
+    if [[ -f "${CLINE_STATE_SOURCE}" ]]; then
+        mkdir -p "$(dirname "${CLINE_STATE_TARGET}")"
+        if [[ ! -f "${CLINE_STATE_TARGET}" ]]; then
+            cp "${CLINE_STATE_SOURCE}" "${CLINE_STATE_TARGET}"
+            log_log "${QUIET}" "Copied Cline global state to \`${CLINE_STATE_TARGET}\`."
+        else
+            log_log "${QUIET}" "Cline global state already exists. Skipping copy to preserve user changes."
+        fi
     else
-        log_log "${QUIET}" "Cline global state already exists. Skipping copy to preserve user changes."
+        echo "WARNING: Cline global state source not found at \`${CLINE_STATE_SOURCE}\`." >&2
     fi
-else
-    log_log "${QUIET}" "WARNING: Cline global state source not found at \`${CLINE_STATE_SOURCE}\`."
 fi
 
 log_log "${QUIET}" "Cline CLI setup complete."

@@ -127,6 +127,7 @@ EOF
 
 # Restore build-modified tracked files in the source tree.
 # `pip install` rebuilds the labextension and modifies `package.json` in-place.
+# Fails gracefully if not in a git repository (e.g., files copied without `.git`).
 git -C "${PROJECT_ROOT}" checkout \
     -- sagemaker/sagemaker_jproxy_launcher_ext/sagemaker_jproxy_launcher_ext/labextension/package.json \
     2>/dev/null || true

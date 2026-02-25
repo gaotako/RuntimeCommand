@@ -146,9 +146,16 @@ bash "${RC_DIR}/claude.sh" --quiet
 # Uses --quiet to suppress step logs; only "Missing ..." messages are printed.
 bash "${RC_DIR}/cline.sh" --quiet
 
-# Add Claude Code CLI native installer path to PATH if present.
+# Check Kiro CLI availability.
+# Uses --quiet to suppress step logs; only "Missing ..." messages are printed.
+bash "${RC_DIR}/kiro.sh" --quiet
+
+# Add CLI tool paths to PATH if present.
 if [[ -d "${HOME}/.claude/local/bin" && ":${PATH}:" != *":${HOME}/.claude/local/bin:"* ]]; then
     export PATH="${HOME}/.claude/local/bin:${PATH}"
+fi
+if [[ -d "${HOME}/.local/bin" && ":${PATH}:" != *":${HOME}/.local/bin:"* ]]; then
+    export PATH="${HOME}/.local/bin:${PATH}"
 fi
 
 # Activate mise for the current shell session if the binary is present.

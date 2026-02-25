@@ -132,7 +132,7 @@ case "${CISH}" in
     eval "$("${MISE_INSTALL_PATH}" activate bash)"
     ;;
 *)
-    log_log "${QUIET}" "WARNING: Unknown shell \`${CISH}\`. \`mise\` is not activated."
+    echo "WARNING: Unknown shell \`${CISH}\`. \`mise\` is not activated." >&2
     ;;
 esac
 

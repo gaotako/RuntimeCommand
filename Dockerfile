@@ -16,6 +16,9 @@
 #
 # Notes
 # -----
+# The image includes: zsh, git, vim, tmux, less, curl, openssh-client,
+# python3, AWS CLI v2, code-server, and mise (polyglot runtime manager).
+#
 # The image is built by `build.sh` and persisted to `DOCKER_IMAGE_DIR` via
 # `docker save`. On subsequent runs `build.sh` loads the cached image via
 # `docker load` to avoid rebuilding after SageMaker restarts.
@@ -46,6 +49,8 @@ RUN apt-get update \
         procps \
         openssh-client \
         less \
+        vim \
+        tmux \
     && rm -rf /var/lib/apt/lists/*
 
 # Set the default shell.

@@ -9,7 +9,8 @@ overcoming the AL2 glibc 2.26 limitation (code-server >= 4.17.0 requires glibc >
 
 ```
 docker/
-├── Dockerfile                       Ubuntu 22.04 + code-server + zsh image
+├── .gitignore                       Git ignore rules for build artifacts
+├── Dockerfile                       Ubuntu 22.04 + code-server + zsh + AWS CLI + vim + tmux image
 ├── entrypoint.sh                    Dual-mode entrypoint (interactive shell / code-server)
 ├── build.sh                         Build the Docker image
 ├── config.sh                        Shared configuration and defaults
@@ -22,6 +23,8 @@ docker/
 ├── cline.sh                         Cline CLI installation and setup
 ├── cline/                           Cline configuration
 │   └── globalState.json             Cline global state (Bedrock API config)
+├── kiro.sh                          Kiro CLI installation and setup
+├── vimrc                            Vim configuration (sourced by ~/.vimrc)
 ├── shutils/                         Shared shell utility libraries
 │   ├── argparse.sh                  Dynamic argument parser (--key value → VAR)
 │   ├── log.sh                       BuildKit-style log indent builder
