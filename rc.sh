@@ -20,9 +20,8 @@
 # rc.sh shows docker entry instructions (once) and exits early.
 if [[ "${RC_DOCKER:-0}" != "1" ]]; then
     if [[ "${_RC_DOCKER_HINT_SHOWN:-0}" != "1" ]]; then
-        export _RC_DOCKER_HINT_SHOWN=1
-        echo "To enter Docker environment, run:"
-        echo "  \`docker exec -it code-server-sagemaker /bin/zsh\`"
+        _RC_DOCKER_HINT_SHOWN=1
+        echo "To enter Docker environment, run: \`docker exec -it code-server-sagemaker /bin/zsh\`."
     fi
     return 0 2>/dev/null || true
 fi
@@ -139,6 +138,10 @@ esac
 # messages are printed.
 bash "${RC_DIR}/mise.sh" --quiet
 
+# Check Claude Code CLI availability.
+# Uses --quiet to suppress step logs; only "Missing ..." messages are printed.
+bash "${RC_DIR}/claude.sh" --quiet
+
 # Activate mise for the current shell session if the binary is present.
 if [[ -f "${MISE_INSTALL_PATH}" ]]; then
     case "${_RC_SHELL}" in
@@ -149,7 +152,7 @@ if [[ -f "${MISE_INSTALL_PATH}" ]]; then
         eval "$("${MISE_INSTALL_PATH}" activate bash)"
         ;;
     *)
-        echo "WARNING: Unknown shell \`${_RC_SHELL}\`, \`mise\` is not activated." >&2
+        echo "WARNING: Unknown shell \`${_RC_SHELL}\`. \`mise\` is not activated." >&2
         ;;
     esac
 fi

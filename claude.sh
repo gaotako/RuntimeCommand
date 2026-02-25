@@ -76,7 +76,7 @@ if [[ "${COLDSTART}" -eq 1 ]]; then
     fi
 else
     if ! command -v claude &>/dev/null; then
-        echo "Missing claude, run \`bash ${SCRIPT_DIR}/claude.sh --coldstart\` to install."
+        echo "Missing \`claude\`. Run \`bash ${SCRIPT_DIR}/claude.sh --coldstart\` to install."
     else
         log_log "${QUIET}" "Claude Code CLI already installed."
     fi

@@ -78,7 +78,7 @@ QUIET="${QUIET:-${QUIET_DEFAULT}}"
 # If mise is not installed and not in coldstart mode, print instructions
 # and skip all mise operations to avoid startup delays.
 if [[ ! -f "${MISE_INSTALL_PATH}" && "${COLDSTART}" -eq 0 ]]; then
-    echo "Missing mise, run \`bash ${SCRIPT_DIR}/mise.sh --coldstart\` to install."
+    echo "Missing \`mise\`. Run \`bash ${SCRIPT_DIR}/mise.sh --coldstart\` to install."
     exit 0
 fi
 
@@ -132,7 +132,7 @@ case "${CISH}" in
     eval "$("${MISE_INSTALL_PATH}" activate bash)"
     ;;
 *)
-    log_log "${QUIET}" "WARNING: Unknown shell \`${CISH}\`, \`mise\` is not activated."
+    log_log "${QUIET}" "WARNING: Unknown shell \`${CISH}\`. \`mise\` is not activated."
     ;;
 esac
 
@@ -153,10 +153,10 @@ if [[ "${COLDSTART}" -eq 1 ]]; then
 else
     "${MISE_INSTALL_PATH}" settings set not_found_auto_install 0 2>/dev/null
     if ! "${MISE_INSTALL_PATH}" which node &>/dev/null; then
-        echo "Missing node, run \`${MISE_INSTALL_PATH} use -g node@${MISE_NODE_VERSION}\` to install."
+        echo "Missing \`node\`. Run \`${MISE_INSTALL_PATH} use -g node@${MISE_NODE_VERSION}\` to install."
     fi
     if ! "${MISE_INSTALL_PATH}" which python3 &>/dev/null; then
-        echo "Missing python, run \`${MISE_INSTALL_PATH} use -g ${MISE_PYTHON_VERSIONS}\` to install."
+        echo "Missing \`python\`. Run \`${MISE_INSTALL_PATH} use -g ${MISE_PYTHON_VERSIONS}\` to install."
     fi
 fi
 log_log "${QUIET}" "Mise setup complete."
