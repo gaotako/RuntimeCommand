@@ -1,8 +1,8 @@
 #!/bin/bash
 # Install and configure Claude Code CLI.
 #
-# Installs the Claude Code CLI via npm (requires Node.js from mise) and
-# copies the Claude settings file to the Docker home directory.
+# Installs the Claude Code CLI via the native installer and copies the Claude
+# settings file to the Docker home directory.
 #
 # Args
 # ----
@@ -23,9 +23,9 @@
 #
 # Notes
 # -----
-# - Claude Code CLI is installed globally via `npm install -g`.
-# - Node.js must be available (installed by mise) before running this script
-#   in `--coldstart` mode.
+# - Claude Code CLI is installed via the native installer from
+#   `https://cli.anthropic.com/install.sh`.
+# - The binary is placed at `~/.claude/local/bin/claude`.
 # - The Claude settings file is copied from `claude/settings.json` in the
 #   project directory to `DOCKER_HOME/.claude/settings.json`.
 #
@@ -62,20 +62,29 @@ COLDSTART="${COLDSTART:-${COLDSTART_DEFAULT}}"
 QUIET_DEFAULT=0
 QUIET="${QUIET:-${QUIET_DEFAULT}}"
 
+# Claude Code CLI install location (native installer default).
+CLAUDE_BIN="${HOME}/.claude/local/bin/claude"
+
 # Print header.
 log_log "${QUIET}" "Claude Code CLI Setup"
 
 # Step 1: Install or check Claude Code CLI.
 log_log "${QUIET}" "[1/2] Checking Claude Code CLI ..."
 if [[ "${COLDSTART}" -eq 1 ]]; then
-    if command -v npm &>/dev/null; then
-        log_log "${QUIET}" "Installing Claude Code CLI via npm ..."
-        npm install -g @anthropic-ai/claude-code
+    if [[ -f "${CLAUDE_BIN}" ]]; then
+        log_log "${QUIET}" "Claude Code CLI already installed at \`${CLAUDE_BIN}\`."
     else
-        log_log "${QUIET}" "WARNING: \`npm\` is not available. Install Node.js first (via \`mise\`), then re-run."
+        log_log "${QUIET}" "Installing Claude Code CLI via native installer ..."
+        curl -fsSL https://cli.anthropic.com/install.sh | sh
+    fi
+    # Hint to the user how to use `claude` immediately or on next session.
+    CLAUDE_BIN_DIR="$(dirname "${CLAUDE_BIN}")"
+    if [[ -d "${CLAUDE_BIN_DIR}" && ":${PATH}:" != *":${CLAUDE_BIN_DIR}:"* ]]; then
+        echo "PATH has been added to \`rc.sh\` for future terminal sessions."
+        echo "To use \`claude\` in this session, run: \`export PATH=\"${CLAUDE_BIN_DIR}:\${PATH}\"\`."
     fi
 else
-    if ! command -v claude &>/dev/null; then
+    if [[ ! -f "${CLAUDE_BIN}" ]] && ! command -v claude &>/dev/null; then
         echo "Missing \`claude\`. Run \`bash ${SCRIPT_DIR}/claude.sh --coldstart\` to install."
     else
         log_log "${QUIET}" "Claude Code CLI already installed."

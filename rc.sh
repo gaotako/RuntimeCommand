@@ -142,6 +142,11 @@ bash "${RC_DIR}/mise.sh" --quiet
 # Uses --quiet to suppress step logs; only "Missing ..." messages are printed.
 bash "${RC_DIR}/claude.sh" --quiet
 
+# Add Claude Code CLI native installer path to PATH if present.
+if [[ -d "${HOME}/.claude/local/bin" && ":${PATH}:" != *":${HOME}/.claude/local/bin:"* ]]; then
+    export PATH="${HOME}/.claude/local/bin:${PATH}"
+fi
+
 # Activate mise for the current shell session if the binary is present.
 if [[ -f "${MISE_INSTALL_PATH}" ]]; then
     case "${_RC_SHELL}" in

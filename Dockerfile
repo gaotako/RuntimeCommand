@@ -60,6 +60,20 @@ RUN if [ "${CODE_SERVER_VERSION}" = "latest" ]; then \
 # Verify code-server installation.
 RUN code-server --version
 
+# Install AWS CLI v2.
+RUN curl -fsSL "https://awscli.amazonaws.com/awscli-exe-linux-$(uname -m).zip" -o /tmp/awscliv2.zip \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends unzip \
+    && unzip -q /tmp/awscliv2.zip -d /tmp \
+    && /tmp/aws/install \
+    && rm -rf /tmp/awscliv2.zip /tmp/aws \
+    && apt-get purge -y unzip \
+    && apt-get autoremove -y \
+    && rm -rf /var/lib/apt/lists/*
+
+# Verify AWS CLI installation.
+RUN aws --version
+
 # Install mise (polyglot runtime manager).
 RUN curl -fsSL https://mise.run | sh
 RUN /root/.local/bin/mise --version
