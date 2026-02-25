@@ -125,6 +125,12 @@ jupyter labextension disable jupyterlab-server-proxy
 conda deactivate
 EOF
 
+# Restore build-modified tracked files in the source tree.
+# `pip install` rebuilds the labextension and modifies `package.json` in-place.
+git -C "${PROJECT_ROOT}" checkout \
+    -- sagemaker/sagemaker_jproxy_launcher_ext/sagemaker_jproxy_launcher_ext/labextension/package.json \
+    2>/dev/null || true
+
 # Restart Jupyter server so the new proxy entry takes effect.
 # Skipped when Jupyter is not yet running (e.g. during lifecycle config).
 log_log "${QUIET}" "[3/3] Restarting Jupyter server ..."

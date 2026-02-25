@@ -61,6 +61,26 @@ if [[ -n "${PORT}" ]]; then
     PORT_FLAGS="-p 127.0.0.1:${PORT}:${PORT}"
 fi
 
+# Build AWS CLI mount flags if the host has AWS CLI installed.
+# Mounts the host's AWS CLI into the container so `aws` commands work with
+# SageMaker's IAM role credentials without installing a separate copy.
+AWS_FLAGS=""
+AWS_BIN="$(command -v aws 2>/dev/null || true)"
+if [[ -n "${AWS_BIN}" ]]; then
+    AWS_REAL="$(readlink -f "${AWS_BIN}")"
+    AWS_DIR="$(dirname "$(dirname "${AWS_REAL}")")"
+    # AWS CLI v2 installs under /usr/local/aws-cli/; mount the whole tree.
+    if [[ -d "${AWS_DIR}" && "${AWS_DIR}" != "/" ]]; then
+        AWS_FLAGS="-v ${AWS_DIR}:${AWS_DIR}:ro"
+    fi
+    # Also mount the symlink location (e.g. /usr/local/bin/aws) if different.
+    AWS_BIN_DIR="$(dirname "${AWS_BIN}")"
+    AWS_REAL_DIR="$(dirname "${AWS_REAL}")"
+    if [[ "${AWS_BIN_DIR}" != "${AWS_REAL_DIR}" ]]; then
+        AWS_FLAGS="${AWS_FLAGS} -v ${AWS_BIN}:${AWS_BIN}:ro"
+    fi
+fi
+
 # Remove any stale container from a previous run.
 docker rm -f code-server-sagemaker >/dev/null 2>&1 || true
 
@@ -85,5 +105,6 @@ exec docker run --rm \
     -v /tmp:/tmp \
     -v /etc/passwd:/etc/passwd:ro \
     -v /etc/group:/etc/group:ro \
+    ${AWS_FLAGS} \
     "${IMAGE_NAME}:${IMAGE_TAG}" \
     "${REWRITTEN_ARGS[@]}"
