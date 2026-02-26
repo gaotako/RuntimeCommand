@@ -164,7 +164,8 @@ Code Server will appear in the JupyterLab launcher under the "Other" category.
 Rebuild the Docker image with the new version:
 
 ```bash
-FORCE_BUILD=1 bash build.sh <VERSION>
+RC_ROOT=/home/ec2-user/SageMaker/RuntimeCommandDev/src/RuntimeCommand
+FORCE_BUILD=1 bash "${RC_ROOT}/build.sh" <VERSION>
 ```
 
 Use `FORCE_BUILD=1` to skip loading the cached image and force a fresh build.

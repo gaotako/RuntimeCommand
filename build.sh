@@ -102,12 +102,41 @@ if [[ -f "${DOCKER_IMAGE_FILE}" ]] && [[ "${FORCE_BUILD:-}" != "1" ]]; then
 fi
 
 # Build the Docker image from the Dockerfile in this directory.
+# Retries up to 3 times to handle transient Docker daemon instability
+# (e.g., `rpc error: EOF` during SageMaker notebook initialization).
+# Docker caches completed layers, so retries resume from the last success.
 log_log "${QUIET}" "Building ${IMAGE_NAME}:${IMAGE_TAG} (code-server ${CODE_SERVER_VERSION}) ..."
-docker build \
-    --build-arg "CODE_SERVER_VERSION=${CODE_SERVER_VERSION}" \
-    --build-arg "DOCKER_SHELL=${DOCKER_SHELL}" \
-    -t "${IMAGE_NAME}:${IMAGE_TAG}" \
-    "${SCRIPT_DIR}"
+BUILD_ATTEMPTS=3
+for BUILD_TRY in $(seq 1 "${BUILD_ATTEMPTS}"); do
+    if docker build \
+        --build-arg "CODE_SERVER_VERSION=${CODE_SERVER_VERSION}" \
+        --build-arg "DOCKER_SHELL=${DOCKER_SHELL}" \
+        -t "${IMAGE_NAME}:${IMAGE_TAG}" \
+        "${SCRIPT_DIR}"; then
+        break
+    fi
+
+    if [[ "${BUILD_TRY}" -eq "${BUILD_ATTEMPTS}" ]]; then
+        echo "${LOG_INDENT} ERROR: Docker build failed after ${BUILD_ATTEMPTS} attempts." >&2
+        exit 1
+    fi
+
+    echo "${LOG_INDENT} WARNING: Docker build attempt ${BUILD_TRY}/${BUILD_ATTEMPTS} failed. Waiting for \`docker\` daemon ..." >&2
+
+    # Wait for Docker daemon to recover before retrying (timeout: 120s).
+    DOCKER_WAIT=0
+    while ! docker info &>/dev/null; do
+        sleep 2
+        DOCKER_WAIT=$((DOCKER_WAIT + 2))
+        if [[ "${DOCKER_WAIT}" -ge 120 ]]; then
+            echo "${LOG_INDENT} ERROR: \`docker\` daemon did not recover within 120 seconds." >&2
+            exit 1
+        fi
+    done
+
+    # Extra stabilization wait after daemon responds.
+    sleep 5
+done
 
 # Verify the newly built image starts correctly.
 log_log "${QUIET}" "Build complete: ${IMAGE_NAME}:${IMAGE_TAG}"

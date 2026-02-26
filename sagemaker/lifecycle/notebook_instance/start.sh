@@ -60,6 +60,28 @@ QUIET_FLAG=""
 RC_READY_FLAG="${APP_DATA_HOME}/.rc_ready"
 rm -f "${RC_READY_FLAG}"
 
+# Skip if `create.sh` is already running (first boot runs both hooks).
+if pgrep -f "lifecycle/notebook_instance/create.sh" &>/dev/null; then
+    log_log "${QUIET}" "Create lifecycle is already running. Skipping start to avoid conflicts."
+    exit 0
+fi
+
+# Wait for Docker daemon to be fully ready.
+log_log "${QUIET}" "Waiting for \`docker\` daemon to stabilize ..."
+DOCKER_WAIT=0
+while ! docker info &>/dev/null; do
+    sleep 2
+    DOCKER_WAIT=$((DOCKER_WAIT + 2))
+    if [[ "${DOCKER_WAIT}" -ge 120 ]]; then
+        echo "ERROR: \`docker\` daemon did not become ready within 120 seconds." >&2
+        exit 1
+    fi
+done
+
+# Extra wait for daemon to finish any post-restart initialization.
+sleep 5
+log_log "${QUIET}" "\`docker\` daemon is ready (waited ${DOCKER_WAIT}s)."
+
 # Print lifecycle header.
 log_log "${QUIET}" "Code-Server Docker Lifecycle (start)"
 
