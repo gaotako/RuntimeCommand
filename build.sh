@@ -90,14 +90,44 @@ DOCKER_IMAGE_FILE="${DOCKER_IMAGE_DIR}/${IMAGE_NAME}-${IMAGE_TAG}.tar"
 
 # Attempt to load a previously saved image from persistent storage.
 # Skipped when `FORCE_BUILD=1` or when no cached file exists.
+# Retries up to 5 times with exponential backoff to handle transient
+# Docker daemon instability during SageMaker startup.
 if [[ -f "${DOCKER_IMAGE_FILE}" ]] && [[ "${FORCE_BUILD:-}" != "1" ]]; then
     log_log "${QUIET}" "Found saved image at ${DOCKER_IMAGE_FILE}, loading ..."
-    if docker load -i "${DOCKER_IMAGE_FILE}"; then
+    LOAD_ATTEMPTS=5
+    LOAD_WAIT_TIMEOUT=60
+    LOAD_SUCCESS=0
+    for LOAD_TRY in $(seq 1 "${LOAD_ATTEMPTS}"); do
+        if docker load -i "${DOCKER_IMAGE_FILE}"; then
+            LOAD_SUCCESS=1
+            break
+        fi
+
+        if [[ "${LOAD_TRY}" -eq "${LOAD_ATTEMPTS}" ]]; then
+            echo "${LOG_INDENT} WARNING: Failed to load saved image after ${LOAD_ATTEMPTS} attempts. Will rebuild." >&2
+            break
+        fi
+
+        echo "${LOG_INDENT} WARNING: Load attempt ${LOAD_TRY}/${LOAD_ATTEMPTS} failed. Waiting for \`docker\` daemon (timeout: ${LOAD_WAIT_TIMEOUT}s) ..." >&2
+
+        DOCKER_WAIT=0
+        while ! docker info &>/dev/null; do
+            sleep 5
+            DOCKER_WAIT=$((DOCKER_WAIT + 5))
+            if [[ "${DOCKER_WAIT}" -ge "${LOAD_WAIT_TIMEOUT}" ]]; then
+                echo "${LOG_INDENT} WARNING: \`docker\` daemon did not recover within ${LOAD_WAIT_TIMEOUT} seconds. Will retry load ..." >&2
+                break
+            fi
+        done
+
+        LOAD_WAIT_TIMEOUT=$((LOAD_WAIT_TIMEOUT * 2))
+        sleep 5
+    done
+
+    if [[ "${LOAD_SUCCESS}" -eq 1 ]]; then
         log_log "${QUIET}" "Image loaded from persistent storage."
         docker run --rm "${IMAGE_NAME}:${IMAGE_TAG}" --version
         exit 0
-    else
-        echo "${LOG_INDENT} WARNING: Failed to load saved image, will rebuild." >&2
     fi
 fi
 
