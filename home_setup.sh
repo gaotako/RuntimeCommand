@@ -103,6 +103,7 @@ HOST_SSH_DIR="${HOME}/.ssh"
 HOST_SSH_CONFIG="${HOST_SSH_DIR}/config"
 if [[ -d "${SSH_HOME}" && "${HOME}" != "${DOCKER_HOME}" ]]; then
     mkdir -p "${HOST_SSH_DIR}"
+    chmod 700 "${HOST_SSH_DIR}"
     SSH_IDENTITY_LINE="IdentityFile ${SSH_HOME}/id_ed25519"
     if ! grep -qF "${SSH_IDENTITY_LINE}" "${HOST_SSH_CONFIG}" 2>/dev/null; then
         echo "" >> "${HOST_SSH_CONFIG}"
@@ -110,6 +111,7 @@ if [[ -d "${SSH_HOME}" && "${HOME}" != "${DOCKER_HOME}" ]]; then
         echo "Host *" >> "${HOST_SSH_CONFIG}"
         echo "    ${SSH_IDENTITY_LINE}" >> "${HOST_SSH_CONFIG}"
     fi
+    chmod 600 "${HOST_SSH_CONFIG}"
 fi
 
 # Symlink ~/.aws to persistent storage, preserving existing content.
