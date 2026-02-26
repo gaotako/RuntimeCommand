@@ -102,11 +102,11 @@ if [[ -f "${DOCKER_IMAGE_FILE}" ]] && [[ "${FORCE_BUILD:-}" != "1" ]]; then
 fi
 
 # Build the Docker image from the Dockerfile in this directory.
-# Retries up to 3 times to handle transient Docker daemon instability
+# Retries up to 5 times to handle transient Docker daemon instability
 # (e.g., `rpc error: EOF` during SageMaker notebook initialization).
 # Docker caches completed layers, so retries resume from the last success.
 log_log "${QUIET}" "Building ${IMAGE_NAME}:${IMAGE_TAG} (code-server ${CODE_SERVER_VERSION}) ..."
-BUILD_ATTEMPTS=3
+BUILD_ATTEMPTS=5
 DOCKER_WAIT_TIMEOUT=60
 for BUILD_TRY in $(seq 1 "${BUILD_ATTEMPTS}"); do
     if docker build \
