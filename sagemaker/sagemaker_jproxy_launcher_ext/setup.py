@@ -1,4 +1,5 @@
-# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# Copyright Jianfei Gao. All Rights Reserved.
+# Originally by Giuseppe Angelo Porcelli (aws-samples/sagemaker-codeserver).
 # SPDX-License-Identifier: MIT-0
 import json
 import sys

@@ -10,9 +10,14 @@
     "homepage": "https://github.com/aws-samples/sagemaker-codeserver",
     "license": "BSD-3-Clause",
     "author": {
-        "name": "Giuseppe Angelo Porcelli",
-        "email": "giu.porcelli@gmail.com"
+        "name": "Jianfei Gao",
+        "email": "gao462@outlook.com"
     },
+    "contributors": [
+        {
+            "name": "AI Assistant (Cline)"
+        }
+    ],
     "files": [
         "lib/**/*.{d.ts,eot,gif,html,jpg,js,js.map,json,png,svg,woff2,ttf}",
         "style/**/*.{css,eot,js,gif,html,jpg,json,png,svg,woff2,ttf}",
