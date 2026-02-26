@@ -1,0 +1,71 @@
+{
+    "name": "@amzn/sagemaker-jproxy-launcher-ext",
+    "version": "0.3.0",
+    "description": "JupyterLab extension for proxy services.",
+    "keywords": [
+        "jupyter",
+        "jupyterlab",
+        "jupyterlab-extension"
+    ],
+    "homepage": "https://github.com/aws-samples/sagemaker-codeserver",
+    "license": "BSD-3-Clause",
+    "author": {
+        "name": "Jianfei Gao",
+        "email": "gao462@outlook.com"
+    },
+    "contributors": [
+        {
+            "name": "AI Assistant (Cline)"
+        }
+    ],
+    "files": [
+        "lib/**/*.{d.ts,eot,gif,html,jpg,js,js.map,json,png,svg,woff2,ttf}",
+        "style/**/*.{css,eot,js,gif,html,jpg,json,png,svg,woff2,ttf}",
+        "style/icons/*.{svg}"
+    ],
+    "main": "lib/index.js",
+    "types": "lib/index.d.ts",
+    "style": "style/index.css",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/aws-samples/sagemaker-codeserver.git"
+    },
+    "scripts": {
+        "build": "jlpm run build:lib && jlpm run build:labextension:dev",
+        "build:all": "jlpm run build:lib && jlpm run build:labextension",
+        "build:labextension": "jupyter labextension build .",
+        "build:labextension:dev": "jupyter labextension build --development True .",
+        "build:lib": "tsc",
+        "build:prod": "jlpm run clean && jlpm run build:lib && jlpm run build:labextension",
+        "clean": "jlpm run clean:lib",
+        "clean:all": "jlpm run clean:lib && jlpm run clean:labextension",
+        "clean:labextension": "rimraf sagemaker_jproxy_launcher_ext/labextension",
+        "clean:lib": "rimraf lib tsconfig.tsbuildinfo",
+        "install:extension": "jlpm run build",
+        "watch": "run-p watch:src watch:labextension",
+        "watch:labextension": "jupyter labextension watch .",
+        "watch:src": "tsc -w"
+    },
+    "dependencies": {
+        "@jupyterlab/application": "^4.0.0",
+        "@jupyterlab/launcher": "^4.0.0",
+        "@jupyterlab/ui-components": "^4.0.0"
+    },
+    "devDependencies": {
+        "@jupyterlab/builder": "^4.0.0",
+        "@typescript-eslint/eslint-plugin": "^6.0.0",
+        "@typescript-eslint/parser": "^6.0.0",
+        "npm-run-all": "^4.1.5",
+        "rimraf": "^5.0.0",
+        "typescript": "~5.1.0"
+    },
+    "sideEffects": [
+        "style/*.css",
+        "style/*.svg",
+        "style/index.js"
+    ],
+    "jupyterlab": {
+        "extension": true,
+        "outputDir": "sagemaker_jproxy_launcher_ext/labextension"
+    }
+}

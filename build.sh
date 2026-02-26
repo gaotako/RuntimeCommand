@@ -107,6 +107,7 @@ fi
 # Docker caches completed layers, so retries resume from the last success.
 log_log "${QUIET}" "Building ${IMAGE_NAME}:${IMAGE_TAG} (code-server ${CODE_SERVER_VERSION}) ..."
 BUILD_ATTEMPTS=3
+DOCKER_WAIT_TIMEOUT=60
 for BUILD_TRY in $(seq 1 "${BUILD_ATTEMPTS}"); do
     if docker build \
         --build-arg "CODE_SERVER_VERSION=${CODE_SERVER_VERSION}" \
@@ -121,18 +122,24 @@ for BUILD_TRY in $(seq 1 "${BUILD_ATTEMPTS}"); do
         exit 1
     fi
 
-    echo "${LOG_INDENT} WARNING: Docker build attempt ${BUILD_TRY}/${BUILD_ATTEMPTS} failed. Waiting for \`docker\` daemon ..." >&2
+    echo "${LOG_INDENT} WARNING: Docker build attempt ${BUILD_TRY}/${BUILD_ATTEMPTS} failed. Waiting for \`docker\` daemon (timeout: ${DOCKER_WAIT_TIMEOUT}s) ..." >&2
 
-    # Wait for Docker daemon to recover before retrying (timeout: 120s).
+    # Wait for Docker daemon to recover with exponential backoff timeout.
+    # SageMaker may restart the Docker daemon during lifecycle transitions,
+    # which can take several minutes. If wait times out, the loop continues
+    # to the next retry attempt with a doubled timeout.
     DOCKER_WAIT=0
     while ! docker info &>/dev/null; do
-        sleep 2
-        DOCKER_WAIT=$((DOCKER_WAIT + 2))
-        if [[ "${DOCKER_WAIT}" -ge 120 ]]; then
-            echo "${LOG_INDENT} ERROR: \`docker\` daemon did not recover within 120 seconds." >&2
-            exit 1
+        sleep 5
+        DOCKER_WAIT=$((DOCKER_WAIT + 5))
+        if [[ "${DOCKER_WAIT}" -ge "${DOCKER_WAIT_TIMEOUT}" ]]; then
+            echo "${LOG_INDENT} WARNING: \`docker\` daemon did not recover within ${DOCKER_WAIT_TIMEOUT} seconds. Will retry build ..." >&2
+            break
         fi
     done
+
+    # Double timeout for next retry.
+    DOCKER_WAIT_TIMEOUT=$((DOCKER_WAIT_TIMEOUT * 2))
 
     # Extra stabilization wait after daemon responds.
     sleep 5
