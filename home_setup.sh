@@ -96,6 +96,22 @@ for KEY_TYPE in ed25519 ecdsa rsa; do
     fi
 done
 
+# Add persistent SSH key as an additional identity on the host.
+# This allows git operations on the SageMaker host (outside Docker) to use
+# the same key as inside Docker, without modifying the host's existing keys.
+HOST_SSH_DIR="${HOME}/.ssh"
+HOST_SSH_CONFIG="${HOST_SSH_DIR}/config"
+if [[ -d "${SSH_HOME}" && "${HOME}" != "${DOCKER_HOME}" ]]; then
+    mkdir -p "${HOST_SSH_DIR}"
+    SSH_IDENTITY_LINE="IdentityFile ${SSH_HOME}/id_ed25519"
+    if ! grep -qF "${SSH_IDENTITY_LINE}" "${HOST_SSH_CONFIG}" 2>/dev/null; then
+        echo "" >> "${HOST_SSH_CONFIG}"
+        echo "# RuntimeCommand persistent SSH key." >> "${HOST_SSH_CONFIG}"
+        echo "Host *" >> "${HOST_SSH_CONFIG}"
+        echo "    ${SSH_IDENTITY_LINE}" >> "${HOST_SSH_CONFIG}"
+    fi
+fi
+
 # Symlink ~/.aws to persistent storage, preserving existing content.
 log_log "${QUIET}" "[3/5] Setting up .aws ..."
 mkdir -p "${AWS_HOME}"
