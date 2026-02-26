@@ -19,6 +19,17 @@
 # host before launching). On the SageMaker host or any other environment,
 # rc.sh shows docker entry instructions (once) and exits early.
 if [[ "${RC_DOCKER:-0}" != "1" ]]; then
+    # Check if the lifecycle setup has completed.
+    # APP_DATA_HOME may not be set yet (config.sh not sourced), so derive it.
+    _RC_APP_DATA="${HOME}/SageMaker/Application/data"
+    _RC_READY_FLAG="${_RC_APP_DATA}/.rc_ready"
+    if [[ ! -f "${_RC_READY_FLAG}" ]]; then
+        if [[ "${_RC_NOT_READY_SHOWN:-0}" != "1" ]]; then
+            _RC_NOT_READY_SHOWN=1
+            echo "Code Server is configuring. Run \`tail -f ~/SageMaker/lifecycle-create.log\` to monitor progress."
+        fi
+        return 0 2>/dev/null || true
+    fi
     if [[ "${_RC_DOCKER_HINT_SHOWN:-0}" != "1" ]]; then
         _RC_DOCKER_HINT_SHOWN=1
         echo "To enter Docker environment, run: \`docker exec -it code-server-sagemaker /bin/zsh\`."

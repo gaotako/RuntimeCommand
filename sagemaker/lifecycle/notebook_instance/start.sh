@@ -56,6 +56,10 @@ QUIET="${QUIET:-${QUIET_DEFAULT}}"
 QUIET_FLAG=""
 [[ "${QUIET}" -eq 1 ]] && QUIET_FLAG="--quiet"
 
+# Remove readiness flag so rc.sh shows "not ready" during setup.
+RC_READY_FLAG="${APP_DATA_HOME}/.rc_ready"
+rm -f "${RC_READY_FLAG}"
+
 # Print lifecycle header.
 log_log "${QUIET}" "Code-Server Docker Lifecycle (start)"
 
@@ -67,4 +71,9 @@ bash "${SAGEMAKER_ROOT}/install.sh" --log-depth $((LOG_DEPTH + 1)) ${QUIET_FLAG}
 
 # Register code-server with JupyterLab and print completion footer.
 bash "${SAGEMAKER_ROOT}/setup_jupyter.sh" --log-depth $((LOG_DEPTH + 1)) ${QUIET_FLAG}
+
+# Mark setup as complete so rc.sh stops showing the "not ready" hint.
+mkdir -p "$(dirname "${RC_READY_FLAG}")"
+touch "${RC_READY_FLAG}"
+
 log_log "${QUIET}" "Code-Server Docker Lifecycle (start) complete."

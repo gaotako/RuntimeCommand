@@ -18,6 +18,13 @@
 # -------
 # (No-Returns)
 #
+# Notes
+# -----
+# This script is designed to run via `nohup ... &` from the SageMaker
+# lifecycle configuration to avoid the 5-minute timeout. A readiness flag
+# file (`RC_READY_FLAG`) is created on completion so that `rc.sh` can
+# show a "not ready" hint until setup finishes.
+#
 # Examples
 # --------
 # In SageMaker lifecycle configuration console:
@@ -27,7 +34,8 @@
 # RC_ROOT=/home/ec2-user/SageMaker/RuntimeCommandDev/src/RuntimeCommand
 # mkdir -p "${RC_ROOT}"
 # git clone https://github.com/gaotako/RuntimeCommand "${RC_ROOT}"
-# bash "${RC_ROOT}/sagemaker/lifecycle/notebook_instance/create.sh"
+# nohup bash "${RC_ROOT}/sagemaker/lifecycle/notebook_instance/create.sh" \
+#     >> /home/ec2-user/SageMaker/lifecycle-create.log 2>&1 &
 # ```
 set -euo pipefail
 
@@ -58,6 +66,10 @@ QUIET="${QUIET:-${QUIET_DEFAULT}}"
 QUIET_FLAG=""
 [[ "${QUIET}" -eq 1 ]] && QUIET_FLAG="--quiet"
 
+# Remove readiness flag so rc.sh shows "not ready" during setup.
+RC_READY_FLAG="${APP_DATA_HOME}/.rc_ready"
+rm -f "${RC_READY_FLAG}"
+
 # Print lifecycle header.
 log_log "${QUIET}" "Code-Server Docker Lifecycle (create)"
 
@@ -72,4 +84,9 @@ bash "${SAGEMAKER_ROOT}/setup_jupyter.sh" --log-depth $((LOG_DEPTH + 1)) ${QUIET
 
 # Bootstrap code-server settings and extensions.
 bash "${SAGEMAKER_ROOT}/code_server/coldstart.sh" --log-depth $((LOG_DEPTH + 1)) ${QUIET_FLAG}
+
+# Mark setup as complete so rc.sh stops showing the "not ready" hint.
+mkdir -p "$(dirname "${RC_READY_FLAG}")"
+touch "${RC_READY_FLAG}"
+
 log_log "${QUIET}" "Code-Server Docker Lifecycle (create) complete."

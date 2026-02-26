@@ -99,7 +99,8 @@ set -euo pipefail
 RC_ROOT=/home/ec2-user/SageMaker/RuntimeCommandDev/src/RuntimeCommand
 mkdir -p "${RC_ROOT}"
 git clone https://github.com/gaotako/RuntimeCommand "${RC_ROOT}"
-bash "${RC_ROOT}/sagemaker/lifecycle/notebook_instance/create.sh"
+nohup bash "${RC_ROOT}/sagemaker/lifecycle/notebook_instance/create.sh" \
+    >> /home/ec2-user/SageMaker/lifecycle-create.log 2>&1 &
 ```
 
 **Start script:**
@@ -108,8 +109,15 @@ bash "${RC_ROOT}/sagemaker/lifecycle/notebook_instance/create.sh"
 #!/bin/bash
 set -euo pipefail
 RC_ROOT=/home/ec2-user/SageMaker/RuntimeCommandDev/src/RuntimeCommand
-bash "${RC_ROOT}/sagemaker/lifecycle/notebook_instance/start.sh"
+nohup bash "${RC_ROOT}/sagemaker/lifecycle/notebook_instance/start.sh" \
+    >> /home/ec2-user/SageMaker/lifecycle-start.log 2>&1 &
 ```
+
+> **Note:** SageMaker lifecycle scripts have a **5-minute timeout**. Both scripts
+> use `nohup ... &` to run in the background and avoid the timeout. During
+> setup, terminals show "Code Server is configuring" instead of errors. Once
+> complete, the normal Docker entry hint appears. Check progress with
+> `tail -f ~/SageMaker/lifecycle-create.log` or `lifecycle-start.log`.
 
 The create script runs once to build the Docker image and install everything.
 The start script runs on every start to reload the cached image and
