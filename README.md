@@ -96,6 +96,7 @@ Attach the following lifecycle scripts in the SageMaker Notebook Instance consol
 ```bash
 #!/bin/bash
 set -euo pipefail
+export DOCKER_HOST="unix:///run/user/$(id -u)/docker.sock"
 RC_ROOT=/home/ec2-user/SageMaker/RuntimeCommandDev/src/RuntimeCommand
 mkdir -p "${RC_ROOT}"
 git clone https://github.com/gaotako/RuntimeCommand "${RC_ROOT}"
@@ -108,6 +109,7 @@ nohup bash "${RC_ROOT}/sagemaker/lifecycle/notebook_instance/create.sh" \
 ```bash
 #!/bin/bash
 set -euo pipefail
+export DOCKER_HOST="unix:///run/user/$(id -u)/docker.sock"
 RC_ROOT=/home/ec2-user/SageMaker/RuntimeCommandDev/src/RuntimeCommand
 nohup bash "${RC_ROOT}/sagemaker/lifecycle/notebook_instance/start.sh" \
     >> /home/ec2-user/SageMaker/lifecycle-start.log 2>&1 &
