@@ -138,17 +138,11 @@ esac
 # messages are printed.
 bash "${RC_DIR}/mise.sh" --quiet
 
-# Check Claude Code CLI availability.
+# Check AI agent CLI availability.
 # Uses --quiet to suppress step logs; only "Missing ..." messages are printed.
-bash "${RC_DIR}/claude.sh" --quiet
-
-# Check Cline CLI availability.
-# Uses --quiet to suppress step logs; only "Missing ..." messages are printed.
-bash "${RC_DIR}/cline.sh" --quiet
-
-# Check Kiro CLI availability.
-# Uses --quiet to suppress step logs; only "Missing ..." messages are printed.
-bash "${RC_DIR}/kiro.sh" --quiet
+bash "${RC_DIR}/ai_agents/claude.sh" --quiet
+bash "${RC_DIR}/ai_agents/cline.sh" --quiet
+bash "${RC_DIR}/ai_agents/kiro.sh" --quiet
 
 # Add CLI tool paths to PATH if present.
 if [[ -d "${HOME}/.claude/local/bin" && ":${PATH}:" != *":${HOME}/.claude/local/bin:"* ]]; then

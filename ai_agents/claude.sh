@@ -41,17 +41,18 @@ set -euo pipefail
 
 # Resolve directory paths.
 SCRIPT_DIR="$(cd "$(dirname "${0}")" && pwd)"
+PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
 # Source shared libraries and defaults.
-source "${SCRIPT_DIR}/shutils/argparse.sh"
-source "${SCRIPT_DIR}/shutils/log.sh"
+source "${PROJECT_ROOT}/shutils/argparse.sh"
+source "${PROJECT_ROOT}/shutils/log.sh"
 
 # Parse arguments (may set LOG_DEPTH, COLDSTART, QUIET via argparse).
 argparse_parse "$@"
 [[ ${#POSITIONAL_ARGS[@]} -gt 0 ]] && set -- "${POSITIONAL_ARGS[@]}"
 
 # Load shared defaults (provides DOCKER_HOME, MISE_INSTALL_PATH, etc.).
-source "${SCRIPT_DIR}/config.sh"
+source "${PROJECT_ROOT}/config.sh"
 
 # Build log indent from LOG_DEPTH.
 log_make_indent "${LOG_DEPTH}"
@@ -62,8 +63,11 @@ COLDSTART="${COLDSTART:-${COLDSTART_DEFAULT}}"
 QUIET_DEFAULT=0
 QUIET="${QUIET:-${QUIET_DEFAULT}}"
 
-# Claude Code CLI install location (native installer default).
+# Claude Code CLI install location.
+# The native installer places the binary at ~/.claude/local/bin/claude.
+# The npm installer (via mise node) places it at ~/.local/bin/claude.
 CLAUDE_BIN="${HOME}/.claude/local/bin/claude"
+CLAUDE_BIN_ALT="${HOME}/.local/bin/claude"
 
 # Print header.
 log_log "${QUIET}" "Claude Code CLI Setup"
@@ -71,7 +75,7 @@ log_log "${QUIET}" "Claude Code CLI Setup"
 # Step 1: Install or check Claude Code CLI.
 log_log "${QUIET}" "[1/2] Checking Claude Code CLI ..."
 if [[ "${COLDSTART}" -eq 1 ]]; then
-    if [[ -f "${CLAUDE_BIN}" ]] || command -v claude &>/dev/null; then
+    if [[ -f "${CLAUDE_BIN}" ]] || [[ -f "${CLAUDE_BIN_ALT}" ]] || command -v claude &>/dev/null; then
         log_log "${QUIET}" "Claude Code CLI already installed."
     else
         # Try native installer first, fall back to npm if DNS/network fails.
@@ -101,10 +105,10 @@ if [[ "${COLDSTART}" -eq 1 ]]; then
         echo "To use \`claude\` in this session, run: \`export PATH=\"${CLAUDE_BIN_DIR}:\${PATH}\"\`."
     fi
 else
-    # Check both the native installer path and mise's node bin path.
+    # Check native installer path, npm path, and command PATH.
     if [[ ! -f "${CLAUDE_BIN}" ]] \
-        && ! command -v claude &>/dev/null \
-        && ! "${MISE_INSTALL_PATH}" which claude &>/dev/null; then
+        && [[ ! -f "${CLAUDE_BIN_ALT}" ]] \
+        && ! command -v claude &>/dev/null; then
         echo "Missing \`claude\`. Run \`bash ${SCRIPT_DIR}/claude.sh --coldstart\` to install."
     else
         log_log "${QUIET}" "Claude Code CLI already installed."

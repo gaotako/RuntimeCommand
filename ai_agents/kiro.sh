@@ -23,7 +23,7 @@
 # Notes
 # -----
 # - Kiro CLI is installed via `curl -fsSL https://cli.kiro.dev/install | bash`.
-# - The binary is placed at `~/.local/bin/kiro` by default.
+# - The binary is placed at `~/.local/bin/kiro-cli` by default.
 #
 # Examples
 # --------
@@ -37,17 +37,18 @@ set -euo pipefail
 
 # Resolve directory paths.
 SCRIPT_DIR="$(cd "$(dirname "${0}")" && pwd)"
+PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
 # Source shared libraries and defaults.
-source "${SCRIPT_DIR}/shutils/argparse.sh"
-source "${SCRIPT_DIR}/shutils/log.sh"
+source "${PROJECT_ROOT}/shutils/argparse.sh"
+source "${PROJECT_ROOT}/shutils/log.sh"
 
 # Parse arguments (may set LOG_DEPTH, COLDSTART, QUIET via argparse).
 argparse_parse "$@"
 [[ ${#POSITIONAL_ARGS[@]} -gt 0 ]] && set -- "${POSITIONAL_ARGS[@]}"
 
 # Load shared defaults (provides DOCKER_HOME, MISE_INSTALL_PATH, etc.).
-source "${SCRIPT_DIR}/config.sh"
+source "${PROJECT_ROOT}/config.sh"
 
 # Build log indent from LOG_DEPTH.
 log_make_indent "${LOG_DEPTH}"
@@ -59,7 +60,8 @@ QUIET_DEFAULT=0
 QUIET="${QUIET:-${QUIET_DEFAULT}}"
 
 # Kiro CLI install location (default installer path).
-KIRO_BIN="${HOME}/.local/bin/kiro"
+# The binary is named `kiro-cli` by the official installer.
+KIRO_BIN="${HOME}/.local/bin/kiro-cli"
 
 # Print header.
 log_log "${QUIET}" "Kiro CLI Setup"
@@ -67,8 +69,8 @@ log_log "${QUIET}" "Kiro CLI Setup"
 # Install or check Kiro CLI.
 log_log "${QUIET}" "[1/1] Checking Kiro CLI ..."
 if [[ "${COLDSTART}" -eq 1 ]]; then
-    if [[ -f "${KIRO_BIN}" ]]; then
-        log_log "${QUIET}" "Kiro CLI already installed at \`${KIRO_BIN}\`."
+    if [[ -f "${KIRO_BIN}" ]] || command -v kiro-cli &>/dev/null; then
+        log_log "${QUIET}" "Kiro CLI already installed."
     else
         log_log "${QUIET}" "Installing Kiro CLI via official installer ..."
         curl -fsSL https://cli.kiro.dev/install | bash
@@ -77,11 +79,11 @@ if [[ "${COLDSTART}" -eq 1 ]]; then
     KIRO_BIN_DIR="$(dirname "${KIRO_BIN}")"
     if [[ -d "${KIRO_BIN_DIR}" && ":${PATH}:" != *":${KIRO_BIN_DIR}:"* ]]; then
         echo "PATH has been added to \`rc.sh\` for future terminal sessions."
-        echo "To use \`kiro\` in this session, run: \`export PATH=\"${KIRO_BIN_DIR}:\${PATH}\"\`."
+        echo "To use \`kiro-cli\` in this session, run: \`export PATH=\"${KIRO_BIN_DIR}:\${PATH}\"\`."
     fi
 else
-    if [[ ! -f "${KIRO_BIN}" ]] && ! command -v kiro &>/dev/null; then
-        echo "Missing \`kiro\`. Run \`bash ${SCRIPT_DIR}/kiro.sh --coldstart\` to install."
+    if [[ ! -f "${KIRO_BIN}" ]] && ! command -v kiro-cli &>/dev/null; then
+        echo "Missing \`kiro-cli\`. Run \`bash ${SCRIPT_DIR}/kiro.sh --coldstart\` to install."
     else
         log_log "${QUIET}" "Kiro CLI already installed."
     fi

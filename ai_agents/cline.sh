@@ -45,17 +45,18 @@ set -euo pipefail
 
 # Resolve directory paths.
 SCRIPT_DIR="$(cd "$(dirname "${0}")" && pwd)"
+PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
 # Source shared libraries and defaults.
-source "${SCRIPT_DIR}/shutils/argparse.sh"
-source "${SCRIPT_DIR}/shutils/log.sh"
+source "${PROJECT_ROOT}/shutils/argparse.sh"
+source "${PROJECT_ROOT}/shutils/log.sh"
 
 # Parse arguments (may set LOG_DEPTH, COLDSTART, QUIET via argparse).
 argparse_parse "$@"
 [[ ${#POSITIONAL_ARGS[@]} -gt 0 ]] && set -- "${POSITIONAL_ARGS[@]}"
 
 # Load shared defaults (provides DOCKER_HOME, MISE_INSTALL_PATH, etc.).
-source "${SCRIPT_DIR}/config.sh"
+source "${PROJECT_ROOT}/config.sh"
 
 # Build log indent from LOG_DEPTH.
 log_make_indent "${LOG_DEPTH}"
@@ -66,13 +67,21 @@ COLDSTART="${COLDSTART:-${COLDSTART_DEFAULT}}"
 QUIET_DEFAULT=0
 QUIET="${QUIET:-${QUIET_DEFAULT}}"
 
+# Cline CLI install location.
+# Installed via npm into mise's active node bin directory.
+CLINE_BIN=""
+MISE_NODE_DIR="$("${MISE_INSTALL_PATH}" where node 2>/dev/null)" || true
+if [[ -n "${MISE_NODE_DIR}" && -f "${MISE_NODE_DIR}/bin/cline" ]]; then
+    CLINE_BIN="${MISE_NODE_DIR}/bin/cline"
+fi
+
 # Print header.
 log_log "${QUIET}" "Cline CLI Setup"
 
 # Step 1: Install or check Cline CLI.
 log_log "${QUIET}" "[1/2] Checking Cline CLI ..."
 if [[ "${COLDSTART}" -eq 1 ]]; then
-    if command -v cline &>/dev/null; then
+    if [[ -n "${CLINE_BIN}" ]] || command -v cline &>/dev/null; then
         log_log "${QUIET}" "Cline CLI already installed."
     elif command -v npm &>/dev/null; then
         log_log "${QUIET}" "Installing Cline CLI via npm ..."
@@ -81,8 +90,8 @@ if [[ "${COLDSTART}" -eq 1 ]]; then
         echo "WARNING: \`npm\` is not available. Install Node.js first (via \`mise\`), then re-run." >&2
     fi
 else
-    if ! command -v cline &>/dev/null \
-        && ! "${MISE_INSTALL_PATH}" which cline &>/dev/null; then
+    # Check mise's active node bin path and command PATH.
+    if [[ -z "${CLINE_BIN}" ]] && ! command -v cline &>/dev/null; then
         echo "Missing \`cline\`. Run \`bash ${SCRIPT_DIR}/cline.sh --coldstart\` to install."
     else
         log_log "${QUIET}" "Cline CLI already installed."

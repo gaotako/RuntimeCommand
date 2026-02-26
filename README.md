@@ -17,13 +17,14 @@ docker/
 ├── rc.sh                            Shell-agnostic runtime command initialization
 ├── home_setup.sh                    Persistent home directory overrides (.ssh, .aws, rc files)
 ├── mise.sh                          Mise runtime manager installation and setup
-├── claude.sh                        Claude Code CLI installation and setup
-├── claude/                          Claude Code CLI configuration
-│   └── settings.json                Claude Code CLI settings (model, auth, env)
-├── cline.sh                         Cline CLI installation and setup
-├── cline/                           Cline configuration
-│   └── globalState.json             Cline global state (Bedrock API config)
-├── kiro.sh                          Kiro CLI installation and setup
+├── ai_agents/                       AI agent CLI installation and configuration
+│   ├── claude.sh                    Claude Code CLI installation and setup
+│   ├── claude/
+│   │   └── settings.json            Claude Code CLI settings (model, auth, env)
+│   ├── cline.sh                     Cline CLI installation and setup
+│   ├── cline/
+│   │   └── globalState.json         Cline global state (Bedrock API config)
+│   └── kiro.sh                      Kiro CLI installation and setup
 ├── vimrc                            Vim configuration (sourced by ~/.vimrc)
 ├── shutils/                         Shared shell utility libraries
 │   ├── argparse.sh                  Dynamic argument parser (--key value → VAR)
