@@ -18,14 +18,25 @@
 # -------
 # (No-Returns)
 #
+# Notes
+# -----
+# This script is designed to run via `nohup ... &` from the SageMaker
+# lifecycle configuration to avoid the 5-minute timeout. A readiness flag
+# file (`RC_READY_FLAG`) is created on completion so that `rc.sh` can
+# show a "not ready" hint until setup finishes.
+#
 # Examples
 # --------
 # In SageMaker lifecycle configuration console:
 # ```
 # #!/bin/bash
 # set -euo pipefail
+# sudo -u ec2-user -i <<'EOF'
+# set -euo pipefail
 # RC_ROOT=/home/ec2-user/SageMaker/RuntimeCommandDev/src/RuntimeCommand
-# bash "${RC_ROOT}/sagemaker/lifecycle/notebook_instance/start.sh"
+# nohup bash "${RC_ROOT}/sagemaker/lifecycle/notebook_instance/start.sh" \
+#     > /home/ec2-user/SageMaker/lifecycle-start.log 2>&1 &
+# EOF
 # ```
 set -euo pipefail
 
@@ -66,14 +77,16 @@ if pgrep -f "lifecycle/notebook_instance/create.sh" &>/dev/null; then
     exit 0
 fi
 
-# Wait for Docker daemon to be fully ready.
+# Wait for Docker daemon to be fully ready. On SageMaker, the daemon may
+# restart during notebook initialization. Loading before it stabilizes
+# causes connection reset errors.
 log_log "${QUIET}" "Waiting for \`docker\` daemon to stabilize ..."
 DOCKER_WAIT=0
 while ! docker info &>/dev/null; do
-    sleep 2
-    DOCKER_WAIT=$((DOCKER_WAIT + 2))
+    sleep 5
+    DOCKER_WAIT=$((DOCKER_WAIT + 5))
     if [[ "${DOCKER_WAIT}" -ge 120 ]]; then
-        echo "ERROR: \`docker\` daemon did not become ready within 120 seconds." >&2
+        echo "${LOG_INDENT} ERROR: \`docker\` daemon did not become ready within 120 seconds." >&2
         exit 1
     fi
 done

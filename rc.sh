@@ -26,7 +26,7 @@ if [[ "${RC_DOCKER:-0}" != "1" ]]; then
     if [[ ! -f "${_RC_READY_FLAG}" ]]; then
         if [[ "${_RC_NOT_READY_SHOWN:-0}" != "1" ]]; then
             _RC_NOT_READY_SHOWN=1
-            echo "Code Server is configuring. Check \`~/SageMaker/lifecycle-create.log\` (first boot) or \`~/SageMaker/lifecycle-start.log\` (restart) to monitor progress."
+            echo "Code Server is configuring. Check \`~/SageMaker/lifecycle-create.log\` (first boot) or \`~/SageMaker/lifecycle-start.log\` (restart) to monitor progress. Restart Jupyter after setup completes to enable the Code Server launcher."
         fi
         return 0 2>/dev/null || true
     fi

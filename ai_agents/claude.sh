@@ -92,7 +92,9 @@ if [[ "${COLDSTART}" -eq 1 ]]; then
             # Migrate from npm to native installer to silence deprecation warning.
             if command -v claude &>/dev/null; then
                 log_log "${QUIET}" "Migrating to native installer via \`claude install\` ..."
-                claude install 2>/dev/null || true
+                if ! claude install 2>/dev/null; then
+                    echo "WARNING: \`claude install\` migration failed. Using npm-installed version." >&2
+                fi
             fi
         else
             echo "WARNING: Claude Code CLI installation failed. Neither native installer nor \`npm\` available." >&2

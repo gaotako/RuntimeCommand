@@ -91,7 +91,8 @@ DOCKER_IMAGE_FILE="${DOCKER_IMAGE_DIR}/${IMAGE_NAME}-${IMAGE_TAG}.tar"
 # Attempt to load a previously saved image from persistent storage.
 # Skipped when `FORCE_BUILD=1` or when no cached file exists.
 # Retries up to 5 times with exponential backoff to handle transient
-# Docker daemon instability during SageMaker startup.
+# Docker daemon instability during SageMaker startup. If all load attempts
+# fail, falls through to a full Docker build (which retries separately).
 if [[ -f "${DOCKER_IMAGE_FILE}" ]] && [[ "${FORCE_BUILD:-}" != "1" ]]; then
     log_log "${QUIET}" "Found saved image at ${DOCKER_IMAGE_FILE}, loading ..."
     LOAD_ATTEMPTS=5

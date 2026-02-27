@@ -86,12 +86,15 @@ if [[ ! -L "${DOCKER_HOME}/.ssh" || "$(readlink -f "${DOCKER_HOME}/.ssh")" != "$
     rm -rf "${DOCKER_HOME}/.ssh"
     ln -s "${SSH_HOME}" "${DOCKER_HOME}/.ssh"
 fi
+GENERATED_KEY_TYPE=""
 for KEY_TYPE in ed25519 ecdsa rsa; do
     if [[ ! -f "${SSH_HOME}/id_${KEY_TYPE}" ]]; then
         if ssh-keygen -t "${KEY_TYPE}" -q -f "${SSH_HOME}/id_${KEY_TYPE}" -N ""; then
+            GENERATED_KEY_TYPE="${KEY_TYPE}"
             break
         fi
     else
+        GENERATED_KEY_TYPE="${KEY_TYPE}"
         break
     fi
 done
@@ -99,12 +102,13 @@ done
 # Add persistent SSH key as an additional identity on the host.
 # This allows git operations on the SageMaker host (outside Docker) to use
 # the same key as inside Docker, without modifying the host's existing keys.
+# Uses whichever key type was generated or found by the loop above.
 HOST_SSH_DIR="${HOME}/.ssh"
 HOST_SSH_CONFIG="${HOST_SSH_DIR}/config"
-if [[ -d "${SSH_HOME}" && "${HOME}" != "${DOCKER_HOME}" ]]; then
+if [[ -d "${SSH_HOME}" && -n "${GENERATED_KEY_TYPE}" && "${HOME}" != "${DOCKER_HOME}" ]]; then
     mkdir -p "${HOST_SSH_DIR}"
     chmod 700 "${HOST_SSH_DIR}"
-    SSH_IDENTITY_LINE="IdentityFile ${SSH_HOME}/id_ed25519"
+    SSH_IDENTITY_LINE="IdentityFile ${SSH_HOME}/id_${GENERATED_KEY_TYPE}"
     if ! grep -qF "${SSH_IDENTITY_LINE}" "${HOST_SSH_CONFIG}" 2>/dev/null; then
         echo "" >> "${HOST_SSH_CONFIG}"
         echo "# RuntimeCommand persistent SSH key." >> "${HOST_SSH_CONFIG}"

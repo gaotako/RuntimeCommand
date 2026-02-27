@@ -102,7 +102,7 @@ RC_ROOT=/home/ec2-user/SageMaker/RuntimeCommandDev/src/RuntimeCommand
 mkdir -p "$(dirname "${RC_ROOT}")"
 git clone https://github.com/gaotako/RuntimeCommand "${RC_ROOT}"
 nohup bash "${RC_ROOT}/sagemaker/lifecycle/notebook_instance/create.sh" \
-    >> /home/ec2-user/SageMaker/lifecycle-create.log 2>&1 &
+    > /home/ec2-user/SageMaker/lifecycle-create.log 2>&1 &
 EOF
 ```
 
@@ -115,7 +115,7 @@ sudo -u ec2-user -i <<'EOF'
 set -euo pipefail
 RC_ROOT=/home/ec2-user/SageMaker/RuntimeCommandDev/src/RuntimeCommand
 nohup bash "${RC_ROOT}/sagemaker/lifecycle/notebook_instance/start.sh" \
-    >> /home/ec2-user/SageMaker/lifecycle-start.log 2>&1 &
+    > /home/ec2-user/SageMaker/lifecycle-start.log 2>&1 &
 EOF
 ```
 

@@ -76,10 +76,10 @@ rm -f "${RC_READY_FLAG}"
 log_log "${QUIET}" "Waiting for \`docker\` daemon to stabilize ..."
 DOCKER_WAIT=0
 while ! docker info &>/dev/null; do
-    sleep 2
-    DOCKER_WAIT=$((DOCKER_WAIT + 2))
+    sleep 5
+    DOCKER_WAIT=$((DOCKER_WAIT + 5))
     if [[ "${DOCKER_WAIT}" -ge 120 ]]; then
-        echo "ERROR: \`docker\` daemon did not become ready within 120 seconds." >&2
+        echo "${LOG_INDENT} ERROR: \`docker\` daemon did not become ready within 120 seconds." >&2
         exit 1
     fi
 done
