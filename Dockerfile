@@ -45,6 +45,7 @@ RUN apt-get update \
         bash \
         zsh \
         python3 \
+        python3-pip \
         ca-certificates \
         procps \
         openssh-client \
@@ -56,6 +57,9 @@ RUN apt-get update \
 
 # Set the default shell.
 RUN chsh -s ${DOCKER_SHELL}
+
+# Create `python` symlink (Ubuntu 22.04 only has `python3`).
+RUN ln -sf /usr/bin/python3 /usr/bin/python
 
 # Install code-server (version determined by CODE_SERVER_VERSION build arg).
 RUN if [ "${CODE_SERVER_VERSION}" = "latest" ]; then \

@@ -61,6 +61,11 @@ if [[ -n "${PORT}" ]]; then
     PORT_FLAGS="-p 127.0.0.1:${PORT}:${PORT}"
 fi
 
+# Map additional ports for development servers (Streamlit: 8501-8509).
+for DEV_PORT in $(seq 8501 8509); do
+    PORT_FLAGS="${PORT_FLAGS} -p 127.0.0.1:${DEV_PORT}:${DEV_PORT}"
+done
+
 # Remove any stale container from a previous run.
 docker rm -f code-server-sagemaker >/dev/null 2>&1 || true
 
