@@ -4,7 +4,7 @@
 # Downloads the mise binary to `MISE_INSTALL_PATH` if not already present, sets
 # up XDG-based directories for mise, migrates any existing mise installs
 # from default locations, enables experimental features, and checks or
-# installs the configured runtimes (Node, Python).
+# installs the configured runtimes (Node, Java, Python).
 #
 # Shell-aware activation supports bash/sh and zsh via the `CISH` variable
 # from `shell.sh`.
@@ -36,6 +36,8 @@
 # - `MISE_PYTHON_VERSIONS`
 #     Space-separated Python versions to install via `mise use -g`
 #     (default: `"python@3.13 python@3.12 python@3.11 python@3.10"`).
+# - `MISE_JAVA_VERSION`
+#     Java version to install (default: `21`).
 #
 # Mise stores its data, config, and cache under the XDG base directories
 # (`XDG_DATA_HOME/mise`, `XDG_CONFIG_HOME/mise`, `XDG_CACHE_HOME/mise`)
@@ -149,12 +151,18 @@ log_log "${QUIET}" "[5/5] Checking runtimes ..."
 # and print install instructions for any that are missing.
 if [[ "${COLDSTART}" -eq 1 ]]; then
     # shellcheck disable=SC2086
-    "${MISE_INSTALL_PATH}" use -g "node@${MISE_NODE_VERSION}" ${MISE_PYTHON_VERSIONS}
+    "${MISE_INSTALL_PATH}" use -g "node@${MISE_NODE_VERSION}" "java@${MISE_JAVA_VERSION}" ${MISE_PYTHON_VERSIONS}
 else
     "${MISE_INSTALL_PATH}" settings set not_found_auto_install 0 2>/dev/null
+
     if ! "${MISE_INSTALL_PATH}" which node &>/dev/null; then
         echo "Missing \`node\`. Run \`${MISE_INSTALL_PATH} use -g node@${MISE_NODE_VERSION}\` to install."
     fi
+
+    if ! "${MISE_INSTALL_PATH}" which java &>/dev/null; then
+        echo "Missing \`java\`. Run \`${MISE_INSTALL_PATH} use -g java@${MISE_JAVA_VERSION}\` to install."
+    fi
+
     if ! "${MISE_INSTALL_PATH}" which python3 &>/dev/null; then
         echo "Missing \`python\`. Run \`${MISE_INSTALL_PATH} use -g ${MISE_PYTHON_VERSIONS}\` to install."
     fi
