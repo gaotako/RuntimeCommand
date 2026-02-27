@@ -66,6 +66,10 @@ for DEV_PORT in $(seq 8501 8509); do
     PORT_FLAGS="${PORT_FLAGS} -p 127.0.0.1:${DEV_PORT}:${DEV_PORT}"
 done
 
+# Clear the Jupyter restart hint flag (set by lifecycle scripts).
+# Opening code-server means Jupyter has been restarted successfully.
+rm -f "${APP_DATA_HOME}/.jupyter_restart_needed"
+
 # Remove any stale container from a previous run.
 docker rm -f code-server-sagemaker >/dev/null 2>&1 || true
 

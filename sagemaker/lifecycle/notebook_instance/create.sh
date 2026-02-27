@@ -103,6 +103,10 @@ bash "${SAGEMAKER_ROOT}/setup_jupyter.sh" --log-depth $((LOG_DEPTH + 1)) ${QUIET
 # Bootstrap code-server settings and extensions.
 bash "${SAGEMAKER_ROOT}/code_server/coldstart.sh" --log-depth $((LOG_DEPTH + 1)) ${QUIET_FLAG}
 
+# Signal that Jupyter needs to be restarted to pick up the new proxy config.
+# Cleared by `wrapper.sh` when code-server is first opened after restart.
+touch "${APP_DATA_HOME}/.jupyter_restart_needed"
+
 # Mark setup as complete so rc.sh stops showing the "not ready" hint.
 mkdir -p "$(dirname "${RC_READY_FLAG}")"
 touch "${RC_READY_FLAG}"
