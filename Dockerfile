@@ -61,6 +61,10 @@ RUN chsh -s ${DOCKER_SHELL}
 # Create `python` symlink (Ubuntu 22.04 only has `python3`).
 RUN ln -sf /usr/bin/python3 /usr/bin/python
 
+# Install vim-plug (lightweight vim plugin manager).
+RUN curl -fLo /usr/share/vim/vim82/autoload/plug.vim --create-dirs \
+    https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
+
 # Install code-server (version determined by CODE_SERVER_VERSION build arg).
 RUN if [ "${CODE_SERVER_VERSION}" = "latest" ]; then \
         curl -fsSL https://code-server.dev/install.sh | sh; \

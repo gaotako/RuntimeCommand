@@ -1,6 +1,12 @@
 " RuntimeCommand vim configuration.
 " Sourced by ~/.vimrc in the Docker home directory.
 
+" ---- Plugins (vim-plug) ----
+" Install plugins on first run: open vim, run `:PlugInstall`.
+call plug#begin('~/.vim/plugged')
+Plug 'joshdick/onedark.vim'
+call plug#end()
+
 " ---- Display ----
 syntax on                       " Enable syntax highlighting.
 set number                      " Show line numbers.
@@ -13,9 +19,13 @@ set showcmd                     " Show partial commands in status line.
 set title                       " Set terminal title to filename.
 set signcolumn=yes              " Always show the sign column.
 
-" ---- Color ----
+" ---- Color (One Dark Pro) ----
 set background=dark             " Optimize colors for dark terminals.
 set termguicolors               " Enable 24-bit color if supported.
+
+" Use onedark colorscheme (matching code-server One Dark Pro theme).
+" Silently skip if not yet installed (before first `:PlugInstall`).
+silent! colorscheme onedark
 
 " ---- Search ----
 set hlsearch                    " Highlight search results.
@@ -54,3 +64,8 @@ set mouse=a                     " Enable mouse in all modes.
 " ---- Key Mappings ----
 " Clear search highlighting with Escape.
 nnoremap <Esc> :nohlsearch<CR>
+
+" Auto-install plugins on first vim launch if plugged directory is missing.
+if empty(glob('~/.vim/plugged'))
+    autocmd VimEnter * PlugInstall --sync | source $MYVIMRC
+endif
