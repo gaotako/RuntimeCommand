@@ -86,6 +86,11 @@ docker/
 
 - SageMaker Notebook Instance with Docker available
 - Terminal access
+- **Minimum `ml.t3.large` (8 GB RAM).** The Docker container runs code-server,
+  AI agent extensions (Cline, Claude Code), Python/Pylance, and mise runtimes
+  concurrently. On `ml.t3.medium` (4 GB), the OOM killer will crash the
+  container. **Recommended: `ml.r5.large` (16 GB)** for comfortable use with
+  multiple AI agents active.
 
 ### Option A: Lifecycle Configuration (Recommended)
 
