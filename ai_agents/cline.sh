@@ -30,8 +30,9 @@
 # - Only `globalState.json` is maintained — workspace states are ephemeral.
 # - The global state file is copied from `cline/globalState.json` in the
 #   project directory to `DOCKER_HOME/.cline/data/globalState.json`.
-# - The file is only copied if it does not already exist, to avoid
-#   overwriting user-modified settings.
+# - If the target already exists (e.g., Cline extension wrote defaults on
+#   first activation), our settings are merged on top — preserving extension
+#   keys while ensuring API config and workspace root are applied.
 #
 # Examples
 # --------
@@ -98,9 +99,11 @@ else
     fi
 fi
 
-# Step 2: Copy Cline global state to DOCKER_HOME (coldstart only).
+# Step 2: Merge Cline global state into DOCKER_HOME (coldstart only).
 # Only globalState.json is maintained — workspace states are ephemeral defaults.
-# Preserves existing user changes (only copies if target does not exist).
+# If the target already exists (e.g., Cline extension wrote defaults on first
+# activation), our settings are merged on top — preserving extension keys
+# while ensuring API config and workspace root are applied.
 if [[ "${COLDSTART}" -eq 1 ]]; then
     log_log "${QUIET}" "[2/2] Setting up Cline settings ..."
     CLINE_STATE_SOURCE="${SCRIPT_DIR}/cline/globalState.json"
@@ -111,7 +114,18 @@ if [[ "${COLDSTART}" -eq 1 ]]; then
             cp "${CLINE_STATE_SOURCE}" "${CLINE_STATE_TARGET}"
             log_log "${QUIET}" "Copied Cline global state to \`${CLINE_STATE_TARGET}\`."
         else
-            log_log "${QUIET}" "Cline global state already exists. Skipping copy to preserve user changes."
+            # Merge: apply our keys on top of existing settings.
+            python3 -c "
+import json, sys
+with open(sys.argv[1]) as f:
+    source = json.load(f)
+with open(sys.argv[2]) as f:
+    target = json.load(f)
+target.update(source)
+with open(sys.argv[2], 'w') as f:
+    json.dump(target, f, indent=4)
+" "${CLINE_STATE_SOURCE}" "${CLINE_STATE_TARGET}"
+            log_log "${QUIET}" "Merged Cline settings into existing \`${CLINE_STATE_TARGET}\`."
         fi
     else
         echo "WARNING: Cline global state source not found at \`${CLINE_STATE_SOURCE}\`." >&2
