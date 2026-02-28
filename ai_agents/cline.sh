@@ -97,6 +97,18 @@ else
     else
         log_log "${QUIET}" "Cline CLI already installed."
     fi
+
+    # Check if Cline workspace root points to Desktop (invalid default).
+    CLINE_STATE_TARGET="${DOCKER_HOME}/.cline/data/globalState.json"
+    if [[ -f "${CLINE_STATE_TARGET}" ]] && grep -q '"Desktop"' "${CLINE_STATE_TARGET}" 2>/dev/null; then
+        echo "Cline workspace root is set to \`Desktop\` (invalid). Fixing to \`Workspace\` ..."
+        CLINE_STATE_SOURCE="${SCRIPT_DIR}/cline/globalState.json"
+        if [[ -f "${CLINE_STATE_SOURCE}" ]]; then
+            python3 "${PROJECT_ROOT}/pyutils/json_merge.py" \
+                "${CLINE_STATE_SOURCE}" "${CLINE_STATE_TARGET}"
+            echo "Fixed. Restart code-server to apply."
+        fi
+    fi
 fi
 
 # Step 2: Merge Cline global state into DOCKER_HOME (coldstart only).
