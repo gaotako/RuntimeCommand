@@ -30,6 +30,8 @@ docker/
 │   ├── argparse.sh                  Dynamic argument parser (--key value → VAR)
 │   ├── log.sh                       BuildKit-style log indent builder
 │   └── shell.sh                     Shell handler detection (CISH), project root (RC_DIR)
+├── pyutils/                         Shared Python utility scripts
+│   └── json_merge.py                Merge two JSON files (source keys on top of target)
 ├── code_server/                     Shared code-server settings (platform-independent)
 │   ├── User/
 │   │   └── settings.json            User-level settings (themes, formatters, etc.)

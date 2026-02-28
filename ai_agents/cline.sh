@@ -115,16 +115,8 @@ if [[ "${COLDSTART}" -eq 1 ]]; then
             log_log "${QUIET}" "Copied Cline global state to \`${CLINE_STATE_TARGET}\`."
         else
             # Merge: apply our keys on top of existing settings.
-            python3 -c "
-import json, sys
-with open(sys.argv[1]) as f:
-    source = json.load(f)
-with open(sys.argv[2]) as f:
-    target = json.load(f)
-target.update(source)
-with open(sys.argv[2], 'w') as f:
-    json.dump(target, f, indent=4)
-" "${CLINE_STATE_SOURCE}" "${CLINE_STATE_TARGET}"
+            python3 "${PROJECT_ROOT}/pyutils/json_merge.py" \
+                "${CLINE_STATE_SOURCE}" "${CLINE_STATE_TARGET}"
             log_log "${QUIET}" "Merged Cline settings into existing \`${CLINE_STATE_TARGET}\`."
         fi
     else
