@@ -1,9 +1,9 @@
 #!/bin/bash
-# Install and configure the Cline CLI and code-server extension.
+# Install and check the Cline CLI.
 #
-# Installs the Cline CLI via npm (requires Node.js from mise) and copies
-# the Cline global state (Bedrock API configuration) to the Docker home
-# directory.
+# Installs the Cline CLI via npm (requires Node.js from mise). In check mode
+# (default), verifies the CLI is on PATH and prints install instructions if
+# missing.
 #
 # Args
 # ----
@@ -27,12 +27,8 @@
 # - Cline CLI is installed globally via `npm install -g cline`.
 # - Node.js must be available (installed by mise) before running this script
 #   in `--coldstart` mode.
-# - Only `globalState.json` is maintained — workspace states are ephemeral.
-# - The global state source (`cline/globalState.json`) is copied or merged
-#   into `DOCKER_HOME/.cline/data/globalState.json`.
-# - If the target already exists (e.g., Cline extension wrote defaults on
-#   first activation), our settings are merged on top — preserving extension
-#   keys while ensuring API config is applied.
+# - Cline extension settings (API config, workspace root) are configured
+#   manually on first launch — no automated config deployment.
 #
 # Examples
 # --------
@@ -78,8 +74,8 @@ fi
 # Print header.
 log_log "${QUIET}" "Cline CLI Setup"
 
-# Step 1: Install or check Cline CLI.
-log_log "${QUIET}" "[1/2] Checking Cline CLI ..."
+# Install or check Cline CLI.
+log_log "${QUIET}" "[1/1] Checking Cline CLI ..."
 if [[ "${COLDSTART}" -eq 1 ]]; then
     if [[ -n "${CLINE_BIN}" ]] || command -v cline &>/dev/null; then
         log_log "${QUIET}" "Cline CLI already installed."
@@ -94,26 +90,6 @@ else
         echo "Missing \`cline\`. Run \`bash ${SCRIPT_DIR}/cline.sh --coldstart\` to install."
     else
         log_log "${QUIET}" "Cline CLI already installed."
-    fi
-fi
-
-# Step 2: Copy or merge Cline global state into DOCKER_HOME (coldstart only).
-if [[ "${COLDSTART}" -eq 1 ]]; then
-    log_log "${QUIET}" "[2/2] Setting up Cline settings ..."
-    CLINE_STATE_SOURCE="${SCRIPT_DIR}/cline/globalState.json"
-    CLINE_STATE_TARGET="${DOCKER_HOME}/.cline/data/globalState.json"
-    if [[ -f "${CLINE_STATE_SOURCE}" ]]; then
-        mkdir -p "$(dirname "${CLINE_STATE_TARGET}")"
-        if [[ ! -f "${CLINE_STATE_TARGET}" ]]; then
-            cp "${CLINE_STATE_SOURCE}" "${CLINE_STATE_TARGET}"
-            log_log "${QUIET}" "Copied Cline global state to \`${CLINE_STATE_TARGET}\`."
-        else
-            python3 "${PROJECT_ROOT}/pyutils/json_merge.py" \
-                "${CLINE_STATE_SOURCE}" "${CLINE_STATE_TARGET}"
-            log_log "${QUIET}" "Merged Cline settings into existing \`${CLINE_STATE_TARGET}\`."
-        fi
-    else
-        echo "WARNING: Cline global state not found at \`${CLINE_STATE_SOURCE}\`." >&2
     fi
 fi
 

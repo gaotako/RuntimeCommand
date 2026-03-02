@@ -26,20 +26,21 @@ docker/
 │   ├── claude.sh                    Claude Code CLI installation and setup
 │   ├── claude/
 │   │   └── settings.json            Claude Code CLI settings (model, auth, env)
-│   ├── cline.sh                     Cline CLI installation and setup
-│   ├── cline/
-│   │   └── globalState-template.json  Cline global state template (${WORKSPACE} resolved at setup)
+│   ├── cline.sh                     Cline CLI installation and check
 │   └── kiro.sh                      Kiro CLI installation and setup
 ├── vimrc                            Vim configuration (sourced by ~/.vimrc)
 ├── shutils/                         Shared shell utility libraries
 │   ├── argparse.sh                  Dynamic argument parser (--key value → VAR)
 │   ├── log.sh                       BuildKit-style log indent builder
 │   └── shell.sh                     Shell handler detection (CISH), project root (RC_DIR)
-├── pyutils/                         Shared Python utility scripts
-│   └── json_merge.py                Merge two JSON files (source keys on top of target)
 ├── code_server/                     Shared code-server settings (platform-independent)
+│   ├── Machine/
+│   │   └── settings-template.json   Machine-level settings template (resolved at coldstart)
 │   ├── User/
-│   │   └── settings.json            User-level settings (themes, formatters, etc.)
+│   │   ├── settings.json            User-level settings (themes, formatters, etc.)
+│   │   └── globalStorage/
+│   │       └── zokugun.sync-settings/
+│   │           └── settings-template.yml  Sync-settings config template
 │   └── Data/
 │       └── SyncSettings/
 │           └── profiles/main/data/
@@ -47,14 +48,8 @@ docker/
 ├── linux/                           Linux / Cloud Desktop-specific scripts
 │   ├── install.sh                   Full install (build + home setup + coldstart)
 │   ├── wrapper.sh                   Launch code-server Docker container directly
-│   └── code_server/                 Linux-specific code-server settings
-│       ├── coldstart.sh             Bootstrap settings symlinks and sync-settings extension
-│       ├── Machine/
-│       │   └── settings-template.json  Machine-level settings template
-│       └── User/
-│           └── globalStorage/
-│               └── zokugun.sync-settings/
-│                   └── settings-template.yml  Sync-settings config template
+│   └── code_server/
+│       └── coldstart.sh             Bootstrap settings symlinks and sync-settings extension
 ├── sagemaker/                       SageMaker-specific scripts and data
 │   ├── install.sh                   Install code-server (build + wrapper + verify)
 │   ├── setup_jupyter.sh             Register code-server into JupyterLab launcher
@@ -63,14 +58,8 @@ docker/
 │   │   └── notebook_instance/
 │   │       ├── create.sh            First-time setup (build + install + register + coldstart)
 │   │       └── start.sh             Every-start setup (load image + install + register)
-│   ├── code_server/                 SageMaker-specific code-server settings
-│   │   ├── coldstart.sh             Bootstrap settings symlinks and sync-settings extension
-│   │   ├── Machine/
-│   │   │   └── settings-template.json  Machine-level settings template (Python path resolved at coldstart)
-│   │   └── User/
-│   │       └── globalStorage/
-│   │           └── zokugun.sync-settings/
-│   │               └── settings-template.yml  Sync-settings config template
+│   ├── code_server/
+│   │   └── coldstart.sh             Bootstrap settings symlinks and sync-settings extension
 │   └── sagemaker_jproxy_launcher_ext/   JupyterLab extension for server-proxy launcher
 │       ├── package.json             NPM metadata and build scripts
 │       ├── pyproject.toml           Python build system config
@@ -109,26 +98,29 @@ docker/
 
 ```bash
 RC_ROOT=~/Workspace/RuntimeCommandDev/src/RuntimeCommand
+git clone https://github.com/gaotako/RuntimeCommand "${RC_ROOT}"
 bash "${RC_ROOT}/linux/install.sh"
 ```
 
-This builds the Docker image, sets up the persistent home directory (SSH keys,
-AWS credentials, shell rc files), and bootstraps code-server settings.
+This clones the repo, builds the Docker image, sets up the persistent home
+directory (SSH keys, AWS credentials, shell rc files), and bootstraps
+code-server settings.
 
 ### Start Code-Server
 
 ```bash
-bash "${RC_ROOT}/linux/wrapper.sh"
+bash "${RC_ROOT}/linux/wrapper.sh" --detach
 ```
 
-Open `http://127.0.0.1:8080` in your browser. Options:
+Open `http://127.0.0.1:8080` in your browser (via SSH port forwarding:
+`ssh -L 8080:127.0.0.1:8080 <host>`). Options:
 
 ```bash
 # Custom port
-bash "${RC_ROOT}/linux/wrapper.sh" --port 9090
+bash "${RC_ROOT}/linux/wrapper.sh" --detach --port 9090
 
-# Run in background
-bash "${RC_ROOT}/linux/wrapper.sh" --detach
+# Foreground (blocking)
+bash "${RC_ROOT}/linux/wrapper.sh"
 ```
 
 ### Enter the Docker Shell
@@ -142,7 +134,7 @@ docker exec -it code-server-runtime /bin/zsh
 ```bash
 FORCE_BUILD=1 bash "${RC_ROOT}/build.sh"
 docker rm -f code-server-runtime
-bash "${RC_ROOT}/linux/wrapper.sh"
+bash "${RC_ROOT}/linux/wrapper.sh" --detach
 ```
 
 ---

@@ -88,5 +88,5 @@ bash "${SCRIPT_DIR}/code_server/coldstart.sh" --log-depth $((LOG_DEPTH + 1)) ${Q
 
 # Print completion summary.
 log_log "${QUIET}" "Installation complete."
-log_log "${QUIET}" "Start code-server: bash ${SCRIPT_DIR}/wrapper.sh"
+log_log "${QUIET}" "Start code-server: bash ${SCRIPT_DIR}/wrapper.sh --detach"
 log_log "${QUIET}" "Enter Docker shell: docker exec -it ${CONTAINER_NAME} ${DOCKER_SHELL}"
