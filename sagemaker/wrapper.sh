@@ -72,26 +72,6 @@ rm -f "${APP_DATA_HOME}/.jupyter_restart_needed"
 # Remove any stale container from a previous run.
 docker rm -f "${CONTAINER_NAME}" >/dev/null 2>&1 || true
 
-# Mount host tools under /host/* (lower priority than Docker binaries).
-HOST_TOOL_FLAGS=""
-HOST_TOOL_PATH=""
-for HOST_DIR in /usr/bin /lib64 /apollo/env; do
-    if [[ -d "${HOST_DIR}" ]]; then
-        HOST_TOOL_FLAGS="${HOST_TOOL_FLAGS} -v ${HOST_DIR}:/host${HOST_DIR}:ro"
-        HOST_TOOL_PATH="${HOST_TOOL_PATH}:/host${HOST_DIR}"
-    fi
-done
-for HOST_FILE in /etc/krb5.conf; do
-    if [[ -f "${HOST_FILE}" ]]; then
-        HOST_TOOL_FLAGS="${HOST_TOOL_FLAGS} -v ${HOST_FILE}:${HOST_FILE}:ro"
-    fi
-done
-for HOST_DIR in /etc/krb5.conf.d; do
-    if [[ -d "${HOST_DIR}" ]]; then
-        HOST_TOOL_FLAGS="${HOST_TOOL_FLAGS} -v ${HOST_DIR}:${HOST_DIR}:ro"
-    fi
-done
-
 # Launch code-server inside the container (SELinux compat, no -u on SageMaker).
 exec docker run --rm \
     --name "${CONTAINER_NAME}" \
@@ -105,13 +85,10 @@ exec docker run --rm \
     -e "XDG_CACHE_HOME=${XDG_CACHE_HOME}" \
     -e "XDG_STATE_HOME=${XDG_STATE_HOME}" \
     -e "SHELL=${DOCKER_SHELL}" \
-    -e "LD_LIBRARY_PATH=/host/lib64" \
-    -e "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin${HOST_TOOL_PATH}" \
     -v "${WORKSPACE}:${WORKSPACE}" \
     -v /opt/ml:/opt/ml:ro \
     -v /tmp:/tmp \
     -v /etc/passwd:/etc/passwd:ro \
     -v /etc/group:/etc/group:ro \
-    ${HOST_TOOL_FLAGS} \
     "${IMAGE_NAME}:${IMAGE_TAG}" \
     "${REWRITTEN_ARGS[@]}"
