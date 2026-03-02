@@ -1,4 +1,5 @@
 {
+    "python.createEnvironment.trigger": "off",
     "python.defaultInterpreterPath": "${MISE_PYTHON_PATH}",
     "terminal.integrated.defaultProfile.linux": "zsh",
     "terminal.integrated.profiles.linux": {
