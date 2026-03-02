@@ -76,59 +76,91 @@ if [[ -f "${VIMRC_SOURCE}" ]]; then
     echo "source ${VIMRC_SOURCE}" > "${VIMRC_TARGET}"
 fi
 
-# Symlink ~/.ssh to persistent storage, preserving existing content.
-# Generate an SSH identity (ed25519, fallback to ecdsa, then rsa) if none exists.
-log_log "${QUIET}" "[2/5] Setting up .ssh ..."
-mkdir -p "${SSH_HOME}"
-if [[ ! -L "${DOCKER_HOME}/.ssh" || "$(readlink -f "${DOCKER_HOME}/.ssh")" != "$(readlink -f "${SSH_HOME}")" ]]; then
-    if [[ -n "$(ls "${DOCKER_HOME}/.ssh" 2>/dev/null)" ]]; then
-        cp -r "${DOCKER_HOME}/.ssh/"* "${SSH_HOME}/"
+# Merge and symlink .ssh for Docker and host to persistent storage.
+#
+# Merge priority (high to low): system (host) > Docker > persistent.
+# Docker content is copied first (fills gaps), then host content
+# overwrites (highest priority). Both dirs are then symlinked.
+# Generates an SSH identity if none exists after merging.
+#
+# Args
+# ----
+# (No-Args)
+#
+# Returns
+# -------
+# (No-Returns)
+_setup_ssh() {
+    mkdir -p "${SSH_HOME}"
+
+    if [[ ! -L "${DOCKER_HOME}/.ssh" ]] && [[ -d "${DOCKER_HOME}/.ssh" ]]; then
+        cp -rn "${DOCKER_HOME}/.ssh/"* "${SSH_HOME}/" 2>/dev/null || true
     fi
+
+    if [[ "${HOME}" != "${DOCKER_HOME}" ]] && [[ ! -L "${HOME}/.ssh" ]] && [[ -d "${HOME}/.ssh" ]]; then
+        cp -r "${HOME}/.ssh/"* "${SSH_HOME}/" 2>/dev/null || true
+    fi
+
     rm -rf "${DOCKER_HOME}/.ssh"
     ln -s "${SSH_HOME}" "${DOCKER_HOME}/.ssh"
-fi
-GENERATED_KEY_TYPE=""
-for KEY_TYPE in ed25519 ecdsa rsa; do
-    if [[ ! -f "${SSH_HOME}/id_${KEY_TYPE}" ]]; then
-        if ssh-keygen -t "${KEY_TYPE}" -q -f "${SSH_HOME}/id_${KEY_TYPE}" -N ""; then
+
+    if [[ "${HOME}" != "${DOCKER_HOME}" ]]; then
+        rm -rf "${HOME}/.ssh"
+        ln -s "${SSH_HOME}" "${HOME}/.ssh"
+    fi
+
+    GENERATED_KEY_TYPE=""
+    for KEY_TYPE in ed25519 ecdsa rsa; do
+        if [[ ! -f "${SSH_HOME}/id_${KEY_TYPE}" ]]; then
+            if ssh-keygen -t "${KEY_TYPE}" -q -f "${SSH_HOME}/id_${KEY_TYPE}" -N ""; then
+                GENERATED_KEY_TYPE="${KEY_TYPE}"
+                break
+            fi
+        else
             GENERATED_KEY_TYPE="${KEY_TYPE}"
             break
         fi
-    else
-        GENERATED_KEY_TYPE="${KEY_TYPE}"
-        break
-    fi
-done
+    done
+}
 
-# Add persistent SSH key as an additional identity on the host.
-# This allows git operations on the SageMaker host (outside Docker) to use
-# the same key as inside Docker, without modifying the host's existing keys.
-# Uses whichever key type was generated or found by the loop above.
-HOST_SSH_DIR="${HOME}/.ssh"
-HOST_SSH_CONFIG="${HOST_SSH_DIR}/config"
-if [[ -d "${SSH_HOME}" && -n "${GENERATED_KEY_TYPE}" && "${HOME}" != "${DOCKER_HOME}" ]]; then
-    mkdir -p "${HOST_SSH_DIR}"
-    chmod 700 "${HOST_SSH_DIR}"
-    SSH_IDENTITY_LINE="IdentityFile ${SSH_HOME}/id_${GENERATED_KEY_TYPE}"
-    if ! grep -qF "${SSH_IDENTITY_LINE}" "${HOST_SSH_CONFIG}" 2>/dev/null; then
-        echo "" >> "${HOST_SSH_CONFIG}"
-        echo "# RuntimeCommand persistent SSH key." >> "${HOST_SSH_CONFIG}"
-        echo "Host *" >> "${HOST_SSH_CONFIG}"
-        echo "    ${SSH_IDENTITY_LINE}" >> "${HOST_SSH_CONFIG}"
-    fi
-    chmod 600 "${HOST_SSH_CONFIG}"
-fi
+# Merge and symlink .aws for Docker and host to persistent storage.
+#
+# Same merge priority as SSH: system (host) > Docker > persistent.
+#
+# Args
+# ----
+# (No-Args)
+#
+# Returns
+# -------
+# (No-Returns)
+_setup_aws() {
+    mkdir -p "${AWS_HOME}"
 
-# Symlink ~/.aws to persistent storage, preserving existing content.
-log_log "${QUIET}" "[3/5] Setting up .aws ..."
-mkdir -p "${AWS_HOME}"
-if [[ ! -L "${DOCKER_HOME}/.aws" || "$(readlink -f "${DOCKER_HOME}/.aws")" != "$(readlink -f "${AWS_HOME}")" ]]; then
-    if [[ -n "$(ls "${DOCKER_HOME}/.aws" 2>/dev/null)" ]]; then
-        cp -r "${DOCKER_HOME}/.aws/"* "${AWS_HOME}/"
+    if [[ ! -L "${DOCKER_HOME}/.aws" ]] && [[ -d "${DOCKER_HOME}/.aws" ]]; then
+        cp -rn "${DOCKER_HOME}/.aws/"* "${AWS_HOME}/" 2>/dev/null || true
     fi
+
+    if [[ "${HOME}" != "${DOCKER_HOME}" ]] && [[ ! -L "${HOME}/.aws" ]] && [[ -d "${HOME}/.aws" ]]; then
+        cp -r "${HOME}/.aws/"* "${AWS_HOME}/" 2>/dev/null || true
+    fi
+
     rm -rf "${DOCKER_HOME}/.aws"
     ln -s "${AWS_HOME}" "${DOCKER_HOME}/.aws"
-fi
+
+    if [[ "${HOME}" != "${DOCKER_HOME}" ]]; then
+        rm -rf "${HOME}/.aws"
+        ln -s "${AWS_HOME}" "${HOME}/.aws"
+    fi
+}
+
+# Set up .ssh (priority: host > Docker > persistent).
+log_log "${QUIET}" "[2/5] Setting up .ssh ..."
+_setup_ssh
+
+# Set up .aws (priority: host > Docker > persistent).
+log_log "${QUIET}" "[3/5] Setting up .aws ..."
+_setup_aws
 
 # Set up shell rc files for DOCKER_HOME and HOST HOME.
 # DOCKER_HOME uses DOCKER_SHELL (from config.sh) to determine the rc file.
