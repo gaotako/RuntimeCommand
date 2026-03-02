@@ -54,17 +54,6 @@ for arg in "${@}"; do
     fi
 done
 
-# Build the port-mapping flag if a port was detected.
-PORT_FLAGS=""
-if [[ -n "${PORT}" ]]; then
-    PORT_FLAGS="-p 127.0.0.1:${PORT}:${PORT}"
-fi
-
-# Map additional ports for development servers (Streamlit: 8501-8509).
-for DEV_PORT in $(seq 8501 8509); do
-    PORT_FLAGS="${PORT_FLAGS} -p 127.0.0.1:${DEV_PORT}:${DEV_PORT}"
-done
-
 # Clear the Jupyter restart hint flag (set by lifecycle scripts).
 # Opening code-server means Jupyter has been restarted successfully.
 rm -f "${APP_DATA_HOME}/.jupyter_restart_needed"
@@ -72,11 +61,11 @@ rm -f "${APP_DATA_HOME}/.jupyter_restart_needed"
 # Remove any stale container from a previous run.
 docker rm -f "${CONTAINER_NAME}" >/dev/null 2>&1 || true
 
-# Launch code-server inside the container (SELinux compat, no -u on SageMaker).
+# Launch code-server with host networking (SELinux compat, no -u on SageMaker).
 exec docker run --rm \
     --name "${CONTAINER_NAME}" \
+    --network host \
     --security-opt label:disable \
-    ${PORT_FLAGS} \
     -e "HOME=${DOCKER_HOME}" \
     -e "WORKSPACE=${DOCKER_HOME}" \
     -e "RC_DOCKER=1" \

@@ -71,14 +71,6 @@ unset RC_DOCKER
 # Ensure XDG directories exist on the host before mounting.
 mkdir -p "${XDG_DATA_HOME}" "${XDG_CONFIG_HOME}" "${XDG_CACHE_HOME}" "${XDG_STATE_HOME}"
 
-# Build port-mapping flags.
-PORT_FLAGS="-p 127.0.0.1:${PORT}:${PORT}"
-
-# Map additional ports for development servers (Streamlit: 8501-8509).
-for DEV_PORT in $(seq 8501 8509); do
-    PORT_FLAGS="${PORT_FLAGS} -p 127.0.0.1:${DEV_PORT}:${DEV_PORT}"
-done
-
 # Build detach flag.
 DETACH_FLAG=""
 if [[ "${DETACH}" -eq 1 ]]; then
@@ -95,12 +87,12 @@ if [[ ${#CS_ARGS[@]} -eq 0 ]]; then
     CS_ARGS=("--bind-addr" "0.0.0.0:${PORT}" "--auth" "none")
 fi
 
-# Launch code-server with SELinux compat, host user mapping, and volume mounts.
+# Launch code-server with host networking, SELinux compat, and volume mounts.
 exec docker run \
     --name "${CONTAINER_NAME}" \
     ${DETACH_FLAG} \
+    --network host \
     --security-opt label:disable \
-    ${PORT_FLAGS} \
     -u "$(id -u):$(id -g)" \
     -e "HOME=${DOCKER_HOME}" \
     -e "WORKSPACE=${DOCKER_HOME}" \
