@@ -48,14 +48,6 @@
         "disableToolUse": true,
         "customArgs": ""
     },
-    "workspaceRoots": [
-        {
-            "path": "${WORKSPACE}/CodeServerDockerHome/Workspace",
-            "name": "Workspace",
-            "vcs": "none"
-        }
-    ],
-    "primaryRootIndex": 0,
     "vscodeTerminalExecutionMode": "vscodeTerminal",
     "defaultTerminalProfile": "default"
 }
