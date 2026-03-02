@@ -95,6 +95,26 @@ if [[ ${#CS_ARGS[@]} -eq 0 ]]; then
     CS_ARGS=("--bind-addr" "0.0.0.0:${PORT}" "--auth" "none")
 fi
 
+# Mount host tools under /host/* (lower priority than Docker binaries).
+HOST_TOOL_FLAGS=""
+HOST_TOOL_PATH=""
+for HOST_DIR in /usr/bin /lib64 /apollo/env; do
+    if [[ -d "${HOST_DIR}" ]]; then
+        HOST_TOOL_FLAGS="${HOST_TOOL_FLAGS} -v ${HOST_DIR}:/host${HOST_DIR}:ro"
+        HOST_TOOL_PATH="${HOST_TOOL_PATH}:/host${HOST_DIR}"
+    fi
+done
+for HOST_FILE in /etc/krb5.conf; do
+    if [[ -f "${HOST_FILE}" ]]; then
+        HOST_TOOL_FLAGS="${HOST_TOOL_FLAGS} -v ${HOST_FILE}:${HOST_FILE}:ro"
+    fi
+done
+for HOST_DIR in /etc/krb5.conf.d; do
+    if [[ -d "${HOST_DIR}" ]]; then
+        HOST_TOOL_FLAGS="${HOST_TOOL_FLAGS} -v ${HOST_DIR}:${HOST_DIR}:ro"
+    fi
+done
+
 # Launch code-server with SELinux compat, host user mapping, and volume mounts.
 exec docker run \
     --name "${CONTAINER_NAME}" \
@@ -111,9 +131,12 @@ exec docker run \
     -e "XDG_CACHE_HOME=${XDG_CACHE_HOME}" \
     -e "XDG_STATE_HOME=${XDG_STATE_HOME}" \
     -e "SHELL=${DOCKER_SHELL}" \
+    -e "LD_LIBRARY_PATH=/host/lib64" \
+    -e "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin${HOST_TOOL_PATH}" \
     -v "${WORKSPACE}:${WORKSPACE}" \
     -v /tmp:/tmp \
     -v /etc/passwd:/etc/passwd:ro \
     -v /etc/group:/etc/group:ro \
+    ${HOST_TOOL_FLAGS} \
     "${IMAGE_NAME}:${IMAGE_TAG}" \
     "${CS_ARGS[@]}"
