@@ -63,6 +63,7 @@ AWS_HOME="${PERSISTENT_ROOT}/aws"
 
 # Ensure DOCKER_HOME and common subdirectories exist.
 mkdir -p "${DOCKER_HOME}" "${DOCKER_HOME}/Workspace"
+ln -sfn "${DOCKER_HOME}/Workspace" "${DOCKER_HOME}/Desktop"
 
 # Print header.
 log_log "${QUIET}" "Home Directory Setup"
