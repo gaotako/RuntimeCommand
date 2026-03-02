@@ -161,29 +161,52 @@ read -r DOCKER_RC_FILE DOCKER_LOGIN_FILE <<< "$(_rc_files_for_shell "${DOCKER_SH
 } > "${DOCKER_HOME}/${DOCKER_RC_FILE}"
 echo "source ${DOCKER_HOME}/${DOCKER_RC_FILE}" > "${DOCKER_HOME}/${DOCKER_LOGIN_FILE}"
 
+# Append a marker-fenced block to a file, replacing any existing block.
+#
+# Removes any existing RuntimeCommand block, collapses consecutive blank
+# lines left behind, then appends the new block at the end preceded by
+# exactly one blank line separator.
+#
+# Args
+# ----
+# - `target_file`
+#     Path to the rc file to modify.
+# - `content`
+#     Content to place between the marker fences.
+#
+# Returns
+# -------
+# (No-Returns)
+_rc_register_block() {
+    [[ ! -f "${1}" ]] && touch "${1}"
+    sed -i "/${RC_MARKER_BEGIN}/,/${RC_MARKER_END}/d" "${1}"
+    sed -i '/^$/N;/^\n$/d' "${1}"
+    if [[ -s "${1}" ]]; then
+        echo "" >> "${1}"
+    fi
+    echo "${RC_MARKER_BEGIN}" >> "${1}"
+    echo "${2}" >> "${1}"
+    echo "${RC_MARKER_END}" >> "${1}"
+}
+
 # Set up HOST HOME rc files (based on SHELL env var, the user's login shell).
 RC_BLOCK="export RC_DIR=\"${SCRIPT_DIR}\"
 ${RC_SOURCE_LINE}"
 read -r HOST_RC_FILE HOST_LOGIN_FILE <<< "$(_rc_files_for_shell "${SHELL}")"
 TARGET_HOME="${HOME}"
-for RC_PAIR in "${HOST_RC_FILE}:${RC_BLOCK}" "${HOST_LOGIN_FILE}:source ${TARGET_HOME}/${HOST_RC_FILE}"; do
-    RC_FILE_TARGET="${TARGET_HOME}/${RC_PAIR%%:*}"
-    RC_CONTENT="${RC_PAIR#*:}"
-    [[ ! -f "${RC_FILE_TARGET}" ]] && touch "${RC_FILE_TARGET}"
-    sed -i "/${RC_MARKER_BEGIN}/,/${RC_MARKER_END}/d" "${RC_FILE_TARGET}"
-    if [[ -s "${RC_FILE_TARGET}" ]]; then
-        echo "" >> "${RC_FILE_TARGET}"
-    fi
-    echo "${RC_MARKER_BEGIN}" >> "${RC_FILE_TARGET}"
-    echo "${RC_CONTENT}" >> "${RC_FILE_TARGET}"
-    echo "${RC_MARKER_END}" >> "${RC_FILE_TARGET}"
-done
+_rc_register_block "${TARGET_HOME}/${HOST_RC_FILE}" "${RC_BLOCK}"
+_rc_register_block "${TARGET_HOME}/${HOST_LOGIN_FILE}" "source ${TARGET_HOME}/${HOST_RC_FILE}"
 
-# Symlink persistent rc file to HOST HOME's rc file.
+# Symlink persistent rc files and cishrc.sh to HOST HOME's rc file.
 RC_LINK="${PERSISTENT_ROOT}/${HOST_RC_FILE##.}.sh"
 if [[ ! -L "${RC_LINK}" || "$(readlink -f "${RC_LINK}")" != "$(readlink -f "${HOME}/${HOST_RC_FILE}")" ]]; then
     rm -rf "${RC_LINK}"
     ln -s "${HOME}/${HOST_RC_FILE}" "${RC_LINK}"
+fi
+CISHRC_LINK="${PERSISTENT_ROOT}/cishrc.sh"
+if [[ ! -L "${CISHRC_LINK}" || "$(readlink -f "${CISHRC_LINK}")" != "$(readlink -f "${HOME}/${HOST_RC_FILE}")" ]]; then
+    rm -rf "${CISHRC_LINK}"
+    ln -s "${HOME}/${HOST_RC_FILE}" "${CISHRC_LINK}"
 fi
 
 # Ensure XDG and application directories exist on the host.
