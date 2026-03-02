@@ -67,5 +67,5 @@ nnoremap <Esc> :nohlsearch<CR>
 
 " Auto-install plugins on first vim launch if plugged directory is missing.
 if empty(glob('~/.vim/plugged'))
-    autocmd VimEnter * PlugInstall --sync | source $MYVIMRC
+    autocmd VimEnter * PlugInstall --sync | quit
 endif
