@@ -1,5 +1,0 @@
-hostname: ""
-profile: main
-repository:
-    type: file
-    path: ${PROJECT_ROOT}/code_server/Data/SyncSettings

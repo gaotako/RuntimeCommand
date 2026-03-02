@@ -1,9 +1,0 @@
-{
-    "python.defaultInterpreterPath": "${MISE_PYTHON_PATH}",
-    "terminal.integrated.defaultProfile.linux": "zsh",
-    "terminal.integrated.profiles.linux": {
-        "zsh": {
-            "path": "${DOCKER_SHELL}"
-        }
-    }
-}

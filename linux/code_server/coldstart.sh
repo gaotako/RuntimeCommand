@@ -56,9 +56,8 @@ log_make_indent "${LOG_DEPTH}"
 QUIET_DEFAULT=0
 QUIET="${QUIET:-${QUIET_DEFAULT}}"
 
-# Shared and Linux-specific code-server source directories.
+# Shared code-server source directory.
 SHARED_CS_ROOT="${PROJECT_ROOT}/code_server"
-LINUX_CS_ROOT="${SCRIPT_DIR}"
 CODE_SERVER_SETTINGS_ROOT="${XDG_DATA_HOME}/code-server"
 
 # Print coldstart header.
@@ -80,19 +79,19 @@ if [[ ! -L "${THERE}" || "$(readlink -f "${THERE}")" != "$(readlink -f "${HERE}"
     ln -s "${HERE}" "${THERE}"
 fi
 
-# Template and symlink Machine settings (uses system Python, not mise).
+# Template and symlink Machine settings (shared, resolved at coldstart).
 log_log "${QUIET}" "[2/4] Templating Machine settings ..."
 SYSTEM_PYTHON_PATH="/usr/bin/python3"
 log_log "${QUIET}" "Python path: ${SYSTEM_PYTHON_PATH}"
 log_log "${QUIET}" "Docker shell: ${DOCKER_SHELL}"
-rm -f "${LINUX_CS_ROOT}/Machine/settings.json"
-cp "${LINUX_CS_ROOT}/Machine/settings-template.json" "${LINUX_CS_ROOT}/Machine/settings.json"
+rm -f "${SHARED_CS_ROOT}/Machine/settings.json"
+cp "${SHARED_CS_ROOT}/Machine/settings-template.json" "${SHARED_CS_ROOT}/Machine/settings.json"
 SYSTEM_PYTHON_PATH_SED="$(echo "${SYSTEM_PYTHON_PATH}" | sed -E "s/([\\/\\.&])/\\\\\1/g")"
 DOCKER_SHELL_SED="$(echo "${DOCKER_SHELL}" | sed -E "s/([\\/\\.&])/\\\\\1/g")"
 sed -i -e "s/\${MISE_PYTHON_PATH}/${SYSTEM_PYTHON_PATH_SED}/g" \
     -e "s/\${DOCKER_SHELL}/${DOCKER_SHELL_SED}/g" \
-    "${LINUX_CS_ROOT}/Machine/settings.json"
-HERE="${LINUX_CS_ROOT}/Machine/settings.json"
+    "${SHARED_CS_ROOT}/Machine/settings.json"
+HERE="${SHARED_CS_ROOT}/Machine/settings.json"
 THERE="${CODE_SERVER_SETTINGS_ROOT}/Machine/settings.json"
 if [[ ! -L "${THERE}" || "$(readlink -f "${THERE}")" != "$(readlink -f "${HERE}")" ]]; then
     if [[ -f "${THERE}" ]]; then
@@ -108,7 +107,7 @@ fi
 
 # Install sync-settings extension if not already present.
 log_log "${QUIET}" "[3/4] Installing sync-settings extension ..."
-SYNC_SETTINGS_SOURCE_ROOT="${LINUX_CS_ROOT}/User/globalStorage/zokugun.sync-settings"
+SYNC_SETTINGS_SOURCE_ROOT="${SHARED_CS_ROOT}/User/globalStorage/zokugun.sync-settings"
 SYNC_SETTINGS_SETTINGS_ROOT="${CODE_SERVER_SETTINGS_ROOT}/User/globalStorage/zokugun.sync-settings"
 if [[ ! -d "${SYNC_SETTINGS_SETTINGS_ROOT}" ]]; then
     docker run --rm \
