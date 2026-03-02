@@ -125,8 +125,8 @@ fi
 log_log "${QUIET}" "[4/4] Configuring sync-settings ..."
 rm -f "${SYNC_SETTINGS_SOURCE_ROOT}/settings.yml"
 cp "${SYNC_SETTINGS_SOURCE_ROOT}/settings-template.yml" "${SYNC_SETTINGS_SOURCE_ROOT}/settings.yml"
-PROJECT_ROOT_SED="$(echo "${PROJECT_ROOT}" | sed -E "s/([\\/\\.&])/\\\\\1/g")"
-sed -i -e "s/\${PROJECT_ROOT}/${PROJECT_ROOT_SED}/g" "${SYNC_SETTINGS_SOURCE_ROOT}/settings.yml"
+PLATFORM_ROOT_SED="$(echo "${LINUX_ROOT}" | sed -E "s/([\\/\\.&])/\\\\\1/g")"
+sed -i -e "s/\${PLATFORM_ROOT}/${PLATFORM_ROOT_SED}/g" "${SYNC_SETTINGS_SOURCE_ROOT}/settings.yml"
 HERE="${SYNC_SETTINGS_SOURCE_ROOT}/settings.yml"
 THERE="${SYNC_SETTINGS_SETTINGS_ROOT}/settings.yml"
 if [[ ! -L "${THERE}" || "$(readlink -f "${THERE}")" != "$(readlink -f "${HERE}")" ]]; then
