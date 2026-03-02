@@ -24,7 +24,6 @@
 # - `DOCKER_HOME`
 #     Isolated home directory for the container (default:
 #     `/home/ec2-user/SageMaker/CodeServerDockerHome`).
-
 set -euo pipefail
 
 # Resolve the directory containing this script.

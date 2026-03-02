@@ -60,6 +60,7 @@ QUIET="${QUIET:-${QUIET_DEFAULT}}"
 PERSISTENT_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 SSH_HOME="${PERSISTENT_ROOT}/ssh"
 AWS_HOME="${PERSISTENT_ROOT}/aws"
+MIDWAY_HOME="${PERSISTENT_ROOT}/midway"
 
 # Ensure DOCKER_HOME and common subdirectories exist.
 mkdir -p "${DOCKER_HOME}" "${DOCKER_HOME}/Workspace"
@@ -69,7 +70,7 @@ ln -sfn "${DOCKER_HOME}/Workspace" "${DOCKER_HOME}/Desktop"
 log_log "${QUIET}" "Home Directory Setup"
 
 # Write DOCKER_HOME .vimrc that sources the project vimrc.
-log_log "${QUIET}" "[1/5] Setting up .vimrc ..."
+log_log "${QUIET}" "[1/6] Setting up .vimrc ..."
 VIMRC_SOURCE="${SCRIPT_DIR}/vimrc"
 VIMRC_TARGET="${DOCKER_HOME}/.vimrc"
 if [[ -f "${VIMRC_SOURCE}" ]]; then
@@ -155,18 +156,53 @@ _setup_aws() {
 }
 
 # Set up .ssh (priority: host > Docker > persistent).
-log_log "${QUIET}" "[2/5] Setting up .ssh ..."
+log_log "${QUIET}" "[2/6] Setting up .ssh ..."
 _setup_ssh
 
 # Set up .aws (priority: host > Docker > persistent).
-log_log "${QUIET}" "[3/5] Setting up .aws ..."
+log_log "${QUIET}" "[3/6] Setting up .aws ..."
 _setup_aws
+
+# Merge and symlink .midway for Docker and host to persistent storage.
+#
+# Same merge priority as SSH and AWS: system (host) > Docker > persistent.
+#
+# Args
+# ----
+# (No-Args)
+#
+# Returns
+# -------
+# (No-Returns)
+_setup_midway() {
+    mkdir -p "${MIDWAY_HOME}"
+
+    if [[ ! -L "${DOCKER_HOME}/.midway" ]] && [[ -d "${DOCKER_HOME}/.midway" ]]; then
+        cp -rn "${DOCKER_HOME}/.midway/"* "${MIDWAY_HOME}/" 2>/dev/null || true
+    fi
+
+    if [[ "${HOME}" != "${DOCKER_HOME}" ]] && [[ ! -L "${HOME}/.midway" ]] && [[ -d "${HOME}/.midway" ]]; then
+        cp -r "${HOME}/.midway/"* "${MIDWAY_HOME}/" 2>/dev/null || true
+    fi
+
+    rm -rf "${DOCKER_HOME}/.midway"
+    ln -s "${MIDWAY_HOME}" "${DOCKER_HOME}/.midway"
+
+    if [[ "${HOME}" != "${DOCKER_HOME}" ]]; then
+        rm -rf "${HOME}/.midway"
+        ln -s "${MIDWAY_HOME}" "${HOME}/.midway"
+    fi
+}
+
+# Set up .midway (priority: host > Docker > persistent).
+log_log "${QUIET}" "[4/6] Setting up .midway ..."
+_setup_midway
 
 # Set up shell rc files for DOCKER_HOME and HOST HOME.
 # DOCKER_HOME uses DOCKER_SHELL (from config.sh) to determine the rc file.
 # HOST HOME uses CISH (from shell.sh) to detect the host's current shell.
 # Both source rc.sh for environment setup.
-log_log "${QUIET}" "[4/5] Setting up shell rc files ..."
+log_log "${QUIET}" "[5/6] Setting up shell rc files ..."
 RC_MARKER_BEGIN="# >>> RuntimeCommand >>>"
 RC_MARKER_END="# <<< RuntimeCommand <<<"
 RC_SOURCE_LINE="source ${SCRIPT_DIR}/rc.sh"
@@ -243,7 +279,7 @@ if [[ ! -L "${CISHRC_LINK}" || "$(readlink -f "${CISHRC_LINK}")" != "$(readlink 
 fi
 
 # Ensure XDG and application directories exist on the host.
-log_log "${QUIET}" "[5/5] Creating XDG and application directories ..."
+log_log "${QUIET}" "[6/6] Creating XDG and application directories ..."
 mkdir -p "${XDG_DATA_HOME}" "${XDG_CONFIG_HOME}" "${XDG_CACHE_HOME}" "${XDG_STATE_HOME}"
 mkdir -p "${APP_ROOT}" "${APP_DATA_HOME}" "${APP_BIN_HOME}"
 log_log "${QUIET}" "Home directory setup complete."
