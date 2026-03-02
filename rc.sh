@@ -14,29 +14,78 @@
 # -------
 # (No-Returns)
 
-# Guard: only run inside the Docker container launched by wrapper.sh.
-# wrapper.sh sets RC_DOCKER=1 as a container env var (and unsets it on the
-# host before launching). On the SageMaker host or any other environment,
-# rc.sh shows docker entry instructions (once) and exits early.
-if [[ "${RC_DOCKER:-0}" != "1" ]]; then
-    # Check if the lifecycle setup has completed.
-    # APP_DATA_HOME may not be set yet (config.sh not sourced), so derive it.
+# Show SageMaker lifecycle and Jupyter restart hints on the host.
+#
+# Checks whether lifecycle setup has completed (via `.rc_ready` flag) and
+# whether Jupyter needs a restart (via `.jupyter_restart_needed` flag).
+# Prints a "configuring" message (once) if setup is incomplete, and a
+# Jupyter restart hint if the flag is present.
+#
+# Args
+# ----
+# (No-Args)
+#
+# Returns
+# -------
+# - `status`
+#     0 if setup is complete, 1 if still configuring (caller should exit).
+_rc_sagemaker_hints() {
     _RC_APP_DATA="${HOME}/SageMaker/Application/data"
     _RC_READY_FLAG="${_RC_APP_DATA}/.rc_ready"
+
     if [[ ! -f "${_RC_READY_FLAG}" ]]; then
         if [[ "${_RC_NOT_READY_SHOWN:-0}" != "1" ]]; then
             _RC_NOT_READY_SHOWN=1
             echo "Code Server is configuring. Check \`~/SageMaker/lifecycle-create.log\` (first boot) or \`~/SageMaker/lifecycle-start.log\` (restart) to monitor progress. Restart Jupyter after setup completes to enable the Code Server launcher."
         fi
-        return 0 2>/dev/null || true
+        return 1
     fi
+
     if [[ -f "${_RC_APP_DATA}/.jupyter_restart_needed" ]]; then
         echo "Jupyter restart needed to enable Code Server. Go to JupyterLab: \`File\` → \`Shut Down\`, then re-open. Open Code Server once to dismiss this hint."
     fi
+    return 0
+}
+
+# Show host-side hints and return early when not inside the Docker container.
+#
+# Detects the platform from `RC_PLATFORM` or hostname heuristics. On
+# SageMaker, shows lifecycle and Jupyter hints via `_rc_sagemaker_hints`.
+# On all platforms, shows the Docker entry hint once per session.
+#
+# Args
+# ----
+# (No-Args)
+#
+# Returns
+# -------
+# - `status`
+#     Always 0 (host-side early exit from rc.sh).
+_rc_host_guard() {
+    _RC_PLATFORM="${RC_PLATFORM:-}"
+    if [[ -z "${_RC_PLATFORM}" ]]; then
+        if [[ "$(whoami)" == "ec2-user" && -d "${HOME}/SageMaker" ]]; then
+            _RC_PLATFORM="sagemaker"
+        else
+            _RC_PLATFORM="linux"
+        fi
+    fi
+
+    if [[ "${_RC_PLATFORM}" == "sagemaker" ]]; then
+        _rc_sagemaker_hints || return 0
+    fi
+
     if [[ "${_RC_DOCKER_HINT_SHOWN:-0}" != "1" ]]; then
         _RC_DOCKER_HINT_SHOWN=1
-        echo "To enter Docker environment, run: \`docker exec -it code-server-sagemaker /bin/zsh\`."
+        _RC_CONTAINER="${CONTAINER_NAME:-code-server-runtime}"
+        echo "To enter Docker environment, run: \`docker exec -it ${_RC_CONTAINER} /bin/zsh\`."
     fi
+    return 0
+}
+
+# Guard: only run inside the Docker container launched by wrapper.sh.
+if [[ "${RC_DOCKER:-0}" != "1" ]]; then
+    _rc_host_guard
     return 0 2>/dev/null || true
 fi
 

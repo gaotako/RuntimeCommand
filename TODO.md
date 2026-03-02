@@ -2,12 +2,37 @@
 
 ## Cross-Platform Docker Deployment
 
-The current setup is SageMaker-specific. The following tasks are needed to
-support AL2 Cloud Desktop and macOS environments.
+The setup now supports SageMaker and Linux (AL2 Cloud Desktop) platforms.
+The following tasks remain for full cross-platform coverage.
 
 ---
 
-### 1. Share Code-Server Settings with Host VS Code
+### ~~1. Platform Detection~~ ✅
+
+Platform detection is implemented in `config.sh` via `RC_PLATFORM`:
+- `sagemaker`: SageMaker Notebook Instance (ec2-user, `~/SageMaker` present).
+- `linux`: Generic Linux / AL2 Cloud Desktop (default for Linux).
+- `macos`: macOS (Darwin kernel) — detected but not yet fully supported.
+
+Override manually: `RC_PLATFORM=linux bash install.sh`.
+
+### ~~2. Wrapper / Entry Point Differences~~ ✅
+
+- SageMaker: `sagemaker/wrapper.sh` launches Docker via `jupyter-server-proxy`.
+- Linux: `linux/wrapper.sh` launches Docker directly with `--port` / `--detach`.
+- The Docker container itself (Dockerfile, `rc.sh`, `mise.sh`) is
+  platform-agnostic. Only the host-side orchestration differs.
+
+### ~~3. AI Agent Configuration~~ ✅
+
+- `claude/settings.json`: Same across platforms (Bedrock via AWS profile).
+- `cline/globalState-template.json`: Uses `${WORKSPACE}` placeholder resolved
+  at setup time via `sed` — produces platform-correct paths automatically.
+- `rc.sh` host guard now shows platform-appropriate hints.
+
+---
+
+### 4. Share Code-Server Settings with Host VS Code
 
 - [ ] Symlink or mount `code_server/User/settings.json` to the host VS Code
       settings directory:
@@ -19,7 +44,7 @@ support AL2 Cloud Desktop and macOS environments.
 - [ ] Machine settings (`settings-template.json`) may need different Python
       paths on each platform (mise-managed vs system).
 
-### 2. Extension List Divergence
+### 5. Extension List Divergence
 
 - [ ] Create platform-specific extension lists or use conditional logic:
   - **SageMaker (code-server):** Uses `saoudrizwan.claude-dev` (Cline open-source)
@@ -30,40 +55,11 @@ support AL2 Cloud Desktop and macOS environments.
   ```
   code_server/Data/SyncSettings/profiles/
   ├── sagemaker/extensions.yml     # code-server extensions
-  ├── cloud-desktop/extensions.yml # AL2 extensions (Cline internal)
+  ├── linux/extensions.yml         # AL2 extensions (Cline internal)
   └── macos/extensions.yml         # macOS extensions (Cline internal)
   ```
 - [ ] Update `coldstart.sh` or equivalent to select the correct profile based
       on the detected platform.
-
-### 3. Platform Detection
-
-- [ ] Add a platform detection mechanism (e.g., `PLATFORM` env var or
-      auto-detect from `uname -s` / hostname pattern):
-  - `sagemaker`: SageMaker Notebook Instance (ec2-user, Jupyter present)
-  - `cloud-desktop`: AL2 Cloud Desktop (gajianfe, no Jupyter)
-  - `macos`: macOS (darwin kernel)
-- [ ] Gate SageMaker-specific scripts (`setup_jupyter.sh`, `coldstart.sh`)
-      behind platform checks.
-
-### 4. Wrapper / Entry Point Differences
-
-- [ ] SageMaker: `wrapper.sh` launches Docker via `jupyter-server-proxy`.
-- [ ] Cloud Desktop / macOS: Docker is started manually or via a simpler
-      launcher script. No Jupyter proxy needed.
-- [ ] The Docker container itself (Dockerfile, `rc.sh`, `mise.sh`) is
-      platform-agnostic. Only the host-side orchestration differs.
-
-### 5. AI Agent Configuration
-
-- [ ] `claude/settings.json`: Same across platforms (Bedrock via AWS profile).
-- [ ] `cline/globalState.json`: Workspace path differs per platform.
-  - SageMaker: `/home/ec2-user/SageMaker/CodeServerDockerHome/Workspace`
-  - Cloud Desktop: `${HOME}/Workspace` (or Docker-mounted equivalent)
-  - macOS: `${HOME}/Workspace`
-- [ ] Cline extension ID:
-  - SageMaker (code-server): `saoudrizwan.claude-dev`
-  - Cloud Desktop / macOS (VS Code): Amazon Internal Cline (different ID)
 
 ### 6. SSH / AWS Credential Sharing
 
@@ -71,3 +67,9 @@ support AL2 Cloud Desktop and macOS environments.
       persistent storage. On Cloud Desktop / macOS, the host already has
       these directories — sharing strategy may differ (mount host dirs
       directly vs symlink).
+
+### 7. macOS Support
+
+- [ ] Create `macos/` directory (parallel to `linux/` and `sagemaker/`).
+- [ ] Handle macOS-specific paths (`~/Library/Application Support/Code/...`).
+- [ ] Test Docker Desktop for Mac compatibility.

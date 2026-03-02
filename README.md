@@ -1,7 +1,12 @@
-# Docker Code-Server for SageMaker
+# Docker Code-Server (Multi-Platform)
 
-Run the latest code-server inside a Docker container on SageMaker Notebook Instances,
-overcoming the AL2 glibc 2.26 limitation (code-server >= 4.17.0 requires glibc >= 2.28).
+Run the latest code-server inside a Docker container, overcoming the AL2 glibc 2.26
+limitation (code-server >= 4.17.0 requires glibc >= 2.28).
+
+Supported platforms:
+- **SageMaker Notebook Instances** — via `jupyter-server-proxy` integration.
+- **Linux / AL2 Cloud Desktop** — direct Docker launch with port mapping.
+- **macOS** — detected but not yet fully supported (see `TODO.md`).
 
 ---
 
@@ -23,7 +28,7 @@ docker/
 │   │   └── settings.json            Claude Code CLI settings (model, auth, env)
 │   ├── cline.sh                     Cline CLI installation and setup
 │   ├── cline/
-│   │   └── globalState.json         Cline global state (Bedrock API config)
+│   │   └── globalState-template.json  Cline global state template (${WORKSPACE} resolved at setup)
 │   └── kiro.sh                      Kiro CLI installation and setup
 ├── vimrc                            Vim configuration (sourced by ~/.vimrc)
 ├── shutils/                         Shared shell utility libraries
@@ -39,6 +44,17 @@ docker/
 │       └── SyncSettings/
 │           └── profiles/main/data/
 │               └── extensions.yml   Extension list managed by sync-settings
+├── linux/                           Linux / Cloud Desktop-specific scripts
+│   ├── install.sh                   Full install (build + home setup + coldstart)
+│   ├── wrapper.sh                   Launch code-server Docker container directly
+│   └── code_server/                 Linux-specific code-server settings
+│       ├── coldstart.sh             Bootstrap settings symlinks and sync-settings extension
+│       ├── Machine/
+│       │   └── settings-template.json  Machine-level settings template
+│       └── User/
+│           └── globalStorage/
+│               └── zokugun.sync-settings/
+│                   └── settings-template.yml  Sync-settings config template
 ├── sagemaker/                       SageMaker-specific scripts and data
 │   ├── install.sh                   Install code-server (build + wrapper + verify)
 │   ├── setup_jupyter.sh             Register code-server into JupyterLab launcher
@@ -82,7 +98,56 @@ docker/
 
 ---
 
-## Deployment
+## Deployment (Linux / Cloud Desktop)
+
+### Prerequisites
+
+- Docker installed and available on PATH.
+- Terminal access (zsh or bash).
+
+### Quick Start
+
+```bash
+RC_ROOT=~/Workspace/RuntimeCommandDev/src/RuntimeCommand
+bash "${RC_ROOT}/linux/install.sh"
+```
+
+This builds the Docker image, sets up the persistent home directory (SSH keys,
+AWS credentials, shell rc files), and bootstraps code-server settings.
+
+### Start Code-Server
+
+```bash
+bash "${RC_ROOT}/linux/wrapper.sh"
+```
+
+Open `http://127.0.0.1:8080` in your browser. Options:
+
+```bash
+# Custom port
+bash "${RC_ROOT}/linux/wrapper.sh" --port 9090
+
+# Run in background
+bash "${RC_ROOT}/linux/wrapper.sh" --detach
+```
+
+### Enter the Docker Shell
+
+```bash
+docker exec -it code-server-runtime /bin/zsh
+```
+
+### Updating Code-Server
+
+```bash
+FORCE_BUILD=1 bash "${RC_ROOT}/build.sh"
+docker rm -f code-server-runtime
+bash "${RC_ROOT}/linux/wrapper.sh"
+```
+
+---
+
+## Deployment (SageMaker)
 
 ### Prerequisites
 
@@ -172,7 +237,7 @@ Code Server will appear in the JupyterLab launcher under the "Other" category.
 
 ---
 
-## Updating Code-Server
+## Updating Code-Server (SageMaker)
 
 Rebuild the Docker image with the new version:
 
@@ -217,7 +282,7 @@ only need a fast `docker load` (~10s).
 
 ---
 
-## How It Works
+## How It Works (SageMaker)
 
 ### Docker Wrapper
 
@@ -246,6 +311,7 @@ It builds from TypeScript source on every `pip install`.
 | -------------------------- | ------------------------------------------------------------ |
 | Docker not found           | Ensure Docker is installed and `docker` is in PATH           |
 | Permission denied on mkdir | Expected on first run; wrapper creates dirs automatically    |
-| Port conflict              | `docker rm -f code-server-sagemaker`                         |
+| Port conflict              | `docker rm -f code-server-runtime`                           |
 | Timeout on open            | Timeout is 120s; container startup takes ~10s                |
 | Broken launcher icon       | Re-run `bash sagemaker/setup_jupyter.sh` and restart Jupyter |
+| Wrong platform detected    | Override with `RC_PLATFORM=linux bash install.sh`            |

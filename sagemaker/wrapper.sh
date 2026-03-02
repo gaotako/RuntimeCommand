@@ -71,14 +71,14 @@ done
 rm -f "${APP_DATA_HOME}/.jupyter_restart_needed"
 
 # Remove any stale container from a previous run.
-docker rm -f code-server-sagemaker >/dev/null 2>&1 || true
+docker rm -f "${CONTAINER_NAME}" >/dev/null 2>&1 || true
 
 # Launch code-server inside the container.
 # `--security-opt label:disable` is set for SELinux compatibility.
 # No `-u` flag because Docker user namespace remapping on SageMaker maps
 # host uid 1000 to container uid 0.
 exec docker run --rm \
-    --name code-server-sagemaker \
+    --name "${CONTAINER_NAME}" \
     --security-opt label:disable \
     ${PORT_FLAGS} \
     -e "HOME=${DOCKER_HOME}" \

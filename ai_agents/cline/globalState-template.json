@@ -50,7 +50,7 @@
     },
     "workspaceRoots": [
         {
-            "path": "/home/ec2-user/SageMaker/CodeServerDockerHome/Workspace",
+            "path": "${WORKSPACE}/CodeServerDockerHome/Workspace",
             "name": "Workspace",
             "vcs": "none"
         }

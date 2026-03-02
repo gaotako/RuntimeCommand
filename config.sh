@@ -17,15 +17,45 @@
 [[ ${_DOCKER_CONFIG_SH_LOADED:-0} -eq 1 ]] && return
 _DOCKER_CONFIG_SH_LOADED=1
 
-# SageMaker path defaults.
-HOME_DEFAULT="/home/ec2-user"
-WORKSPACE_DEFAULT="${HOME:-${HOME_DEFAULT}}/SageMaker"
+# Platform detection.
+# Auto-detects the platform from the environment when RC_PLATFORM is unset.
+# - `sagemaker`: SageMaker Notebook Instance (ec2-user, Jupyter present).
+# - `linux`:     Generic Linux / AL2 Cloud Desktop (default for Linux).
+# - `macos`:     macOS (Darwin kernel).
+if [[ -z "${RC_PLATFORM:-}" ]]; then
+    case "$(uname -s)" in
+    Darwin*)
+        RC_PLATFORM="macos"
+        ;;
+    Linux*)
+        if [[ "$(whoami)" == "ec2-user" && -d "${HOME}/SageMaker" ]]; then
+            RC_PLATFORM="sagemaker"
+        else
+            RC_PLATFORM="linux"
+        fi
+        ;;
+    *)
+        RC_PLATFORM="linux"
+        ;;
+    esac
+fi
+
+# Platform-conditional path defaults.
+HOME_DEFAULT="${HOME:-/home/$(whoami)}"
+case "${RC_PLATFORM}" in
+sagemaker)
+    WORKSPACE_DEFAULT="${HOME:-${HOME_DEFAULT}}/SageMaker"
+    ;;
+*)
+    WORKSPACE_DEFAULT="${HOME:-${HOME_DEFAULT}}/Workspace"
+    ;;
+esac
 APP_ROOT_DEFAULT="${WORKSPACE:-${WORKSPACE_DEFAULT}}/Application"
 APP_DATA_HOME_DEFAULT="${APP_ROOT:-${APP_ROOT_DEFAULT}}/data"
 CODE_SERVER_APPLICATION_DEFAULT="${APP_DATA_HOME:-${APP_DATA_HOME_DEFAULT}}/cs"
 CODE_SERVER_DEFAULT="${CODE_SERVER_APPLICATION:-${CODE_SERVER_APPLICATION_DEFAULT}}/bin/code-server"
 
-# Apply SageMaker path defaults.
+# Apply path defaults.
 HOME="${HOME:-${HOME_DEFAULT}}"
 WORKSPACE="${WORKSPACE:-${WORKSPACE_DEFAULT}}"
 APP_ROOT="${APP_ROOT:-${APP_ROOT_DEFAULT}}"
@@ -39,15 +69,29 @@ CODE_SERVER_VERSION_DEFAULT="latest"
 CODE_SERVER_VERSION="${CODE_SERVER_VERSION:-${CODE_SERVER_VERSION_DEFAULT}}"
 
 # Docker image coordinates.
-IMAGE_NAME="code-server-sagemaker"
+IMAGE_NAME="code-server-runtime"
 IMAGE_TAG="latest"
 
 # Docker image persistence defaults.
-DOCKER_IMAGE_DIR_DEFAULT="${HOME}/SageMaker/CodeServerDockerImage"
+case "${RC_PLATFORM}" in
+sagemaker)
+    DOCKER_IMAGE_DIR_DEFAULT="${HOME}/SageMaker/CodeServerDockerImage"
+    ;;
+*)
+    DOCKER_IMAGE_DIR_DEFAULT="${WORKSPACE}/CodeServerDockerImage"
+    ;;
+esac
 DOCKER_IMAGE_DIR="${DOCKER_IMAGE_DIR:-${DOCKER_IMAGE_DIR_DEFAULT}}"
 
 # Docker container home defaults.
-DOCKER_HOME_DEFAULT="/home/ec2-user/SageMaker/CodeServerDockerHome"
+case "${RC_PLATFORM}" in
+sagemaker)
+    DOCKER_HOME_DEFAULT="/home/ec2-user/SageMaker/CodeServerDockerHome"
+    ;;
+*)
+    DOCKER_HOME_DEFAULT="${WORKSPACE}/CodeServerDockerHome"
+    ;;
+esac
 DOCKER_HOME="${DOCKER_HOME:-${DOCKER_HOME_DEFAULT}}"
 
 # Docker container shell defaults.
@@ -71,6 +115,10 @@ MISE_PYTHON_VERSIONS="${MISE_PYTHON_VERSIONS:-${MISE_PYTHON_VERSIONS_DEFAULT}}"
 MISE_JAVA_VERSION_DEFAULT="21"
 MISE_JAVA_VERSION="${MISE_JAVA_VERSION:-${MISE_JAVA_VERSION_DEFAULT}}"
 
-# Jupyter configuration defaults.
+# Docker container name defaults.
+CONTAINER_NAME_DEFAULT="code-server-runtime"
+CONTAINER_NAME="${CONTAINER_NAME:-${CONTAINER_NAME_DEFAULT}}"
+
+# Jupyter configuration defaults (SageMaker only).
 JUPYTER_CONFIG_DEFAULT="${HOME}/.jupyter/jupyter_notebook_config.py"
 JUPYTER_CONFIG="${JUPYTER_CONFIG:-${JUPYTER_CONFIG_DEFAULT}}"

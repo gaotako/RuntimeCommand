@@ -161,10 +161,10 @@ read -r DOCKER_RC_FILE DOCKER_LOGIN_FILE <<< "$(_rc_files_for_shell "${DOCKER_SH
 } > "${DOCKER_HOME}/${DOCKER_RC_FILE}"
 echo "source ${DOCKER_HOME}/${DOCKER_RC_FILE}" > "${DOCKER_HOME}/${DOCKER_LOGIN_FILE}"
 
-# Set up HOST HOME rc files (based on CISH from shell.sh).
+# Set up HOST HOME rc files (based on SHELL env var, the user's login shell).
 RC_BLOCK="export RC_DIR=\"${SCRIPT_DIR}\"
 ${RC_SOURCE_LINE}"
-read -r HOST_RC_FILE HOST_LOGIN_FILE <<< "$(_rc_files_for_shell "${CISH}")"
+read -r HOST_RC_FILE HOST_LOGIN_FILE <<< "$(_rc_files_for_shell "${SHELL}")"
 TARGET_HOME="${HOME}"
 for RC_PAIR in "${HOST_RC_FILE}:${RC_BLOCK}" "${HOST_LOGIN_FILE}:source ${TARGET_HOME}/${HOST_RC_FILE}"; do
     RC_FILE_TARGET="${TARGET_HOME}/${RC_PAIR%%:*}"
