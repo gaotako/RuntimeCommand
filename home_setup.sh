@@ -1,11 +1,10 @@
 #!/bin/bash
 # Set up persistent home directory overrides for Docker code-server.
 #
-# Symlinks `~/.ssh` and `~/.aws` from the container home to persistent storage
-# directories, preserving any existing content. Detects the current shell via
-# `CISH` and sets up the appropriate rc files (`.bashrc`/`.profile` for
-# bash/sh, `.zshrc`/`.zprofile` for zsh) so the interactive shell sources
-# `rc.sh`.
+# Symlinks `~/.ssh`, `~/.aws`, and `~/.midway` from both the container
+# home and the host home to persistent storage directories, preserving
+# existing content. Detects the user's login shell and sets up the
+# appropriate rc files so the interactive shell sources `rc.sh`.
 #
 # Args
 # ----
@@ -23,7 +22,7 @@
 # -----
 # This script operates on `DOCKER_HOME` (the persistent home directory for the
 # Docker code-server container). Persistent storage directories are created
-# under `PROJECT_ROOT` (the repo root) so they survive SageMaker restarts.
+# under `PERSISTENT_ROOT` (the repo root) so they survive restarts.
 #
 # Examples
 # --------
@@ -77,138 +76,79 @@ if [[ -f "${VIMRC_SOURCE}" ]]; then
     echo "source ${VIMRC_SOURCE}" > "${VIMRC_TARGET}"
 fi
 
-# Merge and symlink .ssh for Docker and host to persistent storage.
+# Merge and symlink a credential directory for both Docker and host.
 #
-# Merge priority (high to low): system (host) > Docker > persistent.
-# Docker content is copied first (fills gaps), then host content
-# overwrites (highest priority). Both dirs are then symlinked.
-# Generates an SSH identity if none exists after merging.
+# Copies content from Docker home and host home into the persistent
+# target (host wins on conflicts), then replaces both with symlinks.
+# Merge priority (high to low): host > Docker > persistent.
 #
 # Args
 # ----
-# (No-Args)
+# - `dot_name`
+#     The dotfile directory name (e.g., `.ssh`, `.aws`, `.midway`).
+# - `persistent_dir`
+#     Absolute path to the persistent storage directory.
 #
 # Returns
 # -------
 # (No-Returns)
-_setup_ssh() {
-    mkdir -p "${SSH_HOME}"
+_merge_and_symlink() {
+    mkdir -p "${2}"
 
-    if [[ ! -L "${DOCKER_HOME}/.ssh" ]] && [[ -d "${DOCKER_HOME}/.ssh" ]]; then
-        cp -rn "${DOCKER_HOME}/.ssh/"* "${SSH_HOME}/" 2>/dev/null || true
+    if [[ ! -L "${DOCKER_HOME}/${1}" ]] && [[ -d "${DOCKER_HOME}/${1}" ]]; then
+        cp -rn "${DOCKER_HOME}/${1}/"* "${2}/" 2>/dev/null || true
     fi
 
-    if [[ "${HOME}" != "${DOCKER_HOME}" ]] && [[ ! -L "${HOME}/.ssh" ]] && [[ -d "${HOME}/.ssh" ]]; then
-        cp -r "${HOME}/.ssh/"* "${SSH_HOME}/" 2>/dev/null || true
+    if [[ "${HOME}" != "${DOCKER_HOME}" ]] && [[ ! -L "${HOME}/${1}" ]] && [[ -d "${HOME}/${1}" ]]; then
+        cp -r "${HOME}/${1}/"* "${2}/" 2>/dev/null || true
     fi
 
-    rm -rf "${DOCKER_HOME}/.ssh"
-    ln -s "${SSH_HOME}" "${DOCKER_HOME}/.ssh"
+    rm -rf "${DOCKER_HOME}/${1}"
+    ln -s "${2}" "${DOCKER_HOME}/${1}" || echo "WARNING: Failed to symlink \`${DOCKER_HOME}/${1}\`." >&2
 
     if [[ "${HOME}" != "${DOCKER_HOME}" ]]; then
-        rm -rf "${HOME}/.ssh"
-        ln -s "${SSH_HOME}" "${HOME}/.ssh"
-    fi
-
-    GENERATED_KEY_TYPE=""
-    for KEY_TYPE in ed25519 ecdsa rsa; do
-        if [[ ! -f "${SSH_HOME}/id_${KEY_TYPE}" ]]; then
-            if ssh-keygen -t "${KEY_TYPE}" -q -f "${SSH_HOME}/id_${KEY_TYPE}" -N ""; then
-                GENERATED_KEY_TYPE="${KEY_TYPE}"
-                break
-            fi
-        else
-            GENERATED_KEY_TYPE="${KEY_TYPE}"
-            break
-        fi
-    done
-}
-
-# Merge and symlink .aws for Docker and host to persistent storage.
-#
-# Same merge priority as SSH: system (host) > Docker > persistent.
-#
-# Args
-# ----
-# (No-Args)
-#
-# Returns
-# -------
-# (No-Returns)
-_setup_aws() {
-    mkdir -p "${AWS_HOME}"
-
-    if [[ ! -L "${DOCKER_HOME}/.aws" ]] && [[ -d "${DOCKER_HOME}/.aws" ]]; then
-        cp -rn "${DOCKER_HOME}/.aws/"* "${AWS_HOME}/" 2>/dev/null || true
-    fi
-
-    if [[ "${HOME}" != "${DOCKER_HOME}" ]] && [[ ! -L "${HOME}/.aws" ]] && [[ -d "${HOME}/.aws" ]]; then
-        cp -r "${HOME}/.aws/"* "${AWS_HOME}/" 2>/dev/null || true
-    fi
-
-    rm -rf "${DOCKER_HOME}/.aws"
-    ln -s "${AWS_HOME}" "${DOCKER_HOME}/.aws"
-
-    if [[ "${HOME}" != "${DOCKER_HOME}" ]]; then
-        rm -rf "${HOME}/.aws"
-        ln -s "${AWS_HOME}" "${HOME}/.aws"
+        rm -rf "${HOME}/${1}"
+        ln -s "${2}" "${HOME}/${1}" || echo "WARNING: Failed to symlink \`${HOME}/${1}\`." >&2
     fi
 }
 
 # Set up .ssh (priority: host > Docker > persistent).
 log_log "${QUIET}" "[2/6] Setting up .ssh ..."
-_setup_ssh
+_merge_and_symlink ".ssh" "${SSH_HOME}"
+
+# Generate an SSH identity (ed25519 preferred, fallback to ecdsa, then rsa).
+_ssh_ensure_key() {
+    for KEY_TYPE in ed25519 ecdsa rsa; do
+        if [[ -f "${SSH_HOME}/id_${KEY_TYPE}" ]]; then
+            return 0
+        fi
+    done
+
+    for KEY_TYPE in ed25519 ecdsa rsa; do
+        if ssh-keygen -t "${KEY_TYPE}" -q -f "${SSH_HOME}/id_${KEY_TYPE}" -N ""; then
+            return 0
+        fi
+    done
+
+    echo "WARNING: Failed to generate SSH key (tried ed25519, ecdsa, rsa)." >&2
+}
+_ssh_ensure_key
 
 # Set up .aws (priority: host > Docker > persistent).
 log_log "${QUIET}" "[3/6] Setting up .aws ..."
-_setup_aws
-
-# Merge and symlink .midway for Docker and host to persistent storage.
-#
-# Same merge priority as SSH and AWS: system (host) > Docker > persistent.
-#
-# Args
-# ----
-# (No-Args)
-#
-# Returns
-# -------
-# (No-Returns)
-_setup_midway() {
-    mkdir -p "${MIDWAY_HOME}"
-
-    if [[ ! -L "${DOCKER_HOME}/.midway" ]] && [[ -d "${DOCKER_HOME}/.midway" ]]; then
-        cp -rn "${DOCKER_HOME}/.midway/"* "${MIDWAY_HOME}/" 2>/dev/null || true
-    fi
-
-    if [[ "${HOME}" != "${DOCKER_HOME}" ]] && [[ ! -L "${HOME}/.midway" ]] && [[ -d "${HOME}/.midway" ]]; then
-        cp -r "${HOME}/.midway/"* "${MIDWAY_HOME}/" 2>/dev/null || true
-    fi
-
-    rm -rf "${DOCKER_HOME}/.midway"
-    ln -s "${MIDWAY_HOME}" "${DOCKER_HOME}/.midway"
-
-    if [[ "${HOME}" != "${DOCKER_HOME}" ]]; then
-        rm -rf "${HOME}/.midway"
-        ln -s "${MIDWAY_HOME}" "${HOME}/.midway"
-    fi
-}
+_merge_and_symlink ".aws" "${AWS_HOME}"
 
 # Set up .midway (priority: host > Docker > persistent).
 log_log "${QUIET}" "[4/6] Setting up .midway ..."
-_setup_midway
+_merge_and_symlink ".midway" "${MIDWAY_HOME}"
 
 # Set up shell rc files for DOCKER_HOME and HOST HOME.
-# DOCKER_HOME uses DOCKER_SHELL (from config.sh) to determine the rc file.
-# HOST HOME uses CISH (from shell.sh) to detect the host's current shell.
-# Both source rc.sh for environment setup.
 log_log "${QUIET}" "[5/6] Setting up shell rc files ..."
 RC_MARKER_BEGIN="# >>> RuntimeCommand >>>"
 RC_MARKER_END="# <<< RuntimeCommand <<<"
 RC_SOURCE_LINE="source ${SCRIPT_DIR}/rc.sh"
 
-# Derive rc file names from a shell path (/bin/zsh → .zshrc/.zprofile,
-# /bin/bash or others → .bashrc/.profile).
+# Derive rc file names from a shell path (/bin/zsh → .zshrc/.zprofile).
 _rc_files_for_shell() {
     case "${1}" in
     *zsh*)
@@ -221,8 +161,6 @@ _rc_files_for_shell() {
 }
 
 # Set up DOCKER_HOME rc files (based on DOCKER_SHELL from config.sh).
-# Writes RC_DIR directly before sourcing rc.sh so it doesn't need to
-# auto-detect its own location (zsh source path detection is unreliable).
 read -r DOCKER_RC_FILE DOCKER_LOGIN_FILE <<< "$(_rc_files_for_shell "${DOCKER_SHELL}")"
 {
     echo "export RC_DIR=\"${SCRIPT_DIR}\""
