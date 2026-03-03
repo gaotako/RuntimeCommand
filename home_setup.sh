@@ -186,6 +186,12 @@ echo "source ${DOCKER_HOME}/${DOCKER_RC_FILE}" > "${DOCKER_HOME}/${DOCKER_LOGIN_
 # (No-Returns)
 _rc_register_block() {
     [[ ! -f "${1}" ]] && touch "${1}"
+
+    RC_EXT_LINES=""
+    if grep -qF "${RC_MARKER_BEGIN}" "${1}" 2>/dev/null; then
+        RC_EXT_LINES="$(sed -n "/${RC_MARKER_BEGIN}/,/${RC_MARKER_END}/p" "${1}" | grep -v "${RC_MARKER_BEGIN}" | grep -v "${RC_MARKER_END}" | grep -vF "${2}" || true)"
+    fi
+
     sed -i "/${RC_MARKER_BEGIN}/,/${RC_MARKER_END}/d" "${1}"
     sed -i '/^$/N;/^\n$/d' "${1}"
     if [[ -s "${1}" ]]; then
@@ -193,6 +199,9 @@ _rc_register_block() {
     fi
     echo "${RC_MARKER_BEGIN}" >> "${1}"
     echo "${2}" >> "${1}"
+    if [[ -n "${RC_EXT_LINES}" ]]; then
+        echo "${RC_EXT_LINES}" >> "${1}"
+    fi
     echo "${RC_MARKER_END}" >> "${1}"
 }
 
