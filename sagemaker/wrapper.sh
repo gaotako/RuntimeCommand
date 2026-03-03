@@ -39,6 +39,20 @@ unset RC_DOCKER
 # Ensure XDG directories exist on the host before mounting.
 mkdir -p "${XDG_DATA_HOME}" "${XDG_CONFIG_HOME}" "${XDG_CACHE_HOME}" "${XDG_STATE_HOME}"
 
+# Collect extension volume mounts from drop-in scripts.
+DOCKER_EXTRA_VOLUMES=()
+if [[ -d "${DOCKER_MOUNTS_DIR}" ]]; then
+    for MOUNT_SCRIPT in "${DOCKER_MOUNTS_DIR}"/*.sh; do
+        [[ -f "${MOUNT_SCRIPT}" ]] && source "${MOUNT_SCRIPT}"
+    done
+    unset MOUNT_SCRIPT
+fi
+EXTRA_VOLUME_FLAGS=()
+for VOL in "${DOCKER_EXTRA_VOLUMES[@]}"; do
+    EXTRA_VOLUME_FLAGS+=("-v" "${VOL}")
+done
+unset VOL
+
 # Rewrite bind-addr arguments for container networking.
 # `jupyter-server-proxy` passes `--bind-addr 127.0.0.1:{port}`, but code-server
 # inside the container must bind to `0.0.0.0` for Docker port mapping to reach
@@ -88,5 +102,6 @@ exec docker run --rm \
     -v /tmp:/tmp \
     -v /etc/passwd:/etc/passwd:ro \
     -v /etc/group:/etc/group:ro \
+    "${EXTRA_VOLUME_FLAGS[@]}" \
     "${IMAGE_NAME}:${IMAGE_TAG}" \
     "${REWRITTEN_ARGS[@]}"

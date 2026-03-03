@@ -115,6 +115,12 @@ MISE_PYTHON_VERSIONS="${MISE_PYTHON_VERSIONS:-${MISE_PYTHON_VERSIONS_DEFAULT}}"
 MISE_JAVA_VERSION_DEFAULT="21"
 MISE_JAVA_VERSION="${MISE_JAVA_VERSION:-${MISE_JAVA_VERSION_DEFAULT}}"
 
+# Docker volume mount extension directory.
+# Extension scripts (.sh files) in this directory are sourced by wrapper
+# scripts to collect additional `-v` volume mount flags for docker run.
+# Each script may append to the DOCKER_EXTRA_VOLUMES bash array.
+DOCKER_MOUNTS_DIR="${APP_DATA_HOME}/docker_mounts.d"
+
 # Docker container name defaults.
 CONTAINER_NAME_DEFAULT="code-server-runtime"
 CONTAINER_NAME="${CONTAINER_NAME:-${CONTAINER_NAME_DEFAULT}}"
