@@ -81,6 +81,10 @@ for DEV_PORT in $(seq 8501 8509); do
     PORT_FLAGS="${PORT_FLAGS} -p 127.0.0.1:${DEV_PORT}:${DEV_PORT}"
 done
 
+# Append the workspace folder so code-server opens in a user directory
+# (prevents "can't download to this folder since it contains system files").
+REWRITTEN_ARGS+=("${WORKSPACE}")
+
 # Remove any stale container from a previous run.
 docker rm -f "${CONTAINER_NAME}" >/dev/null 2>&1 || true
 

@@ -112,8 +112,14 @@ code-server settings.
 bash "${RC_ROOT}/linux/wrapper.sh" --detach
 ```
 
-Open `http://127.0.0.1:8080` in your browser (via SSH port forwarding:
-`ssh -L 8080:127.0.0.1:8080 <host>`). Options:
+If the host is remote, set up a background SSH tunnel first, then open
+`http://127.0.0.1:8080` in your local browser:
+
+```bash
+ssh -fNL 8080:127.0.0.1:8080 <host>
+```
+
+Options:
 
 ```bash
 # Custom port

@@ -98,7 +98,7 @@ docker rm -f "${CONTAINER_NAME}" >/dev/null 2>&1 || true
 
 # Default code-server arguments if none provided.
 if [[ ${#CS_ARGS[@]} -eq 0 ]]; then
-    CS_ARGS=("--bind-addr" "0.0.0.0:${PORT}" "--auth" "none")
+    CS_ARGS=("--bind-addr" "0.0.0.0:${PORT}" "--auth" "none" "${WORKSPACE}")
 fi
 
 # Launch code-server with host networking, SELinux compat, and volume mounts.

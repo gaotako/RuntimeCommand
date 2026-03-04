@@ -16,8 +16,9 @@
 #
 # Notes
 # -----
-# The image includes: zsh, git, vim, tmux, less, curl, unzip, openssh-client,
-# python3, AWS CLI v2, code-server, and mise (polyglot runtime manager).
+# The image includes: zsh, git, vim, tmux, less, curl, unzip, zstd,
+# openssh-client, python3, AWS CLI v2, code-server, and mise (polyglot
+# runtime manager).
 #
 # The image is built by `build.sh` and persisted to `DOCKER_IMAGE_DIR` via
 # `docker save`. On subsequent runs `build.sh` loads the cached image via
@@ -53,6 +54,7 @@ RUN apt-get update \
         vim \
         tmux \
         unzip \
+        zstd \
     && rm -rf /var/lib/apt/lists/*
 
 # Set the default shell.
