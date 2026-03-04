@@ -81,14 +81,14 @@ fi
 
 # Template and symlink Machine settings (shared, resolved at coldstart).
 log_log "${QUIET}" "[2/4] Templating Machine settings ..."
-SYSTEM_PYTHON_PATH="/usr/bin/python3"
+SYSTEM_PYTHON_PATH="python"
 log_log "${QUIET}" "Python path: ${SYSTEM_PYTHON_PATH}"
 log_log "${QUIET}" "Docker shell: ${DOCKER_SHELL}"
 rm -f "${SHARED_CS_ROOT}/Machine/settings.json"
 cp "${SHARED_CS_ROOT}/Machine/settings-template.json" "${SHARED_CS_ROOT}/Machine/settings.json"
 SYSTEM_PYTHON_PATH_SED="$(echo "${SYSTEM_PYTHON_PATH}" | sed -E "s/([\\/\\.&])/\\\\\1/g")"
 DOCKER_SHELL_SED="$(echo "${DOCKER_SHELL}" | sed -E "s/([\\/\\.&])/\\\\\1/g")"
-sed -i -e "s/\${MISE_PYTHON_PATH}/${SYSTEM_PYTHON_PATH_SED}/g" \
+sed -i -e "s/\${PYTHON_PATH}/${SYSTEM_PYTHON_PATH_SED}/g" \
     -e "s/\${DOCKER_SHELL}/${DOCKER_SHELL_SED}/g" \
     "${SHARED_CS_ROOT}/Machine/settings.json"
 HERE="${SHARED_CS_ROOT}/Machine/settings.json"
