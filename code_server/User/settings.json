@@ -592,7 +592,8 @@
     ],
 
     // Disable VSCode auto update.
-    "update.mode": "none"
+    "update.mode": "none",
+    "remote.autoForwardPortsSource": "hybrid"
 
     // ---------------------------------------------------------------------------------------------
     // ## Must End-With
