@@ -48,7 +48,7 @@ if [[ -d "${DOCKER_MOUNTS_DIR}" ]]; then
     unset MOUNT_SCRIPT
 fi
 EXTRA_VOLUME_FLAGS=()
-for VOL in "${DOCKER_EXTRA_VOLUMES[@]}"; do
+for VOL in ${DOCKER_EXTRA_VOLUMES[@]+"${DOCKER_EXTRA_VOLUMES[@]}"}; do
     EXTRA_VOLUME_FLAGS+=("-v" "${VOL}")
 done
 unset VOL
@@ -106,6 +106,6 @@ exec docker run --rm \
     -v /tmp:/tmp \
     -v /etc/passwd:/etc/passwd:ro \
     -v /etc/group:/etc/group:ro \
-    "${EXTRA_VOLUME_FLAGS[@]}" \
+    ${EXTRA_VOLUME_FLAGS[@]+"${EXTRA_VOLUME_FLAGS[@]}"} \
     "${IMAGE_NAME}:${IMAGE_TAG}" \
     "${REWRITTEN_ARGS[@]}"
