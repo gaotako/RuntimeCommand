@@ -110,6 +110,7 @@ exec docker run \
     -u "$(id -u):$(id -g)" \
     -e "HOME=${DOCKER_HOME}" \
     -e "WORKSPACE=${DOCKER_HOME}" \
+    -e "DOCKER_HOME=${DOCKER_HOME}" \
     -e "RC_DOCKER=1" \
     -e "RC_PLATFORM=${RC_PLATFORM}" \
     -e "XDG_DATA_HOME=${XDG_DATA_HOME}" \
