@@ -55,6 +55,7 @@ RUN apt-get update \
         tmux \
         unzip \
         zstd \
+        libgomp1 \
     && rm -rf /var/lib/apt/lists/*
 
 # Set the default shell.
