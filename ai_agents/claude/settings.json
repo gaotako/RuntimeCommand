@@ -5,5 +5,25 @@
         "CLAUDE_CODE_USE_BEDROCK": "1",
         "AWS_PROFILE": "default",
         "AWS_REGION": "us-east-1"
+    },
+    "mcpServers": {
+        "builder-mcp": {
+            "command": "/usr/local/bin/mise",
+            "args": ["exec", "--", "/usr/local/bin/builder-mcp"],
+            "env": {
+                "MIDWAY_COOKIE_PATH": "${HOME}/.midway/cookie",
+                "TOOL_PERSONALIZATION_ENABLED": "true",
+                "TOOL_PERSONALIZATION_MIN_EXECUTIONS": "0",
+                "TOOL_PERSONALIZATION_TRAINING_DAYS": "0",
+                "TOOL_PERSONALIZATION_ROLLOUT_PERCENTAGE": "100"
+            }
+        },
+        "aws-sharepoint-mcp": {
+            "command": "/usr/local/bin/mise",
+            "args": ["exec", "--", "${HOME}/../.aim/mcp-servers/aws-sharepoint-mcp"],
+            "env": {
+                "PATH": "${HOME}/../.toolbox/bin:/usr/local/bin:/usr/bin:/bin"
+            }
+        }
     }
 }
