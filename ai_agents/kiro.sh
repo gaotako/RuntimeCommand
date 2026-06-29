@@ -61,7 +61,14 @@ QUIET="${QUIET:-${QUIET_DEFAULT}}"
 
 # Kiro CLI install location (default installer path).
 # The binary is named `kiro-cli` by the official installer.
-KIRO_BIN="${HOME}/.local/bin/kiro-cli"
+# Check both HOST HOME and DOCKER_HOME since the script may run on the host
+# but Kiro is installed inside Docker (whose HOME = DOCKER_HOME).
+_kiro_bin_exists() {
+    [[ -f "${HOME}/.local/bin/kiro-cli" ]] \
+        || [[ -f "${DOCKER_HOME}/.local/bin/kiro-cli" ]] \
+        || command -v kiro-cli &>/dev/null
+}
+KIRO_BIN="${DOCKER_HOME}/.local/bin/kiro-cli"
 
 # Print header.
 log_log "${QUIET}" "Kiro CLI Setup"
@@ -69,7 +76,7 @@ log_log "${QUIET}" "Kiro CLI Setup"
 # Install or check Kiro CLI.
 log_log "${QUIET}" "[1/1] Checking Kiro CLI ..."
 if [[ "${COLDSTART}" -eq 1 ]]; then
-    if [[ -f "${KIRO_BIN}" ]] || command -v kiro-cli &>/dev/null; then
+    if _kiro_bin_exists; then
         log_log "${QUIET}" "Kiro CLI already installed."
     else
         log_log "${QUIET}" "Installing Kiro CLI via official installer ..."
@@ -82,7 +89,7 @@ if [[ "${COLDSTART}" -eq 1 ]]; then
         echo "To use \`kiro-cli\` in this session, run: \`export PATH=\"${KIRO_BIN_DIR}:\${PATH}\"\`."
     fi
 else
-    if [[ ! -f "${KIRO_BIN}" ]] && ! command -v kiro-cli &>/dev/null; then
+    if ! _kiro_bin_exists; then
         echo "Missing \`kiro-cli\`. Run \`bash ${SCRIPT_DIR}/kiro.sh --coldstart\` to install."
     else
         log_log "${QUIET}" "Kiro CLI already installed."

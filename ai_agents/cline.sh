@@ -65,11 +65,23 @@ QUIET_DEFAULT=0
 QUIET="${QUIET:-${QUIET_DEFAULT}}"
 
 # Cline CLI install location (npm into mise's active node bin directory).
-CLINE_BIN=""
-MISE_NODE_DIR="$("${MISE_INSTALL_PATH}" where node 2>/dev/null)" || true
-if [[ -n "${MISE_NODE_DIR}" && -f "${MISE_NODE_DIR}/bin/cline" ]]; then
-    CLINE_BIN="${MISE_NODE_DIR}/bin/cline"
-fi
+# Check both HOST HOME and DOCKER_HOME since the script may run on the host
+# but Cline is installed inside Docker (whose HOME = DOCKER_HOME).
+_cline_bin_exists() {
+    # Check mise node bin directories (host and Docker).
+    local mise_node_dir=""
+    if [[ -f "${MISE_INSTALL_PATH}" ]]; then
+        mise_node_dir="$("${MISE_INSTALL_PATH}" where node 2>/dev/null)" || true
+        if [[ -n "${mise_node_dir}" && -f "${mise_node_dir}/bin/cline" ]]; then
+            return 0
+        fi
+    fi
+    # Check XDG_DATA_HOME mise installs (covers Docker home case).
+    local xdg_cline="${XDG_DATA_HOME}/mise/installs/node/${MISE_NODE_VERSION}/bin/cline"
+    [[ -f "${xdg_cline}" ]] && return 0
+    # Fallback: check command PATH.
+    command -v cline &>/dev/null
+}
 
 # Print header.
 log_log "${QUIET}" "Cline CLI Setup"
@@ -77,7 +89,7 @@ log_log "${QUIET}" "Cline CLI Setup"
 # Install or check Cline CLI.
 log_log "${QUIET}" "[1/1] Checking Cline CLI ..."
 if [[ "${COLDSTART}" -eq 1 ]]; then
-    if [[ -n "${CLINE_BIN}" ]] || command -v cline &>/dev/null; then
+    if _cline_bin_exists; then
         log_log "${QUIET}" "Cline CLI already installed."
     elif command -v npm &>/dev/null; then
         log_log "${QUIET}" "Installing Cline CLI via npm ..."
@@ -86,7 +98,7 @@ if [[ "${COLDSTART}" -eq 1 ]]; then
         echo "WARNING: \`npm\` is not available. Install Node.js first (via \`mise\`), then re-run." >&2
     fi
 else
-    if [[ -z "${CLINE_BIN}" ]] && ! command -v cline &>/dev/null; then
+    if ! _cline_bin_exists; then
         echo "Missing \`cline\`. Run \`bash ${SCRIPT_DIR}/cline.sh --coldstart\` to install."
     else
         log_log "${QUIET}" "Cline CLI already installed."

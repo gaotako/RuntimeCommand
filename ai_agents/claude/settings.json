@@ -8,10 +8,11 @@
     },
     "mcpServers": {
         "builder-mcp": {
-            "command": "/usr/local/bin/mise",
+            "command": "${MISE_INSTALL_PATH}",
             "args": ["exec", "--", "/usr/local/bin/builder-mcp"],
             "env": {
-                "MIDWAY_COOKIE_PATH": "${HOME}/.midway/cookie",
+                "HOME": "${DOCKER_HOME}",
+                "MIDWAY_COOKIE_PATH": "${DOCKER_HOME}/.midway/cookie",
                 "TOOL_PERSONALIZATION_ENABLED": "true",
                 "TOOL_PERSONALIZATION_MIN_EXECUTIONS": "0",
                 "TOOL_PERSONALIZATION_TRAINING_DAYS": "0",
@@ -19,10 +20,12 @@
             }
         },
         "aws-sharepoint-mcp": {
-            "command": "/usr/local/bin/mise",
-            "args": ["exec", "--", "${HOME}/../.aim/mcp-servers/aws-sharepoint-mcp"],
+            "command": "${MISE_INSTALL_PATH}",
+            "args": ["exec", "--", "node", "${SP_MCP_INDEX_JS}"],
             "env": {
-                "PATH": "${HOME}/../.toolbox/bin:/usr/local/bin:/usr/bin:/bin"
+                "HOME": "${DOCKER_HOME}",
+                "MIDWAY_COOKIE_PATH": "${DOCKER_HOME}/.midway/cookie",
+                "PATH": "${XDG_DATA_HOME}/mise/installs/node/${MISE_NODE_VERSION}/bin:${TOOLBOX_BIN}:/usr/local/bin:/usr/bin:/bin"
             }
         }
     }

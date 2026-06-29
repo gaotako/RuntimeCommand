@@ -66,8 +66,16 @@ QUIET="${QUIET:-${QUIET_DEFAULT}}"
 # Claude Code CLI install location.
 # The native installer places the binary at ~/.claude/local/bin/claude.
 # The npm installer (via mise node) places it at ~/.local/bin/claude.
-CLAUDE_BIN="${HOME}/.claude/local/bin/claude"
-CLAUDE_BIN_ALT="${HOME}/.local/bin/claude"
+# Check both HOST HOME and DOCKER_HOME since the script may run on the host
+# but Claude is installed inside Docker (whose HOME = DOCKER_HOME).
+_claude_bin_exists() {
+    [[ -f "${HOME}/.claude/local/bin/claude" ]] \
+        || [[ -f "${HOME}/.local/bin/claude" ]] \
+        || [[ -f "${DOCKER_HOME}/.claude/local/bin/claude" ]] \
+        || [[ -f "${DOCKER_HOME}/.local/bin/claude" ]] \
+        || command -v claude &>/dev/null
+}
+CLAUDE_BIN="${DOCKER_HOME}/.claude/local/bin/claude"
 
 # Print header.
 log_log "${QUIET}" "Claude Code CLI Setup"
@@ -75,7 +83,7 @@ log_log "${QUIET}" "Claude Code CLI Setup"
 # Step 1: Install or check Claude Code CLI.
 log_log "${QUIET}" "[1/2] Checking Claude Code CLI ..."
 if [[ "${COLDSTART}" -eq 1 ]]; then
-    if [[ -f "${CLAUDE_BIN}" ]] || [[ -f "${CLAUDE_BIN_ALT}" ]] || command -v claude &>/dev/null; then
+    if _claude_bin_exists; then
         log_log "${QUIET}" "Claude Code CLI already installed."
     else
         # Try native installer first, fall back to npm if DNS/network fails.
@@ -107,29 +115,42 @@ if [[ "${COLDSTART}" -eq 1 ]]; then
         echo "To use \`claude\` in this session, run: \`export PATH=\"${CLAUDE_BIN_DIR}:\${PATH}\"\`."
     fi
 else
-    # Check native installer path, npm path, and command PATH.
-    if [[ ! -f "${CLAUDE_BIN}" ]] \
-        && [[ ! -f "${CLAUDE_BIN_ALT}" ]] \
-        && ! command -v claude &>/dev/null; then
+    if ! _claude_bin_exists; then
         echo "Missing \`claude\`. Run \`bash ${SCRIPT_DIR}/claude.sh --coldstart\` to install."
     else
         log_log "${QUIET}" "Claude Code CLI already installed."
     fi
 fi
 
-# Step 2: Copy Claude settings to DOCKER_HOME (coldstart only).
-# Always overwrites — repo settings are canonical.
-if [[ "${COLDSTART}" -eq 1 ]]; then
-    log_log "${QUIET}" "[2/2] Setting up Claude settings ..."
-    CLAUDE_SETTINGS_SOURCE="${SCRIPT_DIR}/claude/settings.json"
-    CLAUDE_SETTINGS_TARGET="${DOCKER_HOME}/.claude/settings.json"
-    if [[ -f "${CLAUDE_SETTINGS_SOURCE}" ]]; then
-        mkdir -p "$(dirname "${CLAUDE_SETTINGS_TARGET}")"
-        cp "${CLAUDE_SETTINGS_SOURCE}" "${CLAUDE_SETTINGS_TARGET}"
-        log_log "${QUIET}" "Copied Claude settings to \`${CLAUDE_SETTINGS_TARGET}\`."
-    else
-        echo "WARNING: Claude settings source not found at \`${CLAUDE_SETTINGS_SOURCE}\`." >&2
+# Step 2: Deploy Claude settings to DOCKER_HOME.
+# Performs variable substitution on the template so paths are resolved
+# for the current machine. Runs on every invocation (not coldstart-only)
+# to keep the deployed settings in sync with the template.
+log_log "${QUIET}" "[2/2] Setting up Claude settings ..."
+CLAUDE_SETTINGS_SOURCE="${SCRIPT_DIR}/claude/settings.json"
+CLAUDE_SETTINGS_TARGET="${DOCKER_HOME}/.claude/settings.json"
+if [[ -f "${CLAUDE_SETTINGS_SOURCE}" ]]; then
+    mkdir -p "$(dirname "${CLAUDE_SETTINGS_TARGET}")"
+
+    # Resolve dynamic paths for MCP server configuration.
+    TOOLBOX_BIN="${HOME}/.toolbox/bin"
+    # Find the SharePoint MCP Server dist/index.js from brazil-pkg-cache.
+    BRAZIL_PKG_CACHE="$(readlink -f "${HOME}/brazil-pkg-cache" 2>/dev/null || echo "${HOME}/brazil-pkg-cache")"
+    SP_MCP_INDEX_JS="$(find "${BRAZIL_PKG_CACHE}/packages/Sharepoint-MCP-Server" \
+        -path "*/build/sharepoint-mcp-server/dist/index.js" 2>/dev/null | sort -V | tail -1)"
+    if [[ -z "${SP_MCP_INDEX_JS}" ]]; then
+        SP_MCP_INDEX_JS="${BRAZIL_PKG_CACHE}/packages/Sharepoint-MCP-Server/LATEST/dist/index.js"
     fi
+
+    # Export variables for envsubst.
+    export DOCKER_HOME MISE_INSTALL_PATH XDG_DATA_HOME MISE_NODE_VERSION
+    export TOOLBOX_BIN SP_MCP_INDEX_JS
+
+    # Substitute variables and write the deployed settings.
+    envsubst < "${CLAUDE_SETTINGS_SOURCE}" > "${CLAUDE_SETTINGS_TARGET}"
+    log_log "${QUIET}" "Deployed Claude settings to \`${CLAUDE_SETTINGS_TARGET}\`."
+else
+    echo "WARNING: Claude settings source not found at \`${CLAUDE_SETTINGS_SOURCE}\`." >&2
 fi
 
 log_log "${QUIET}" "Claude Code CLI setup complete."
