@@ -145,6 +145,7 @@ esac
 log_log "${QUIET}" "[5/5] Checking runtimes ..."
 "${MISE_INSTALL_PATH}" settings experimental=true 2>/dev/null
 "${MISE_INSTALL_PATH}" settings node.gpg_verify=false 2>/dev/null
+"${MISE_INSTALL_PATH}" settings ruby.github_attestations=false 2>/dev/null
 
 # Check or install runtimes based on coldstart flag.
 # In coldstart mode, install all runtimes. Otherwise, check each runtime
