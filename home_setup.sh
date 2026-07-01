@@ -42,6 +42,16 @@ source "${SCRIPT_DIR}/shutils/argparse.sh"
 source "${SCRIPT_DIR}/shutils/log.sh"
 source "${SCRIPT_DIR}/shutils/shell.sh"
 
+# Portable sed in-place for macOS (BSD) and Linux (GNU).
+# BSD sed requires `sed -i ''`, while GNU sed uses `sed -i`.
+_sed_i() {
+    if [[ "$(uname -s)" == "Darwin" ]]; then
+        sed -i '' "$@"
+    else
+        sed -i "$@"
+    fi
+}
+
 # Parse arguments (may set LOG_DEPTH, QUIET via --log-depth, --quiet).
 argparse_parse "$@"
 [[ ${#POSITIONAL_ARGS[@]} -gt 0 ]] && set -- "${POSITIONAL_ARGS[@]}"
@@ -208,8 +218,8 @@ _rc_register_block() {
         RC_EXT_LINES="$(sed -n "/${RC_MARKER_BEGIN}/,/${RC_MARKER_END}/p" "${1}" | grep -v "${RC_MARKER_BEGIN}" | grep -v "${RC_MARKER_END}" | grep -vF "${2}" || true)"
     fi
 
-    sed -i "/${RC_MARKER_BEGIN}/,/${RC_MARKER_END}/d" "${1}"
-    sed -i '/^$/N;/^\n$/d' "${1}"
+    _sed_i "/${RC_MARKER_BEGIN}/,/${RC_MARKER_END}/d" "${1}"
+    _sed_i '/^$/N;/^\n$/d' "${1}"
     if [[ -s "${1}" ]]; then
         echo "" >> "${1}"
     fi
@@ -231,12 +241,12 @@ _rc_register_block "${TARGET_HOME}/${HOST_LOGIN_FILE}" "source ${TARGET_HOME}/${
 
 # Symlink persistent rc files and cishrc.sh to HOST HOME's rc file.
 RC_LINK="${PERSISTENT_ROOT}/${HOST_RC_FILE##.}.sh"
-if [[ ! -L "${RC_LINK}" || "$(readlink -f "${RC_LINK}")" != "$(readlink -f "${HOME}/${HOST_RC_FILE}")" ]]; then
+if [[ ! -L "${RC_LINK}" || "$(_shell_readlink_f "${RC_LINK}")" != "$(_shell_readlink_f "${HOME}/${HOST_RC_FILE}")" ]]; then
     rm -rf "${RC_LINK}"
     ln -s "${HOME}/${HOST_RC_FILE}" "${RC_LINK}"
 fi
 CISHRC_LINK="${PERSISTENT_ROOT}/cishrc.sh"
-if [[ ! -L "${CISHRC_LINK}" || "$(readlink -f "${CISHRC_LINK}")" != "$(readlink -f "${HOME}/${HOST_RC_FILE}")" ]]; then
+if [[ ! -L "${CISHRC_LINK}" || "$(_shell_readlink_f "${CISHRC_LINK}")" != "$(_shell_readlink_f "${HOME}/${HOST_RC_FILE}")" ]]; then
     rm -rf "${CISHRC_LINK}"
     ln -s "${HOME}/${HOST_RC_FILE}" "${CISHRC_LINK}"
 fi

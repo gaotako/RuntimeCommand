@@ -20,12 +20,36 @@ _SHUTILS_SHELL_SH_LOADED=1
 # Detect the current interactive shell handler.
 CISH="$(ps -o comm -p $$ | tail -1 | cut -d " " -f 1)"
 
+# Portable readlink -f for macOS and Linux.
+#
+# macOS BSD readlink does not support `-f`. This function resolves the
+# canonical path using Python3, perl, or GNU readlink (whichever is available).
+#
+# Args
+# ----
+# - `path`
+#     The path to resolve.
+#
+# Returns
+# -------
+# - `stdout`
+#     The resolved canonical path.
+_shell_readlink_f() {
+    if readlink -f "${1}" 2>/dev/null; then
+        return
+    fi
+    # macOS fallback: try python3, then perl.
+    python3 -c "import os,sys; print(os.path.realpath(sys.argv[1]))" "${1}" 2>/dev/null \
+        || perl -MCwd -e 'print Cwd::realpath($ARGV[0]),"\n"' "${1}" 2>/dev/null \
+        || echo "${1}"
+}
+
 # Resolve the project root directory from this file's location.
 # shell.sh lives at docker/shutils/shell.sh, so RC_DIR = docker/.
 # Skipped if RC_DIR is already set (e.g., by home_setup.sh writing it
 # directly into .zshrc/.bashrc for reliable cross-shell path resolution).
 if [[ -z "${RC_DIR:-}" ]]; then
-    RC_DIR="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/.." && pwd)"
+    RC_DIR="$(cd "$(dirname "$(_shell_readlink_f "${BASH_SOURCE[0]}")")/.." && pwd)"
 fi
 
 # Check whether the detected shell supports extended features.

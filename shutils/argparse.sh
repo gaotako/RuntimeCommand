@@ -47,6 +47,12 @@ _SHUTILS_ARGPARSE_SH_LOADED=1
 #     Array of positional (non-keyword) arguments. To restore `$1`, `$2`,
 #     etc., run `set -- "${POSITIONAL_ARGS[@]}"` after calling this function.
 #     Otherwise, use `POSITIONAL_ARGS[0]`, `POSITIONAL_ARGS[1]`, etc.
+# Portable uppercase conversion (works on Bash 3.2+ and zsh).
+# Bash 4+ has ${var^^} but macOS ships Bash 3.2 which lacks it.
+_argparse_upper() {
+    echo "${1}" | tr '[:lower:]' '[:upper:]'
+}
+
 argparse_parse() {
     POSITIONAL_ARGS=()
     while [[ $# -gt 0 ]]; do
@@ -56,19 +62,19 @@ argparse_parse() {
             local value="${1#*=}"
             key="${key#--}"
             key="${key//-/_}"
-            key="${key^^}"
-            declare -g "${key}"="${value}"
+            key="$(_argparse_upper "${key}")"
+            eval "${key}=\"${value}\""
             shift 1
             ;;
         --*)
             local key="${1#--}"
             key="${key//-/_}"
-            key="${key^^}"
+            key="$(_argparse_upper "${key}")"
             if [[ $# -ge 2 && "${2}" != --* ]]; then
-                declare -g "${key}"="${2}"
+                eval "${key}=\"${2}\""
                 shift 2
             else
-                declare -g "${key}"=1
+                eval "${key}=1"
                 shift 1
             fi
             ;;

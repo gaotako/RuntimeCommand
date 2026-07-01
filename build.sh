@@ -65,14 +65,12 @@ if [[ ${#POSITIONAL_ARGS[@]} -gt 0 ]]; then
 fi
 
 # Pre-build checks: verify all required tools and files are available.
-# Docker is needed for image build.
+# Container runtime (docker or finch) is needed for image build.
 BUILD_CHECK_FAILED=0
-for REQUIRED_CMD in docker; do
-    if ! command -v "${REQUIRED_CMD}" &>/dev/null; then
-        echo "${LOG_INDENT} ERROR: Required command \`${REQUIRED_CMD}\` is not installed or not in PATH." >&2
-        BUILD_CHECK_FAILED=1
-    fi
-done
+if ! command -v "${CONTAINER_RUNTIME}" &>/dev/null; then
+    echo "${LOG_INDENT} ERROR: Required command \`${CONTAINER_RUNTIME}\` is not installed or not in PATH." >&2
+    BUILD_CHECK_FAILED=1
+fi
 for REQUIRED_FILE in Dockerfile entrypoint.sh; do
     if [[ ! -f "${SCRIPT_DIR}/${REQUIRED_FILE}" ]]; then
         echo "${LOG_INDENT} ERROR: Required file \`${REQUIRED_FILE}\` not found in \`${SCRIPT_DIR}\`." >&2
@@ -99,7 +97,7 @@ if [[ -f "${DOCKER_IMAGE_FILE}" ]] && [[ "${FORCE_BUILD:-}" != "1" ]]; then
     LOAD_WAIT_TIMEOUT=60
     LOAD_SUCCESS=0
     for LOAD_TRY in $(seq 1 "${LOAD_ATTEMPTS}"); do
-        if docker load -i "${DOCKER_IMAGE_FILE}"; then
+        if ${CONTAINER_RUNTIME} load -i "${DOCKER_IMAGE_FILE}"; then
             LOAD_SUCCESS=1
             break
         fi
@@ -109,14 +107,14 @@ if [[ -f "${DOCKER_IMAGE_FILE}" ]] && [[ "${FORCE_BUILD:-}" != "1" ]]; then
             break
         fi
 
-        echo "${LOG_INDENT} WARNING: Load attempt ${LOAD_TRY}/${LOAD_ATTEMPTS} failed. Waiting for \`docker\` daemon (timeout: ${LOAD_WAIT_TIMEOUT}s) ..." >&2
+        echo "${LOG_INDENT} WARNING: Load attempt ${LOAD_TRY}/${LOAD_ATTEMPTS} failed. Waiting for \`${CONTAINER_RUNTIME}\` daemon (timeout: ${LOAD_WAIT_TIMEOUT}s) ..." >&2
 
         DOCKER_WAIT=0
-        while ! docker info &>/dev/null; do
+        while ! ${CONTAINER_RUNTIME} info &>/dev/null; do
             sleep 5
             DOCKER_WAIT=$((DOCKER_WAIT + 5))
             if [[ "${DOCKER_WAIT}" -ge "${LOAD_WAIT_TIMEOUT}" ]]; then
-                echo "${LOG_INDENT} WARNING: \`docker\` daemon did not recover within ${LOAD_WAIT_TIMEOUT} seconds. Will retry load ..." >&2
+                echo "${LOG_INDENT} WARNING: \`${CONTAINER_RUNTIME}\` daemon did not recover within ${LOAD_WAIT_TIMEOUT} seconds. Will retry load ..." >&2
                 break
             fi
         done
@@ -127,7 +125,7 @@ if [[ -f "${DOCKER_IMAGE_FILE}" ]] && [[ "${FORCE_BUILD:-}" != "1" ]]; then
 
     if [[ "${LOAD_SUCCESS}" -eq 1 ]]; then
         log_log "${QUIET}" "Image loaded from persistent storage."
-        docker run --rm "${IMAGE_NAME}:${IMAGE_TAG}" --version
+        ${CONTAINER_RUNTIME} run --rm "${IMAGE_NAME}:${IMAGE_TAG}" --version
         exit 0
     fi
 fi
@@ -140,7 +138,7 @@ log_log "${QUIET}" "Building ${IMAGE_NAME}:${IMAGE_TAG} (code-server ${CODE_SERV
 BUILD_ATTEMPTS=5
 DOCKER_WAIT_TIMEOUT=60
 for BUILD_TRY in $(seq 1 "${BUILD_ATTEMPTS}"); do
-    if docker build \
+    if ${CONTAINER_RUNTIME} build \
         --build-arg "CODE_SERVER_VERSION=${CODE_SERVER_VERSION}" \
         --build-arg "DOCKER_SHELL=${DOCKER_SHELL}" \
         -t "${IMAGE_NAME}:${IMAGE_TAG}" \
@@ -149,22 +147,22 @@ for BUILD_TRY in $(seq 1 "${BUILD_ATTEMPTS}"); do
     fi
 
     if [[ "${BUILD_TRY}" -eq "${BUILD_ATTEMPTS}" ]]; then
-        echo "${LOG_INDENT} ERROR: Docker build failed after ${BUILD_ATTEMPTS} attempts." >&2
+        echo "${LOG_INDENT} ERROR: Build failed after ${BUILD_ATTEMPTS} attempts." >&2
         exit 1
     fi
 
-    echo "${LOG_INDENT} WARNING: Docker build attempt ${BUILD_TRY}/${BUILD_ATTEMPTS} failed. Waiting for \`docker\` daemon (timeout: ${DOCKER_WAIT_TIMEOUT}s) ..." >&2
+    echo "${LOG_INDENT} WARNING: Build attempt ${BUILD_TRY}/${BUILD_ATTEMPTS} failed. Waiting for \`${CONTAINER_RUNTIME}\` daemon (timeout: ${DOCKER_WAIT_TIMEOUT}s) ..." >&2
 
-    # Wait for Docker daemon to recover with exponential backoff timeout.
+    # Wait for runtime daemon to recover with exponential backoff timeout.
     # SageMaker may restart the Docker daemon during lifecycle transitions,
     # which can take several minutes. If wait times out, the loop continues
     # to the next retry attempt with a doubled timeout.
     DOCKER_WAIT=0
-    while ! docker info &>/dev/null; do
+    while ! ${CONTAINER_RUNTIME} info &>/dev/null; do
         sleep 5
         DOCKER_WAIT=$((DOCKER_WAIT + 5))
         if [[ "${DOCKER_WAIT}" -ge "${DOCKER_WAIT_TIMEOUT}" ]]; then
-            echo "${LOG_INDENT} WARNING: \`docker\` daemon did not recover within ${DOCKER_WAIT_TIMEOUT} seconds. Will retry build ..." >&2
+            echo "${LOG_INDENT} WARNING: \`${CONTAINER_RUNTIME}\` daemon did not recover within ${DOCKER_WAIT_TIMEOUT} seconds. Will retry build ..." >&2
             break
         fi
     done
@@ -178,10 +176,10 @@ done
 
 # Verify the newly built image starts correctly.
 log_log "${QUIET}" "Build complete: ${IMAGE_NAME}:${IMAGE_TAG}"
-docker run --rm "${IMAGE_NAME}:${IMAGE_TAG}" --version
+${CONTAINER_RUNTIME} run --rm "${IMAGE_NAME}:${IMAGE_TAG}" --version
 
 # Save the image to persistent storage so it survives SageMaker restarts.
 log_log "${QUIET}" "Saving image to ${DOCKER_IMAGE_FILE} ..."
 mkdir -p "${DOCKER_IMAGE_DIR}"
-docker save -o "${DOCKER_IMAGE_FILE}" "${IMAGE_NAME}:${IMAGE_TAG}"
+${CONTAINER_RUNTIME} save -o "${DOCKER_IMAGE_FILE}" "${IMAGE_NAME}:${IMAGE_TAG}"
 log_log "${QUIET}" "Image saved to persistent storage."

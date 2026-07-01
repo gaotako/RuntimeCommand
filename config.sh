@@ -123,6 +123,18 @@ MISE_RUBY_VERSION="${MISE_RUBY_VERSION:-${MISE_RUBY_VERSION_DEFAULT}}"
 # Each script may append to the DOCKER_EXTRA_VOLUMES bash array.
 DOCKER_MOUNTS_DIR="${APP_DATA_HOME}/docker_mounts.d"
 
+# Container runtime detection (docker or finch).
+# Finch is an AWS open-source Docker-compatible runtime for macOS.
+if [[ -z "${CONTAINER_RUNTIME:-}" ]]; then
+    if command -v docker &>/dev/null; then
+        CONTAINER_RUNTIME="docker"
+    elif command -v finch &>/dev/null; then
+        CONTAINER_RUNTIME="finch"
+    else
+        CONTAINER_RUNTIME="docker"  # Default; scripts will error with helpful message.
+    fi
+fi
+
 # Docker container name defaults.
 CONTAINER_NAME_DEFAULT="code-server-runtime"
 CONTAINER_NAME="${CONTAINER_NAME:-${CONTAINER_NAME_DEFAULT}}"
