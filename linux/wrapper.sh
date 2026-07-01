@@ -117,6 +117,7 @@ exec docker run \
     -e "XDG_CONFIG_HOME=${XDG_CONFIG_HOME}" \
     -e "XDG_CACHE_HOME=${XDG_CACHE_HOME}" \
     -e "XDG_STATE_HOME=${XDG_STATE_HOME}" \
+    -e "TERM=${TERM:-xterm}" \
     -e "SHELL=${DOCKER_SHELL}" \
     -v "${WORKSPACE}:${WORKSPACE}" \
     -v /tmp:/tmp \

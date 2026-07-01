@@ -135,6 +135,7 @@ exec ${CONTAINER_RUNTIME} run \
     -e "DOCKER_HOME=${DOCKER_HOME}" \
     -e "RC_DOCKER=1" \
     -e "RC_PLATFORM=${RC_PLATFORM}" \
+    -e "TERM=${TERM:-xterm-256color}" \
     -e "XDG_DATA_HOME=${XDG_DATA_HOME}" \
     -e "XDG_CONFIG_HOME=${XDG_CONFIG_HOME}" \
     -e "XDG_CACHE_HOME=${XDG_CACHE_HOME}" \
