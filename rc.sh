@@ -78,7 +78,8 @@ _rc_host_guard() {
     if [[ "${_RC_DOCKER_HINT_SHOWN:-0}" != "1" ]]; then
         _RC_DOCKER_HINT_SHOWN=1
         _RC_CONTAINER="${CONTAINER_NAME:-code-server-runtime}"
-        echo "To enter Docker environment, run: \`docker exec -it ${_RC_CONTAINER} /bin/zsh\`."
+        _RC_RUNTIME="${CONTAINER_RUNTIME:-docker}"
+        echo "To enter Docker environment, run: \`${_RC_RUNTIME} exec -it ${_RC_CONTAINER} /bin/zsh\`."
     fi
     return 0
 }
