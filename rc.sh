@@ -96,6 +96,12 @@ _rc_host_guard() {
 # Guard: only run inside the Docker container launched by wrapper.sh.
 if [[ "${RC_DOCKER:-0}" != "1" ]]; then
     _rc_host_guard
+
+    # Source macOS SSH tunnel helper on the host (not inside Docker).
+    if [[ "$(uname -s)" == "Darwin" && -n "${RC_DIR:-}" ]]; then
+        source "${RC_DIR}/macos/ssh_tunnel.sh"
+    fi
+
     return 0 2>/dev/null || true
 fi
 
