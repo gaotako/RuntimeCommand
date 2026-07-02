@@ -114,7 +114,7 @@ _merge_and_symlink() {
     fi
 
     if [[ "${HOME}" != "${DOCKER_HOME}" ]] && [[ ! -L "${HOME}/${1}" ]] && [[ -d "${HOME}/${1}" ]]; then
-        cp -r "${HOME}/${1}/"* "${2}/" 2>/dev/null || true
+        cp -rn "${HOME}/${1}/"* "${2}/" 2>/dev/null || true
     fi
 
     rm -rf "${DOCKER_HOME}/${1}"
