@@ -123,28 +123,20 @@ else
 fi
 
 # Step 2: Deploy Claude settings to DOCKER_HOME.
-# Performs variable substitution on the template so paths are resolved
-# for the current machine. Runs on every invocation (not coldstart-only)
-# to keep the deployed settings in sync with the template.
+# Only deploys the template on first run (when settings.json doesn't exist).
+# Once deployed, the user manages this file directly (model, Bedrock config,
+# etc.). MCP server registration is handled separately by
+# RuntimeCommandAmazonInternal/claude_mcp/register.sh.
 log_log "${QUIET}" "[2/2] Setting up Claude settings ..."
 CLAUDE_SETTINGS_SOURCE="${SCRIPT_DIR}/claude/settings.json"
 CLAUDE_SETTINGS_TARGET="${DOCKER_HOME}/.claude/settings.json"
-if [[ -f "${CLAUDE_SETTINGS_SOURCE}" ]]; then
+if [[ -f "${CLAUDE_SETTINGS_TARGET}" ]]; then
+    log_log "${QUIET}" "Claude settings already exist at \`${CLAUDE_SETTINGS_TARGET}\`. Skipping."
+elif [[ -f "${CLAUDE_SETTINGS_SOURCE}" ]]; then
     mkdir -p "$(dirname "${CLAUDE_SETTINGS_TARGET}")"
-
-    # Resolve dynamic paths for MCP server configuration.
-    TOOLBOX_BIN="${HOME}/.toolbox/bin"
-    # Find the SharePoint MCP Server dist/index.js from brazil-pkg-cache.
-    BRAZIL_PKG_CACHE="$(readlink -f "${HOME}/brazil-pkg-cache" 2>/dev/null || echo "${HOME}/brazil-pkg-cache")"
-    SP_MCP_INDEX_JS="$(find "${BRAZIL_PKG_CACHE}/packages/Sharepoint-MCP-Server" \
-        -path "*/build/sharepoint-mcp-server/dist/index.js" 2>/dev/null | sort -V | tail -1 || true)"
-    if [[ -z "${SP_MCP_INDEX_JS}" ]]; then
-        SP_MCP_INDEX_JS="${BRAZIL_PKG_CACHE}/packages/Sharepoint-MCP-Server/LATEST/dist/index.js"
-    fi
 
     # Export variables for envsubst.
     export DOCKER_HOME MISE_INSTALL_PATH XDG_DATA_HOME MISE_NODE_VERSION
-    export TOOLBOX_BIN SP_MCP_INDEX_JS
 
     # Substitute variables and write the deployed settings.
     envsubst < "${CLAUDE_SETTINGS_SOURCE}" > "${CLAUDE_SETTINGS_TARGET}"

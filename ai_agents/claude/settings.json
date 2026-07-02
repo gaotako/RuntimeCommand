@@ -5,28 +5,5 @@
         "CLAUDE_CODE_USE_BEDROCK": "1",
         "AWS_PROFILE": "default",
         "AWS_REGION": "us-east-1"
-    },
-    "mcpServers": {
-        "builder-mcp": {
-            "command": "${MISE_INSTALL_PATH}",
-            "args": ["exec", "--", "/usr/local/bin/builder-mcp"],
-            "env": {
-                "HOME": "${DOCKER_HOME}",
-                "MIDWAY_COOKIE_PATH": "${DOCKER_HOME}/.midway/cookie",
-                "TOOL_PERSONALIZATION_ENABLED": "true",
-                "TOOL_PERSONALIZATION_MIN_EXECUTIONS": "0",
-                "TOOL_PERSONALIZATION_TRAINING_DAYS": "0",
-                "TOOL_PERSONALIZATION_ROLLOUT_PERCENTAGE": "100"
-            }
-        },
-        "aws-sharepoint-mcp": {
-            "command": "${MISE_INSTALL_PATH}",
-            "args": ["exec", "--", "node", "${SP_MCP_INDEX_JS}"],
-            "env": {
-                "HOME": "${DOCKER_HOME}",
-                "MIDWAY_COOKIE_PATH": "${DOCKER_HOME}/.midway/cookie",
-                "PATH": "${XDG_DATA_HOME}/mise/installs/node/${MISE_NODE_VERSION}/bin:${TOOLBOX_BIN}:/usr/local/bin:/usr/bin:/bin"
-            }
-        }
     }
 }
