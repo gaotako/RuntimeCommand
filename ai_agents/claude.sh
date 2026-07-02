@@ -137,7 +137,7 @@ if [[ -f "${CLAUDE_SETTINGS_SOURCE}" ]]; then
     # Find the SharePoint MCP Server dist/index.js from brazil-pkg-cache.
     BRAZIL_PKG_CACHE="$(readlink -f "${HOME}/brazil-pkg-cache" 2>/dev/null || echo "${HOME}/brazil-pkg-cache")"
     SP_MCP_INDEX_JS="$(find "${BRAZIL_PKG_CACHE}/packages/Sharepoint-MCP-Server" \
-        -path "*/build/sharepoint-mcp-server/dist/index.js" 2>/dev/null | sort -V | tail -1)"
+        -path "*/build/sharepoint-mcp-server/dist/index.js" 2>/dev/null | sort -V | tail -1 || true)"
     if [[ -z "${SP_MCP_INDEX_JS}" ]]; then
         SP_MCP_INDEX_JS="${BRAZIL_PKG_CACHE}/packages/Sharepoint-MCP-Server/LATEST/dist/index.js"
     fi
