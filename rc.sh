@@ -78,7 +78,16 @@ _rc_host_guard() {
     if [[ "${_RC_DOCKER_HINT_SHOWN:-0}" != "1" ]]; then
         _RC_DOCKER_HINT_SHOWN=1
         _RC_CONTAINER="${CONTAINER_NAME:-code-server-runtime}"
-        _RC_RUNTIME="${CONTAINER_RUNTIME:-docker}"
+        # Detect container runtime (config.sh not yet sourced at this point).
+        if [[ -n "${CONTAINER_RUNTIME:-}" ]]; then
+            _RC_RUNTIME="${CONTAINER_RUNTIME}"
+        elif command -v docker &>/dev/null; then
+            _RC_RUNTIME="docker"
+        elif command -v finch &>/dev/null; then
+            _RC_RUNTIME="finch"
+        else
+            _RC_RUNTIME="docker"
+        fi
         echo "To enter Docker environment, run: \`${_RC_RUNTIME} exec -it ${_RC_CONTAINER} /bin/zsh\`."
     fi
     return 0
