@@ -31,9 +31,9 @@
 # --------
 # ```
 # bash build.sh
-# bash build.sh 4.109.2
-# FORCE_BUILD=1 bash build.sh 4.109.2
-# bash build.sh --log-depth 2 4.109.2
+# bash build.sh 4.127.0
+# FORCE_BUILD=1 bash build.sh 4.127.0
+# bash build.sh --log-depth 2 4.127.0
 # bash build.sh --quiet
 # ```
 set -euo pipefail
@@ -130,6 +130,19 @@ if [[ -f "${DOCKER_IMAGE_FILE}" ]] && [[ "${FORCE_BUILD:-}" != "1" ]]; then
     fi
 fi
 
+# Cache-busting for the code-server install layer.
+#
+# When CODE_SERVER_VERSION is a fixed version (e.g. `4.127.0`), the Dockerfile's
+# install command embeds that version, so changing it naturally invalidates the
+# layer cache. But with the default `latest`, the install command string never
+# changes, so Docker's layer cache would silently reinstall the OLD binary on a
+# rebuild. Passing `--no-cache` on a forced rebuild guarantees `latest` (and any
+# apt/curl-fetched layers) are re-resolved to the newest available versions.
+NO_CACHE_FLAG=""
+if [[ "${FORCE_BUILD:-}" == "1" ]]; then
+    NO_CACHE_FLAG="--no-cache"
+fi
+
 # Build the Docker image from the Dockerfile in this directory.
 # Retries up to 5 times to handle transient Docker daemon instability
 # (e.g., `rpc error: EOF` during SageMaker notebook initialization).
@@ -139,6 +152,7 @@ BUILD_ATTEMPTS=5
 DOCKER_WAIT_TIMEOUT=60
 for BUILD_TRY in $(seq 1 "${BUILD_ATTEMPTS}"); do
     if ${CONTAINER_RUNTIME} build \
+        ${NO_CACHE_FLAG} \
         --build-arg "CODE_SERVER_VERSION=${CODE_SERVER_VERSION}" \
         --build-arg "DOCKER_SHELL=${DOCKER_SHELL}" \
         -t "${IMAGE_NAME}:${IMAGE_TAG}" \

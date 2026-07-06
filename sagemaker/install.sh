@@ -40,7 +40,7 @@
 # --------
 # ```
 # bash install.sh
-# CODE_SERVER_VERSION=4.109.2 bash install.sh
+# CODE_SERVER_VERSION=4.127.0 bash install.sh
 # bash install.sh --log-depth 2
 # bash install.sh --quiet
 # ```

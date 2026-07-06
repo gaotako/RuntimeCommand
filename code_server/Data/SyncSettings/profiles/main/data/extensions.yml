@@ -9,6 +9,8 @@ enabled:
       uuid: f8d0ffc4-66bb-4a9c-8149-ef8f043691a1
     - id: charliermarsh.ruff
       uuid: c2ca9b43-fa38-44fc-928e-5125970b9c00
+    - id: cweijan.vscode-office
+      uuid: 936b1be7-8595-4f76-b102-aa6bb915da73
     - id: emilast.LogFileHighlighter
       uuid: e8b488af-fccf-4adf-b60c-fc7455bea107
     - id: esbenp.prettier-vscode

@@ -28,7 +28,7 @@
 # --------
 # ```
 # docker build -t code-server-sagemaker .
-# docker build -t code-server-sagemaker --build-arg CODE_SERVER_VERSION=4.109.2 .
+# docker build -t code-server-sagemaker --build-arg CODE_SERVER_VERSION=4.127.0 .
 # ```
 
 # Base image.

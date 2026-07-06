@@ -143,6 +143,22 @@ docker rm -f code-server-runtime
 bash "${RC_ROOT}/linux/wrapper.sh" --detach
 ```
 
+**Why the container must be recreated, not just restarted.** The code-server
+binary is baked into the Docker *image*. A `docker restart` reuses the running
+container's existing image snapshot, so it keeps the old binary — it will
+**not** pick up a rebuilt image. You must `docker rm -f` the old container and
+launch a fresh one (as above) for a new version to take effect.
+
+`FORCE_BUILD=1` now builds with `--no-cache`. This matters because the default
+version is `latest`: without it, Docker's layer cache would serve the
+previously-built binary even though the Dockerfile command is unchanged,
+silently keeping you on the old version.
+
+Your settings and **extensions survive the update** — they are not in the image.
+Extensions (Office Viewer, Python, etc.) are installed by `zokugun.sync-settings`
+into the persistent mounted volume (`XDG_DATA_HOME` on the host), so recreating
+the container does not remove them.
+
 ---
 
 ## Deployment (SageMaker)
@@ -215,7 +231,7 @@ transparently runs code-server inside the container.
 To pin a specific code-server version:
 
 ```bash
-CODE_SERVER_VERSION=4.109.2 bash sagemaker/install.sh
+CODE_SERVER_VERSION=4.127.0 bash sagemaker/install.sh
 ```
 
 #### Step 2: Register with Jupyter
@@ -245,11 +261,16 @@ FORCE_BUILD=1 bash "${RC_ROOT}/build.sh" <VERSION>
 ```
 
 Use `FORCE_BUILD=1` to skip loading the cached image and force a fresh build.
+It also builds with `--no-cache`, which is required when relying on the default
+`latest` version: otherwise Docker's layer cache serves the previously-built
+binary (the install command string is unchanged) and the "update" is a no-op.
 The wrapper script does not need to change — it always uses the
 `code-server-sagemaker:latest` image tag.
 
-After rebuilding, the running container still uses the **old** image. To apply
-the new image:
+After rebuilding, the running container still uses the **old** image — a plain
+restart keeps the old binary because it reuses the container's image snapshot.
+To apply the new image you must remove the container so the wrapper creates a
+fresh one:
 
 ```bash
 docker rm -f code-server-sagemaker
@@ -257,7 +278,8 @@ docker rm -f code-server-sagemaker
 
 Then restart Jupyter: **File → Shut Down**, re-open the notebook URL, and open
 Code Server from the launcher. The wrapper will create a new container from the
-updated image.
+updated image. Your extensions (Office Viewer, etc.) and settings are unaffected
+— `sync-settings` keeps them in the persistent home volume, not in the image.
 
 ## Image Persistence
 
