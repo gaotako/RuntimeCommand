@@ -96,6 +96,11 @@ fi
 # target (host wins on conflicts), then replaces both with symlinks.
 # Merge priority (high to low): host > Docker > persistent.
 #
+# Also handles the passwd-home directory (the home path from /etc/passwd
+# via getpwuid), which may differ from $HOME inside Docker containers.
+# Tools like SSH use getpwuid() to resolve the home directory, so symlinks
+# must exist there as well.
+#
 # Args
 # ----
 # - `dot_name`
@@ -123,6 +128,19 @@ _merge_and_symlink() {
     if [[ "${HOME}" != "${DOCKER_HOME}" ]]; then
         rm -rf "${HOME}/${1}"
         ln -s "${2}" "${HOME}/${1}" || echo "WARNING: Failed to symlink \`${HOME}/${1}\`." >&2
+    fi
+
+    # Handle passwd-home: SSH and other tools use getpwuid() to resolve the
+    # home directory, which reads from /etc/passwd rather than $HOME. Inside
+    # Docker containers the passwd-home may differ from both $HOME and
+    # DOCKER_HOME (e.g., /etc/passwd is mounted from the host).
+    local PASSWD_HOME
+    PASSWD_HOME="$(getent passwd "$(whoami)" 2>/dev/null | cut -d: -f6 || true)"
+    if [[ -n "${PASSWD_HOME}" && "${PASSWD_HOME}" != "${HOME}" && "${PASSWD_HOME}" != "${DOCKER_HOME}" ]]; then
+        if [[ ! -L "${PASSWD_HOME}/${1}" || "$(readlink "${PASSWD_HOME}/${1}" 2>/dev/null)" != "${2}" ]]; then
+            rm -rf "${PASSWD_HOME}/${1}" 2>/dev/null || true
+            ln -s "${2}" "${PASSWD_HOME}/${1}" 2>/dev/null || echo "WARNING: Failed to symlink \`${PASSWD_HOME}/${1}\` (passwd-home). You may need root to create it." >&2
+        fi
     fi
 }
 

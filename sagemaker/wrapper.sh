@@ -36,6 +36,16 @@ source "${WRAPPER_DIR}/config.sh"
 # Only the explicit -e "RC_DOCKER=1" in docker run below should set it.
 unset RC_DOCKER
 
+# Resolve the passwd-home (the home directory from /etc/passwd).
+# SSH and other tools use getpwuid() to resolve the home directory from
+# /etc/passwd rather than the $HOME environment variable. When DOCKER_HOME
+# differs from the passwd-home, we must volume-mount credential directories
+# at the passwd-home path so that these tools can find them.
+PASSWD_HOME="$(getent passwd "$(whoami)" 2>/dev/null | cut -d: -f6 || echo "${HOME}")"
+
+# Persistent storage root (sibling of src/RuntimeCommand in the repo tree).
+PERSISTENT_ROOT="$(cd "${WRAPPER_DIR}/../../../.." && pwd)"
+
 # Ensure XDG directories exist on the host before mounting.
 mkdir -p "${XDG_DATA_HOME}" "${XDG_CONFIG_HOME}" "${XDG_CACHE_HOME}" "${XDG_STATE_HOME}"
 
@@ -52,6 +62,26 @@ for VOL in ${DOCKER_EXTRA_VOLUMES[@]+"${DOCKER_EXTRA_VOLUMES[@]}"}; do
     EXTRA_VOLUME_FLAGS+=("-v" "${VOL}")
 done
 unset VOL
+
+# Build passwd-home credential volume mounts.
+# When DOCKER_HOME differs from the passwd-home, mount the persistent
+# credential directories at the passwd-home path so tools using getpwuid()
+# (like SSH) can find them.
+PASSWD_HOME_VOLUME_FLAGS=()
+if [[ "${PASSWD_HOME}" != "${DOCKER_HOME}" && "${PASSWD_HOME}" != "${WORKSPACE}" ]]; then
+    SSH_PERSISTENT="${PERSISTENT_ROOT}/ssh"
+    AWS_PERSISTENT="${PERSISTENT_ROOT}/aws"
+    MIDWAY_PERSISTENT="${PERSISTENT_ROOT}/midway"
+    if [[ -d "${SSH_PERSISTENT}" ]]; then
+        PASSWD_HOME_VOLUME_FLAGS+=("-v" "${SSH_PERSISTENT}:${PASSWD_HOME}/.ssh")
+    fi
+    if [[ -d "${AWS_PERSISTENT}" ]]; then
+        PASSWD_HOME_VOLUME_FLAGS+=("-v" "${AWS_PERSISTENT}:${PASSWD_HOME}/.aws")
+    fi
+    if [[ -d "${MIDWAY_PERSISTENT}" ]]; then
+        PASSWD_HOME_VOLUME_FLAGS+=("-v" "${MIDWAY_PERSISTENT}:${PASSWD_HOME}/.midway")
+    fi
+fi
 
 # Rewrite bind-addr arguments for container networking.
 # `jupyter-server-proxy` passes `--bind-addr 127.0.0.1:{port}`, but code-server
@@ -109,6 +139,7 @@ exec docker run --rm \
     -v /tmp:/tmp \
     -v /etc/passwd:/etc/passwd:ro \
     -v /etc/group:/etc/group:ro \
+    ${PASSWD_HOME_VOLUME_FLAGS[@]+"${PASSWD_HOME_VOLUME_FLAGS[@]}"} \
     ${EXTRA_VOLUME_FLAGS[@]+"${EXTRA_VOLUME_FLAGS[@]}"} \
     "${IMAGE_NAME}:${IMAGE_TAG}" \
     "${REWRITTEN_ARGS[@]}"
