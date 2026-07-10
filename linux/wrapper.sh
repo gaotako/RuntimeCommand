@@ -78,6 +78,24 @@ PASSWD_HOME="$(getent passwd "$(whoami)" 2>/dev/null | cut -d: -f6 || echo "${HO
 # Persistent storage root (same as home_setup.sh uses).
 PERSISTENT_ROOT="$(cd "${PROJECT_ROOT}/../.." && pwd)"
 
+# Resolve credential directories by following symlinks from DOCKER_HOME.
+# home_setup.sh creates symlinks (e.g., DOCKER_HOME/.ssh → PERSISTENT_ROOT/ssh).
+# Resolving via symlinks is more robust than computing PERSISTENT_ROOT from the
+# script location, which can fail if the wrapper is installed at a non-standard
+# depth relative to the persistent storage.
+_resolve_cred_dir() {
+    local LINK="${DOCKER_HOME}/${1}"
+    if [[ -L "${LINK}" ]]; then
+        readlink -f "${LINK}"
+    elif [[ -L "${HOME}/${1}" ]]; then
+        readlink -f "${HOME}/${1}"
+    elif [[ -d "${PERSISTENT_ROOT}/${2}" ]]; then
+        echo "${PERSISTENT_ROOT}/${2}"
+    else
+        echo ""
+    fi
+}
+
 # Ensure XDG directories exist on the host before mounting.
 mkdir -p "${XDG_DATA_HOME}" "${XDG_CONFIG_HOME}" "${XDG_CACHE_HOME}" "${XDG_STATE_HOME}"
 
@@ -101,16 +119,17 @@ unset VOL
 # (like SSH) can find them.
 PASSWD_HOME_VOLUME_FLAGS=()
 if [[ "${PASSWD_HOME}" != "${DOCKER_HOME}" && "${PASSWD_HOME}" != "${WORKSPACE}" ]]; then
-    SSH_PERSISTENT="${PERSISTENT_ROOT}/ssh"
-    AWS_PERSISTENT="${PERSISTENT_ROOT}/aws"
-    MIDWAY_PERSISTENT="${PERSISTENT_ROOT}/midway"
-    if [[ -d "${SSH_PERSISTENT}" ]]; then
+    # Resolve credential dirs via symlinks first, falling back to PERSISTENT_ROOT.
+    SSH_PERSISTENT="$(_resolve_cred_dir ".ssh" "ssh")"
+    AWS_PERSISTENT="$(_resolve_cred_dir ".aws" "aws")"
+    MIDWAY_PERSISTENT="$(_resolve_cred_dir ".midway" "midway")"
+    if [[ -n "${SSH_PERSISTENT}" && -d "${SSH_PERSISTENT}" ]]; then
         PASSWD_HOME_VOLUME_FLAGS+=("-v" "${SSH_PERSISTENT}:${PASSWD_HOME}/.ssh")
     fi
-    if [[ -d "${AWS_PERSISTENT}" ]]; then
+    if [[ -n "${AWS_PERSISTENT}" && -d "${AWS_PERSISTENT}" ]]; then
         PASSWD_HOME_VOLUME_FLAGS+=("-v" "${AWS_PERSISTENT}:${PASSWD_HOME}/.aws")
     fi
-    if [[ -d "${MIDWAY_PERSISTENT}" ]]; then
+    if [[ -n "${MIDWAY_PERSISTENT}" && -d "${MIDWAY_PERSISTENT}" ]]; then
         PASSWD_HOME_VOLUME_FLAGS+=("-v" "${MIDWAY_PERSISTENT}:${PASSWD_HOME}/.midway")
     fi
 fi
