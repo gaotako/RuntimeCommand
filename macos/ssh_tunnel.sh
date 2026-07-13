@@ -101,13 +101,23 @@ code-server-tunnel() {
 
     # Create the tunnel.
     echo "Creating SSH tunnel: localhost:${local_port} → ${host}:${_CS_TUNNEL_REMOTE_PORT} ..."
-    ssh -fNL "${local_port}:localhost:${_CS_TUNNEL_REMOTE_PORT}" "${host}" 2>&1
+
+    # Tag every line ssh (and its ProxyCommand, e.g. the WSSH proxy) writes
+    # with the tunnel it belongs to. `ssh -f` forks into the background after
+    # authenticating, and the forked child inherits these redirections — so if
+    # the connection later drops (e.g. the laptop sleeps), the "session ended
+    # unexpectedly" notice is still prefixed with this host and port instead of
+    # appearing with no context and leaving you guessing which tunnel died.
+    local tag="localhost:${local_port} → ${host}:${_CS_TUNNEL_REMOTE_PORT}"
+    ssh -fNL "${local_port}:localhost:${_CS_TUNNEL_REMOTE_PORT}" "${host}" \
+        > >(sed "s|^|[acst ${tag}] |") \
+        2> >(sed "s|^|[acst ${tag}] |" >&2)
     local rc=$?
 
     if [[ ${rc} -eq 0 ]]; then
         echo "Tunnel established. Access code-server at: http://localhost:${local_port}"
     else
-        echo "ERROR: Failed to create SSH tunnel (exit code: ${rc})." >&2
+        echo "ERROR: Failed to create SSH tunnel for ${tag} (exit code: ${rc})." >&2
         return 1
     fi
 }
