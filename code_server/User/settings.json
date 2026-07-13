@@ -11,6 +11,8 @@
     //   - White Space
     //   - Escape Character
     //   - Editing Focus
+    // + Editor Backend
+    //   - Editor Trigger
     // + File System
     //   - File Category Association
     //   - File Monitoring and Ignoring
@@ -205,6 +207,19 @@
 
     // Do not put additional focus on ambiguous characters.
     "editor.unicodeHighlight.ambiguousCharacters": false,
+
+    // ---------------------------------------------------------------------------------------------
+    // ## Editor Backend
+    // ---------------------------------------------------------------------------------------------
+
+    // ---------------------------------------------------------------------------------------------
+    // ### Editor Trigger
+    // ---------------------------------------------------------------------------------------------
+
+    // Disable auto save so edits are never persisted without an explicit save.
+    // Protects against stray keystrokes landing in the wrong place when focus shifts
+    // (e.g. an agent moving the cursor mid-edit) from being written to disk automatically.
+    "files.autoSave": "off",
 
     // ---------------------------------------------------------------------------------------------
     // ## File System
