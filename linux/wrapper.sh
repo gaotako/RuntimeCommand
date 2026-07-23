@@ -134,10 +134,16 @@ if [[ "${PASSWD_HOME}" != "${DOCKER_HOME}" && "${PASSWD_HOME}" != "${WORKSPACE}"
     fi
 fi
 
-# Build detach flag.
+# Build detach and restart flags. A detached container gets a restart policy so
+# the Docker daemon resurrects it after a host reboot or daemon restart (the
+# cloud desktop reboots periodically to apply system updates). Foreground runs
+# use --rm for cleanup, which is incompatible with --restart, so they get no
+# restart policy.
 DETACH_FLAG=""
+RESTART_FLAG=""
 if [[ "${DETACH}" -eq 1 ]]; then
     DETACH_FLAG="-d"
+    RESTART_FLAG="--restart unless-stopped"
 else
     DETACH_FLAG="--rm"
 fi
@@ -154,6 +160,7 @@ fi
 exec docker run \
     --name "${CONTAINER_NAME}" \
     ${DETACH_FLAG} \
+    ${RESTART_FLAG} \
     --network host \
     --security-opt label:disable \
     -u "$(id -u):$(id -g)" \

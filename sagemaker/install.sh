@@ -97,7 +97,7 @@ else
 fi
 
 # Install the wrapper script and config alongside it.
-log_log "${QUIET}" "[4/4] Installing wrapper script to ${CODE_SERVER}"
+log_log "${QUIET}" "[4/5] Installing wrapper script to ${CODE_SERVER}"
 mkdir -p "$(dirname "${CODE_SERVER}")"
 cp "${SCRIPT_DIR}/wrapper.sh" "${CODE_SERVER}"
 chmod +x "${CODE_SERVER}"
@@ -109,6 +109,11 @@ if docker run --rm "${IMAGE_NAME}:${IMAGE_TAG}" --version; then
         log_log "${QUIET}" "Verification passed, removing backup: ${BACKUP}"
         rm -f "${BACKUP}"
     fi
+    # Install the shared 4am restart cron job. The root volume is wiped on each
+    # instance stop/start, so re-installing it here (install runs on every start
+    # via the lifecycle hook) re-establishes the crontab entry each boot.
+    log_log "${QUIET}" "[5/5] Installing 4am restart cron job ..."
+    bash "${PROJECT_ROOT}/cron_setup.sh" --log-depth $((LOG_DEPTH + 1)) ${QUIET_FLAG}
     log_log "${QUIET}" "Installation complete."
 else
     echo "${LOG_INDENT} ERROR: Verification failed." >&2

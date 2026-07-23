@@ -72,19 +72,24 @@ if ! command -v docker &>/dev/null; then
     echo "${LOG_INDENT} ERROR: \`docker\` is not installed or not in PATH." >&2
     exit 1
 fi
-log_log "${QUIET}" "[1/4] Docker is available: $(docker --version)"
+log_log "${QUIET}" "[1/5] Docker is available: $(docker --version)"
 
 # Build (or load from cache) the Docker image.
-log_log "${QUIET}" "[2/4] Building Docker image ..."
+log_log "${QUIET}" "[2/5] Building Docker image ..."
 bash "${PROJECT_ROOT}/build.sh" --log-depth $((LOG_DEPTH + 1)) ${QUIET_FLAG} "${CODE_SERVER_VERSION}"
 
 # Set up persistent home directory (ssh, aws, rc files, XDG dirs).
-log_log "${QUIET}" "[3/4] Setting up persistent home directory ..."
+log_log "${QUIET}" "[3/5] Setting up persistent home directory ..."
 bash "${PROJECT_ROOT}/home_setup.sh" --log-depth $((LOG_DEPTH + 1)) ${QUIET_FLAG}
 
 # Run code-server coldstart (settings, extensions, sync-settings).
-log_log "${QUIET}" "[4/4] Running code-server coldstart ..."
+log_log "${QUIET}" "[4/5] Running code-server coldstart ..."
 bash "${SCRIPT_DIR}/code_server/coldstart.sh" --log-depth $((LOG_DEPTH + 1)) ${QUIET_FLAG}
+
+# Install the shared 4am restart cron job (keeps the long-lived detached
+# container fresh; reboot survival is handled by wrapper.sh's --restart policy).
+log_log "${QUIET}" "[5/5] Installing 4am restart cron job ..."
+bash "${PROJECT_ROOT}/cron_setup.sh" --log-depth $((LOG_DEPTH + 1)) ${QUIET_FLAG}
 
 # Print completion summary.
 log_log "${QUIET}" "Installation complete."

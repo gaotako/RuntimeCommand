@@ -68,6 +68,10 @@ echo "Container: ${CONTAINER_NAME}"
 echo "Docker Home: ${DOCKER_HOME}"
 echo ""
 
+# Step 0: Remove the 4am restart cron entry so it doesn't recreate the
+# container after removal. Idempotent — a no-op if no entry is installed.
+bash "${PROJECT_ROOT}/cron_setup.sh" --remove
+
 # Step 1: Stop and remove the container.
 if docker ps -a --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
     if _confirm "Remove container \`${CONTAINER_NAME}\`?"; then
