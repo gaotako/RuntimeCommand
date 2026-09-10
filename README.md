@@ -6,7 +6,7 @@ limitation (code-server >= 4.17.0 requires glibc >= 2.28).
 Supported platforms:
 - **SageMaker Notebook Instances** — via `jupyter-server-proxy` integration.
 - **Linux / AL2 Cloud Desktop** — direct Docker launch with port mapping.
-- **macOS** — detected but not yet fully supported (see `TODO.md`).
+- **macOS** — direct Docker launch via Docker Desktop.
 
 ---
 
@@ -82,6 +82,13 @@ docker/
 │           ├── _version.py          Version from package.json
 │           └── labextension/
 │               └── package.json     Extension manifest (rebuilt on install)
+├── macos/                           macOS-specific scripts
+│   ├── install.sh                   Full install for macOS (Docker Desktop)
+│   ├── wrapper.sh                   Launch code-server Docker container on macOS
+│   ├── ssh_tunnel.sh                SSH tunnel setup for remote access
+│   └── code_server/
+│       └── coldstart.sh             Bootstrap settings symlinks on macOS
+├── CLAUDE.md                        AI agent rules (synchronized settings, path rules)
 └── README.md                        This file
 ```
 
@@ -335,3 +342,31 @@ It builds from TypeScript source on every `pip install`.
 | Timeout on open            | Timeout is 120s; container startup takes ~10s                |
 | Broken launcher icon       | Re-run `bash sagemaker/setup_jupyter.sh` and restart Jupyter |
 | Wrong platform detected    | Override with `RC_PLATFORM=linux bash install.sh`            |
+
+---
+
+## TODO
+
+### Share Code-Server Settings with Host VS Code
+
+- [ ] Symlink or mount `code_server/User/settings.json` to the host VS Code
+      settings directory (`~/Library/Application Support/Code/User/` on macOS,
+      `~/.config/Code/User/` on Linux).
+- [ ] Handle merge strategy: code-server settings are a superset (some keys
+      like `code-eol.*` are code-server-only). Consider shared base +
+      platform-specific overrides.
+- [ ] Machine settings may need different Python paths per platform.
+
+### Extension List Divergence
+
+- [ ] Create per-platform extension profiles (currently single `profiles/main`):
+  - SageMaker: `saoudrizwan.claude-dev` (Cline open-source) + `Anthropic.claude-code`.
+  - AL2 Cloud Desktop / macOS: May use Cline (Amazon Internal) with a different
+    extension ID.
+- [ ] Update `coldstart.sh` to select the correct profile based on `RC_PLATFORM`.
+
+### SSH / AWS Credential Sharing
+
+- [ ] On Cloud Desktop / macOS the host already has `~/.ssh` and `~/.aws` —
+      sharing strategy may differ from Docker-symlink approach (mount host
+      dirs directly vs symlink).
