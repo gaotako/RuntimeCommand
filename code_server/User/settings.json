@@ -560,7 +560,7 @@
 
     "claudeCode.preferredLocation": "sidebar",
     "claudeCode.disableLoginPrompt": true,
-    "claudeCode.selectedModel": "us.anthropic.claude-opus-4-8",
+    "claudeCode.selectedModel": "us.anthropic.claude-opus-5",
     "claudeCode.environmentVariables": [
         { "name": "CLAUDE_CODE_USE_BEDROCK", "value": "1" },
         { "name": "AWS_PROFILE", "value": "default" },
