@@ -1,5 +1,5 @@
 #!/bin/bash
-# Remove the RuntimeCommand Docker container and optionally its data on Linux.
+# Remove the RuntimeCommand Docker container and optionally its data on macOS.
 #
 # Delegates to the shared removal logic in `remove_common.sh`.
 #

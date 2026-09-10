@@ -1,12 +1,9 @@
 #!/bin/bash
 # Bootstrap code-server settings and extensions for Docker code-server on macOS.
 #
-# Symlinks User settings from the shared repo directory and templates Machine
-# settings (with default Python path) to the code-server data directory,
-# installs the `zokugun.sync-settings` extension, and templates the
-# sync-settings configuration with the resolved project root path.
-# Shared settings come from `code_server/`, while macOS-specific settings
-# come from `macos/code_server/`.
+# Defines macOS-specific platform hooks (`_sed_i`, `_readlink_f`,
+# `_coldstart_install_extension_cmd`) and delegates to the shared coldstart
+# logic in `coldstart_common.sh`.
 #
 # Args
 # ----
@@ -63,6 +60,16 @@ log_make_indent "${LOG_DEPTH}"
 QUIET_DEFAULT=0
 QUIET="${QUIET:-${QUIET_DEFAULT}}"
 
+# Print coldstart header.
+log_log "${QUIET}" "Code-Server Coldstart (macOS)"
+
+# --- Platform hooks ---
+
+# macOS BSD sed: requires `sed -i ''` (empty backup extension).
+_sed_i() {
+    sed -i '' "$@"
+}
+
 # Portable readlink -f replacement for macOS (BSD readlink lacks -f).
 _readlink_f() {
     python3 -c "import os,sys; print(os.path.realpath(sys.argv[1]))" "${1}" 2>/dev/null \
@@ -70,88 +77,17 @@ _readlink_f() {
         || echo "${1}"
 }
 
-# Shared code-server source directory.
-SHARED_CS_ROOT="${PROJECT_ROOT}/code_server"
-CODE_SERVER_SETTINGS_ROOT="${XDG_DATA_HOME}/code-server"
-
-# Print coldstart header.
-log_log "${QUIET}" "Code-Server Coldstart (macOS)"
-
-# Symlink User settings (shared) to code-server data directory.
-log_log "${QUIET}" "[1/4] Linking User settings ..."
-HERE="${SHARED_CS_ROOT}/User/settings.json"
-THERE="${CODE_SERVER_SETTINGS_ROOT}/User/settings.json"
-if [[ ! -L "${THERE}" || "$(_readlink_f "${THERE}")" != "$(_readlink_f "${HERE}")" ]]; then
-    if [[ -f "${THERE}" ]]; then
-        mv "${THERE}" "${THERE}.bak"
-        rm -f "${HERE}.bak"
-        ln -s "${THERE}.bak" "${HERE}.bak"
-    else
-        rm -f "${THERE}"
-    fi
-    mkdir -p "$(dirname "${THERE}")"
-    ln -s "${HERE}" "${THERE}"
-fi
-
-# Template and symlink Machine settings (shared, resolved at coldstart).
-log_log "${QUIET}" "[2/4] Templating Machine settings ..."
-SYSTEM_PYTHON_PATH="python"
-log_log "${QUIET}" "Python path: ${SYSTEM_PYTHON_PATH}"
-log_log "${QUIET}" "Docker shell: ${DOCKER_SHELL}"
-rm -f "${SHARED_CS_ROOT}/Machine/settings.json"
-cp "${SHARED_CS_ROOT}/Machine/settings-template.json" "${SHARED_CS_ROOT}/Machine/settings.json"
-SYSTEM_PYTHON_PATH_SED="$(echo "${SYSTEM_PYTHON_PATH}" | sed -E "s/([\\/\\.&])/\\\\\1/g")"
-DOCKER_SHELL_SED="$(echo "${DOCKER_SHELL}" | sed -E "s/([\\/\\.&])/\\\\\1/g")"
-# macOS BSD sed requires `sed -i ''` (empty string backup extension).
-sed -i '' -e "s/\${PYTHON_PATH}/${SYSTEM_PYTHON_PATH_SED}/g" \
-    -e "s/\${DOCKER_SHELL}/${DOCKER_SHELL_SED}/g" \
-    "${SHARED_CS_ROOT}/Machine/settings.json"
-HERE="${SHARED_CS_ROOT}/Machine/settings.json"
-THERE="${CODE_SERVER_SETTINGS_ROOT}/Machine/settings.json"
-if [[ ! -L "${THERE}" || "$(_readlink_f "${THERE}")" != "$(_readlink_f "${HERE}")" ]]; then
-    if [[ -f "${THERE}" ]]; then
-        mv "${THERE}" "${THERE}.bak"
-        rm -f "${HERE}.bak"
-        ln -s "${THERE}.bak" "${HERE}.bak"
-    else
-        rm -f "${THERE}"
-    fi
-    mkdir -p "$(dirname "${THERE}")"
-    ln -s "${HERE}" "${THERE}"
-fi
-
-# Install sync-settings extension if not already present.
-log_log "${QUIET}" "[3/4] Installing sync-settings extension ..."
-SYNC_SETTINGS_SOURCE_ROOT="${SHARED_CS_ROOT}/User/globalStorage/zokugun.sync-settings"
-SYNC_SETTINGS_SETTINGS_ROOT="${CODE_SERVER_SETTINGS_ROOT}/User/globalStorage/zokugun.sync-settings"
-if [[ ! -d "${SYNC_SETTINGS_SETTINGS_ROOT}" ]]; then
-    # macOS: no -u flag (Docker Desktop/Finch handles ownership), no --security-opt.
+# macOS Docker extension install: no -u flag (Docker Desktop handles ownership),
+# no --security-opt (no SELinux on macOS).
+_coldstart_install_extension_cmd() {
     ${CONTAINER_RUNTIME} run --rm \
         -e "HOME=${DOCKER_HOME}" \
         -e "XDG_DATA_HOME=${XDG_DATA_HOME}" \
         -v "${WORKSPACE}:${WORKSPACE}" \
         "${IMAGE_NAME}:${IMAGE_TAG}" \
-        --install-extension zokugun.sync-settings
-fi
+        --install-extension "${1}"
+}
 
-# Template and symlink sync-settings configuration.
-log_log "${QUIET}" "[4/4] Configuring sync-settings ..."
-rm -f "${SYNC_SETTINGS_SOURCE_ROOT}/settings.yml"
-cp "${SYNC_SETTINGS_SOURCE_ROOT}/settings-template.yml" "${SYNC_SETTINGS_SOURCE_ROOT}/settings.yml"
-PROJECT_ROOT_SED="$(echo "${PROJECT_ROOT}" | sed -E "s/([\\/\\.&])/\\\\\1/g")"
-# macOS BSD sed requires `sed -i ''`.
-sed -i '' -e "s/\${PROJECT_ROOT}/${PROJECT_ROOT_SED}/g" "${SYNC_SETTINGS_SOURCE_ROOT}/settings.yml"
-HERE="${SYNC_SETTINGS_SOURCE_ROOT}/settings.yml"
-THERE="${SYNC_SETTINGS_SETTINGS_ROOT}/settings.yml"
-if [[ ! -L "${THERE}" || "$(_readlink_f "${THERE}")" != "$(_readlink_f "${HERE}")" ]]; then
-    if [[ -f "${THERE}" ]]; then
-        mv "${THERE}" "${THERE}.bak"
-        rm -f "${HERE}.bak"
-        ln -s "${THERE}.bak" "${HERE}.bak"
-    else
-        rm -f "${THERE}"
-    fi
-    mkdir -p "$(dirname "${THERE}")"
-    ln -s "${HERE}" "${THERE}"
-fi
-log_log "${QUIET}" "Coldstart complete. Run \`Sync Settings: Download (repository -> user)\` in code-server."
+# Source shared coldstart logic and run.
+source "${PROJECT_ROOT}/coldstart_common.sh"
+_coldstart_run "${QUIET}" "${PROJECT_ROOT}"

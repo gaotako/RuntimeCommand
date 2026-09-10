@@ -22,6 +22,9 @@ docker/
 ├── rc.sh                            Shell-agnostic runtime command initialization
 ├── home_setup.sh                    Persistent home directory overrides (.ssh, .aws, rc files)
 ├── mise.sh                          Mise runtime manager installation and setup
+├── cron_setup.sh                    Shared 4am container restart schedule
+├── coldstart_common.sh              Shared coldstart logic (platform scripts supply hooks)
+├── remove_common.sh                 Shared container/image removal logic
 ├── ai_agents/                       AI agent CLI installation and configuration
 │   ├── claude.sh                    Claude Code CLI installation and setup
 │   ├── claude/
@@ -48,6 +51,7 @@ docker/
 ├── linux/                           Linux / Cloud Desktop-specific scripts
 │   ├── install.sh                   Full install (build + home setup + coldstart)
 │   ├── wrapper.sh                   Launch code-server Docker container directly
+│   ├── remove.sh                    Remove the container (and image with --purge)
 │   └── code_server/
 │       └── coldstart.sh             Bootstrap settings symlinks and sync-settings extension
 ├── sagemaker/                       SageMaker-specific scripts and data
@@ -86,6 +90,7 @@ docker/
 │   ├── install.sh                   Full install for macOS (Docker Desktop)
 │   ├── wrapper.sh                   Launch code-server Docker container on macOS
 │   ├── ssh_tunnel.sh                SSH tunnel setup for remote access
+│   ├── remove.sh                    Remove the container (and image with --purge)
 │   └── code_server/
 │       └── coldstart.sh             Bootstrap settings symlinks on macOS
 ├── CLAUDE.md                        AI agent rules (synchronized settings, path rules)
