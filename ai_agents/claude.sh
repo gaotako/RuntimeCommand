@@ -24,8 +24,10 @@
 # Notes
 # -----
 # - Claude Code CLI is installed via the native installer from
-#   `https://cli.anthropic.com/install.sh`.
-# - The binary is placed at `~/.claude/local/bin/claude`.
+#   `https://cli.anthropic.com/install.sh`, falling back to `npm install -g` where that
+#   host does not resolve.
+# - The native installer places the binary at `~/.claude/local/bin/claude`; the npm
+#   fallback places it in mise's node bin directory instead.
 # - The Claude settings file is copied from `claude/settings.json` in the
 #   project directory to `DOCKER_HOME/.claude/settings.json`.
 #
@@ -65,15 +67,28 @@ QUIET="${QUIET:-${QUIET_DEFAULT}}"
 
 # Claude Code CLI install location.
 # The native installer places the binary at ~/.claude/local/bin/claude.
-# The npm installer (via mise node) places it at ~/.local/bin/claude.
+# `npm install -g` into mise's node places it in mise's node bin directory — NOT in
+# ~/.local/bin — so that is a third install location, and it is the one that gets used
+# wherever `cli.anthropic.com` does not resolve (SageMaker, cloud desktops). Every
+# consumer of the binary has to know all three; `cline.sh` checks the same mise path.
 # Check both HOST HOME and DOCKER_HOME since the script may run on the host
 # but Claude is installed inside Docker (whose HOME = DOCKER_HOME).
+MISE_NODE_BIN_DIR="${XDG_DATA_HOME}/mise/installs/node/${MISE_NODE_VERSION}/bin"
+
+# A `claude` merely on PATH counts only when it is NOT the ASBX toolbox build. The host's
+# `~/.toolbox/` is bind-mounted into the container, so `~/.toolbox/bin/claude` answers
+# `command -v claude` on the host and inside the container alike. Accepting it reports
+# "already installed" while no install path holds a binary, and the missing install
+# only surfaces two steps later as `register.sh: Claude Code CLI not found in container`.
 _claude_bin_exists() {
+    local _claude_on_path
+    _claude_on_path="$(command -v claude 2>/dev/null || true)"
     [[ -f "${HOME}/.claude/local/bin/claude" ]] \
         || [[ -f "${HOME}/.local/bin/claude" ]] \
         || [[ -f "${DOCKER_HOME}/.claude/local/bin/claude" ]] \
         || [[ -f "${DOCKER_HOME}/.local/bin/claude" ]] \
-        || command -v claude &>/dev/null
+        || [[ -f "${MISE_NODE_BIN_DIR}/claude" ]] \
+        || [[ -n "${_claude_on_path}" && "${_claude_on_path}" != *"/.toolbox/"* ]]
 }
 CLAUDE_BIN="${DOCKER_HOME}/.claude/local/bin/claude"
 
@@ -109,6 +124,15 @@ if [[ "${COLDSTART}" -eq 1 ]]; then
         fi
     fi
     # Hint to the user how to use `claude` immediately or on next session.
+    # Point at the binary that actually got installed: the native installer and the npm
+    # fallback land in different directories, so a fixed path names a directory that does
+    # not exist whenever the fallback ran, and then no hint is printed at all.
+    for _candidate in \
+        "${DOCKER_HOME}/.claude/local/bin/claude" \
+        "${DOCKER_HOME}/.local/bin/claude" \
+        "${MISE_NODE_BIN_DIR}/claude"; do
+        [[ -f "${_candidate}" ]] && CLAUDE_BIN="${_candidate}" && break
+    done
     CLAUDE_BIN_DIR="$(dirname "${CLAUDE_BIN}")"
     if [[ -d "${CLAUDE_BIN_DIR}" && ":${PATH}:" != *":${CLAUDE_BIN_DIR}:"* ]]; then
         echo "PATH has been added to \`rc.sh\` for future terminal sessions."
