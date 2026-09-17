@@ -53,8 +53,6 @@ enabled:
       uuid: 2061917f-f76a-458a-8da9-f162de22b97e
     - id: ritwickdey.LiveServer
       uuid: 46cc5bbd-b098-4568-9b87-f91e07d26f2d
-    - id: saoudrizwan.claude-dev
-      uuid: ad94c633-a9d5-4f78-b85f-c664e7d91a0f
     - id: tamasfe.even-better-toml
       uuid: b2215d5f-675e-4a2b-b6ac-1ca737518b78
     - id: wayou.vscode-todo-highlight

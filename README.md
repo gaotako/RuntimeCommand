@@ -29,7 +29,6 @@ docker/
 │   ├── claude.sh                    Claude Code CLI installation and setup
 │   ├── claude/
 │   │   └── settings.json            Claude Code CLI settings (model, auth, env)
-│   ├── cline.sh                     Cline CLI installation and check
 │   └── kiro.sh                      Kiro CLI installation and setup
 ├── vimrc                            Vim configuration (sourced by ~/.vimrc)
 ├── shutils/                         Shared shell utility libraries
@@ -180,7 +179,7 @@ the container does not remove them.
 - SageMaker Notebook Instance with Docker available
 - Terminal access
 - **Minimum `ml.t3.large` (8 GB RAM).** The Docker container runs code-server,
-  AI agent extensions (Cline, Claude Code), Python/Pylance, and mise runtimes
+  AI agent extensions (Claude Code), Python/Pylance, and mise runtimes
   concurrently. On `ml.t3.medium` (4 GB), the OOM killer will crash the
   container. **Recommended: `ml.r5.large` (16 GB)** for comfortable use with
   multiple AI agents active.
@@ -365,9 +364,8 @@ It builds from TypeScript source on every `pip install`.
 ### Extension List Divergence
 
 - [ ] Create per-platform extension profiles (currently single `profiles/main`):
-  - SageMaker: `saoudrizwan.claude-dev` (Cline open-source) + `Anthropic.claude-code`.
-  - AL2 Cloud Desktop / macOS: May use Cline (Amazon Internal) with a different
-    extension ID.
+  - SageMaker: `Anthropic.claude-code`.
+  - AL2 Cloud Desktop / macOS: may need platform-specific extension IDs.
 - [ ] Update `coldstart.sh` to select the correct profile based on `RC_PLATFORM`.
 
 ### SSH / AWS Credential Sharing

@@ -220,7 +220,6 @@ bash "${RC_DIR}/mise.sh" --quiet
 # Check AI agent CLI availability.
 # Uses --quiet to suppress step logs; only "Missing ..." messages are printed.
 bash "${RC_DIR}/ai_agents/claude.sh" --quiet
-bash "${RC_DIR}/ai_agents/cline.sh" --quiet
 bash "${RC_DIR}/ai_agents/kiro.sh" --quiet
 
 # Add CLI tool paths to PATH if present.

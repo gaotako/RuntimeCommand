@@ -70,7 +70,7 @@ QUIET="${QUIET:-${QUIET_DEFAULT}}"
 # `npm install -g` into mise's node places it in mise's node bin directory — NOT in
 # ~/.local/bin — so that is a third install location, and it is the one that gets used
 # wherever `cli.anthropic.com` does not resolve (SageMaker, cloud desktops). Every
-# consumer of the binary has to know all three; `cline.sh` checks the same mise path.
+# consumer of the binary has to know all three.
 # Check both HOST HOME and DOCKER_HOME since the script may run on the host
 # but Claude is installed inside Docker (whose HOME = DOCKER_HOME).
 MISE_NODE_BIN_DIR="${XDG_DATA_HOME}/mise/installs/node/${MISE_NODE_VERSION}/bin"
