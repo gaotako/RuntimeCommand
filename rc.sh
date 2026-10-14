@@ -97,6 +97,11 @@ _rc_host_guard() {
 if [[ "${RC_DOCKER:-0}" != "1" ]]; then
     _rc_host_guard
 
+    # Source host-side container commands (code-server-start) on every platform.
+    if [[ -n "${RC_DIR:-}" ]]; then
+        source "${RC_DIR}/host_commands.sh"
+    fi
+
     # Source macOS SSH tunnel helper on the host (not inside Docker).
     if [[ "$(uname -s)" == "Darwin" && -n "${RC_DIR:-}" ]]; then
         source "${RC_DIR}/macos/ssh_tunnel.sh"

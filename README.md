@@ -20,6 +20,7 @@ docker/
 ├── build.sh                         Build the Docker image
 ├── config.sh                        Shared configuration and defaults
 ├── rc.sh                            Shell-agnostic runtime command initialization
+├── host_commands.sh                 Host-side commands (code-server-start), sourced by rc.sh
 ├── home_setup.sh                    Persistent home directory overrides (.ssh, .aws, rc files)
 ├── mise.sh                          Mise runtime manager installation and setup
 ├── cron_setup.sh                    Shared 4am container restart schedule
@@ -122,6 +123,11 @@ code-server settings.
 ```bash
 bash "${RC_ROOT}/linux/wrapper.sh" --detach
 ```
+
+After install, the host shell also has `code-server-start` (from
+`host_commands.sh`), a shortcut for the same command. Use it to bring the
+container back if it was killed and did not auto-restart. Extra arguments are
+forwarded, e.g. `code-server-start --port 9090`.
 
 If the host is remote, set up a background SSH tunnel first, then open
 `http://127.0.0.1:8080` in your local browser:
