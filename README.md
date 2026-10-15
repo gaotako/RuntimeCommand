@@ -126,8 +126,9 @@ bash "${RC_ROOT}/linux/wrapper.sh" --detach
 
 After install, the host shell also has `code-server-start` (from
 `host_commands.sh`), a shortcut for the same command. Use it to bring the
-container back if it was killed and did not auto-restart. Extra arguments are
-forwarded, e.g. `code-server-start --port 9090`.
+container back if it was killed and did not auto-restart. It is a fixed alias
+and rejects any argument except `-h`/`--help`; call `wrapper.sh` directly to
+change the port or code-server arguments.
 
 If the host is remote, set up a background SSH tunnel first, then open
 `http://127.0.0.1:8080` in your local browser:
