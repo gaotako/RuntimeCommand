@@ -1,0 +1,6 @@
+model = "openai.gpt-6.2-astra"
+model_provider = "amazon-bedrock"
+
+[model_providers.amazon-bedrock.aws]
+profile = "default"
+region = "us-east-1"

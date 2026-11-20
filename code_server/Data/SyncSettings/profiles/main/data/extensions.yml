@@ -45,6 +45,8 @@ enabled:
       uuid: e153ca70-b543-4865-b4c5-b31d34185948
     - id: oderwat.indent-rainbow
       uuid: eaa2127d-cb69-4ab9-8505-a60c9ee5f28b
+    - id: openai.chatgpt
+      uuid: 90b52117-6fd1-4f1c-9e14-256bd6e21d79
     - id: PKief.material-icon-theme
       uuid: 5db78037-f674-459f-a236-db622c427c5b
     - id: RandomFractalsInc.vscode-data-preview

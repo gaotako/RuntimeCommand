@@ -21,7 +21,7 @@ docker/
 ├── config.sh                        Shared configuration and defaults
 ├── rc.sh                            Shell-agnostic runtime command initialization
 ├── host_commands.sh                 Host-side commands (code-server-start), sourced by rc.sh
-├── home_setup.sh                    Persistent home directory overrides (.ssh, .aws, rc files)
+├── home_setup.sh                    Persistent home directory overrides (.ssh, .aws, .claude, .codex, rc files)
 ├── mise.sh                          Mise runtime manager installation and setup
 ├── cron_setup.sh                    Shared 4am container restart schedule
 ├── coldstart_common.sh              Shared coldstart logic (platform scripts supply hooks)
@@ -30,6 +30,9 @@ docker/
 │   ├── claude.sh                    Claude Code CLI installation and setup
 │   ├── claude/
 │   │   └── settings.json            Claude Code CLI settings (model, auth, env)
+│   ├── codex.sh                     Codex CLI installation and setup
+│   ├── codex/
+│   │   └── config.toml              Codex CLI config (model, Bedrock provider)
 │   └── kiro.sh                      Kiro CLI installation and setup
 ├── vimrc                            Vim configuration (sourced by ~/.vimrc)
 ├── shutils/                         Shared shell utility libraries

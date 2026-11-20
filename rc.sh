@@ -226,6 +226,7 @@ bash "${RC_DIR}/mise.sh" --quiet
 # Uses --quiet to suppress step logs; only "Missing ..." messages are printed.
 bash "${RC_DIR}/ai_agents/claude.sh" --quiet
 bash "${RC_DIR}/ai_agents/kiro.sh" --quiet
+bash "${RC_DIR}/ai_agents/codex.sh" --quiet
 
 # Add CLI tool paths to PATH if present.
 if [[ -d "${HOME}/.claude/local/bin" && ":${PATH}:" != *":${HOME}/.claude/local/bin:"* ]]; then
