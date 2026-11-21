@@ -1,5 +1,11 @@
 # AI Agent Rules
 
+## Scope
+
+- This repo is a general-purpose runtime environment, not limited to Amazon-internal use.
+- Amazon-internal behavior lives in a separate overlay package built on top of this one, which overrides or adds to it.
+- Never put Amazon-only defaults, tooling, or policy here (e.g. toolbox installs, ASBX credentials); defaults must work for any user.
+
 ## Synchronized Settings
 
 Model and API settings exist in multiple locations. Update ALL together:
